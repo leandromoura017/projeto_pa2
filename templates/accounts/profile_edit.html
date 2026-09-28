@@ -33,7 +33,6 @@
 
             <!-- Avatar Preview & Upload -->
             <div class="flex flex-col sm:flex-row items-center gap-6 p-5 bg-gray-900/60 border border-gray-800 rounded-2xl">
-                <!-- Avatar Preview Image -->
                 <div class="shrink-0">
                     <img id="avatar-preview" 
                          src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ user.first_name|default:'Dev' }}&background=0ea5e9&color=fff&size=128{% endif %}" 
@@ -112,7 +111,6 @@
 
 {% block extra_scripts %}
 <script>
-    // Preview dinâmico de avatar
     const avatarInput = document.querySelector('input[type="file"][name="avatar"]');
     const avatarPreview = document.getElementById('avatar-preview');
 
@@ -129,7 +127,6 @@
         });
     }
 
-    // Contador regressivo de caracteres para a Bio
     const bioTextarea = document.getElementById('bio-textarea');
     const charCounter = document.getElementById('char-counter');
 
@@ -147,7 +144,7 @@
 
     if (bioTextarea) {
         bioTextarea.addEventListener('input', updateCounter);
-        updateCounter(); // Executa ao carregar
+        updateCounter();
     }
 </script>
 {% endblock %}

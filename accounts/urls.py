@@ -8,8 +8,6 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('terms/', views.terms_view, name='terms'),
     path('privacy/', views.privacy_view, name='privacy'),
-    path('profile/', views.profile_view, name='profile'),
-    path('profile/edit/', views.profile_edit_view, name='profile_edit'),
     
     # Password Reset
     path('password-reset/', 

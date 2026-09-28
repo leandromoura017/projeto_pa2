@@ -69,7 +69,6 @@ class SignUpForm(forms.ModelForm):
             if password != password_confirm:
                 self.add_error('password_confirm', "As senhas não coincidem.")
             else:
-                # Validação de regras de senha do Django
                 try:
                     password_validation.validate_password(password, self.instance)
                 except ValidationError as error:
@@ -84,7 +83,6 @@ class SignUpForm(forms.ModelForm):
         
         if commit:
             user.save()
-            # Registra consentimento LGPD
             ip = None
             if request:
                 ip = request.META.get('HTTP_X_FORWARDED_FOR')
