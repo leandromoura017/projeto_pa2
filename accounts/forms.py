@@ -181,7 +181,6 @@ class ProfileEditForm(forms.Form):
     def clean_avatar(self):
         avatar = self.cleaned_data.get('avatar')
         if avatar:
-            # Limite de 2MB
             max_size = 2 * 1024 * 1024
             if avatar.size > max_size:
                 raise ValidationError("O arquivo da foto não pode exceder 2MB.")

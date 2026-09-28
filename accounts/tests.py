@@ -151,9 +151,9 @@ class LegalPagesTests(TestCase):
         self.assertContains(response, 'LGPD')
 
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 import io
 from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 class ProfileAndShellTests(TestCase):
     def setUp(self):
@@ -171,7 +171,7 @@ class ProfileAndShellTests(TestCase):
         self.assertIn('/accounts/login/', response.url)
 
     def test_feed_loads_for_authenticated_user(self):
-        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        self.client.force_login(self.user)
         response = self.client.get(reverse('feed'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'feed.html')
@@ -183,19 +183,19 @@ class ProfileAndShellTests(TestCase):
         self.assertIn('/accounts/login/', response.url)
 
     def test_profile_view_loads_for_authenticated_user(self):
-        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        self.client.force_login(self.user)
         response = self.client.get(reverse('profile'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'accounts/profile.html')
         self.assertContains(response, 'Carlinhos Dev')
         self.assertContains(response, 'Portfólio Vivo')
-        # Verifica regra de negócio inviolável: não pode ter campo de upload de currículo
+        # Verifica regra de negócio anti-CV: nenhum campo de upload de currículo
         self.assertNotContains(response, 'name="curriculo"')
         self.assertNotContains(response, 'name="resume"')
         self.assertNotContains(response, 'name="cv"')
 
     def test_profile_edit_form_updates_profile(self):
-        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        self.client.force_login(self.user)
         response = self.client.post(reverse('profile_edit'), {
             'first_name': 'Carlos',
             'last_name': 'Sabino',
@@ -211,8 +211,7 @@ class ProfileAndShellTests(TestCase):
         self.assertEqual(self.user.profile.github_url, 'https://github.com/carlinhos')
 
     def test_profile_avatar_upload_success(self):
-        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
-        # Gera uma imagem em memória
+        self.client.force_login(self.user)
         img_io = io.BytesIO()
         image = Image.new('RGB', (100, 100), color='cyan')
         image.save(img_io, format='JPEG')

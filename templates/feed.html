@@ -81,11 +81,14 @@
             <p class="text-xs text-gray-400 mt-0.5">Acesse o painel Django Admin com a conta de superusuário para ver os logs de consentimento.</p>
         </div>
         <div class="flex items-center gap-3">
+            <a href="/profile/" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-500 transition">
+                Meu Perfil Vivo &rarr;
+            </a>
             <a href="/admin/" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-gray-800 hover:bg-gray-700 border border-gray-700 transition">
-                Acessar Django Admin &rarr;
+                Django Admin
             </a>
             <a href="{% url 'logout' %}" class="px-4 py-2 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/30 border border-red-900/50 transition">
-                Sair da Conta
+                Sair
             </a>
         </div>
     </div>
