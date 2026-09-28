@@ -118,3 +118,71 @@ class LoginForm(forms.Form):
             'required': True,
         })
     )
+
+
+class ProfileEditForm(forms.Form):
+    first_name = forms.CharField(
+        label="Primeiro Nome",
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
+            'placeholder': 'Seu primeiro nome',
+            'required': True,
+        })
+    )
+    last_name = forms.CharField(
+        label="Sobrenome",
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
+            'placeholder': 'Seu sobrenome',
+        })
+    )
+    bio = forms.CharField(
+        label="Biografia do Dev",
+        max_length=250,
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none',
+            'placeholder': 'Ex: Desenvolvedor Python e Django focado em automações e APIs...',
+            'rows': 3,
+            'maxlength': '250',
+            'id': 'bio-textarea'
+        }),
+        help_text="Máximo de 250 caracteres. Apresente seu foco técnico."
+    )
+    github_url = forms.URLField(
+        label="Link do GitHub",
+        required=False,
+        widget=forms.URLInput(attrs={
+            'class': 'w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
+            'placeholder': 'https://github.com/seu-usuario',
+        })
+    )
+    linkedin_url = forms.URLField(
+        label="Link do LinkedIn",
+        required=False,
+        widget=forms.URLInput(attrs={
+            'class': 'w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
+            'placeholder': 'https://linkedin.com/in/seu-perfil',
+        })
+    )
+    avatar = forms.ImageField(
+        label="Foto de Avatar",
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'block w-full text-xs text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-600/20 file:text-cyan-300 hover:file:bg-cyan-600/30 file:cursor-pointer',
+            'accept': 'image/jpeg,image/png,image/webp'
+        }),
+        help_text="Formatos aceitos: JPG, PNG ou WebP. Tamanho máximo: 2MB."
+    )
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar:
+            # Limite de 2MB
+            max_size = 2 * 1024 * 1024
+            if avatar.size > max_size:
+                raise ValidationError("O arquivo da foto não pode exceder 2MB.")
+        return avatar

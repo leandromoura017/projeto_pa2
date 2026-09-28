@@ -5,13 +5,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import feed_view
+from accounts.views import feed_view, profile_view, profile_edit_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('', feed_view, name='home'),
     path('feed/', feed_view, name='feed'),
+    path('profile/', profile_view, name='profile_root'),
+    path('profile/edit/', profile_edit_view, name='profile_edit_root'),
 ]
 
 if settings.DEBUG:

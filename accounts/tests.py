@@ -149,3 +149,82 @@ class LegalPagesTests(TestCase):
         response = self.client.get(reverse('privacy'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'LGPD')
+
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+import io
+from PIL import Image
+
+class ProfileAndShellTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            email='carlinhos.dev@codeview.com',
+            password='Password123!',
+            first_name='Carlinhos',
+            last_name='Dev'
+        )
+
+    def test_feed_requires_login(self):
+        response = self.client.get(reverse('feed'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+
+    def test_feed_loads_for_authenticated_user(self):
+        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        response = self.client.get(reverse('feed'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'feed.html')
+        self.assertContains(response, 'Carlinhos')
+
+    def test_profile_requires_login(self):
+        response = self.client.get(reverse('profile'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+
+    def test_profile_view_loads_for_authenticated_user(self):
+        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        response = self.client.get(reverse('profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/profile.html')
+        self.assertContains(response, 'Carlinhos Dev')
+        self.assertContains(response, 'Portfólio Vivo')
+        # Verifica regra de negócio inviolável: não pode ter campo de upload de currículo
+        self.assertNotContains(response, 'name="curriculo"')
+        self.assertNotContains(response, 'name="resume"')
+        self.assertNotContains(response, 'name="cv"')
+
+    def test_profile_edit_form_updates_profile(self):
+        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        response = self.client.post(reverse('profile_edit'), {
+            'first_name': 'Carlos',
+            'last_name': 'Sabino',
+            'bio': 'Desenvolvedor Python focado em backend e automações.',
+            'github_url': 'https://github.com/carlinhos',
+            'linkedin_url': 'https://linkedin.com/in/carlinhos',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Carlos')
+        self.assertEqual(self.user.last_name, 'Sabino')
+        self.assertEqual(self.user.profile.bio, 'Desenvolvedor Python focado em backend e automações.')
+        self.assertEqual(self.user.profile.github_url, 'https://github.com/carlinhos')
+
+    def test_profile_avatar_upload_success(self):
+        self.client.login(username='carlinhos.dev@codeview.com', password='Password123!')
+        # Gera uma imagem em memória
+        img_io = io.BytesIO()
+        image = Image.new('RGB', (100, 100), color='cyan')
+        image.save(img_io, format='JPEG')
+        img_file = SimpleUploadedFile("avatar.jpg", img_io.getvalue(), content_type="image/jpeg")
+
+        response = self.client.post(reverse('profile_edit'), {
+            'first_name': 'Carlos',
+            'last_name': 'Dev',
+            'bio': 'Bio com foto',
+            'avatar': img_file,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.user.refresh_from_db()
+        self.assertTrue(bool(self.user.profile.avatar))
+        self.assertIn('avatars/', self.user.profile.avatar.name)

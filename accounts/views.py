@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.views.decorators.http import require_http_methods
-from .forms import SignUpForm, LoginForm
+from django.contrib.auth.decorators import login_required
+from .forms import SignUpForm, LoginForm, ProfileEditForm
+from .models import Profile
 
 
 def signup_view(request):
@@ -73,3 +74,50 @@ def feed_view(request):
     if not request.user.is_authenticated:
         return redirect('login')
     return render(request, 'feed.html')
+
+
+@login_required
+def profile_view(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    return render(request, 'accounts/profile.html', {
+        'profile': profile,
+        'user': request.user,
+    })
+
+
+@login_required
+def profile_edit_view(request):
+    user = request.user
+    profile, _ = Profile.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, request.FILES)
+        if form.is_valid():
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.save()
+
+            profile.bio = form.cleaned_data['bio']
+            profile.github_url = form.cleaned_data['github_url']
+            profile.linkedin_url = form.cleaned_data['linkedin_url']
+
+            if 'avatar' in request.FILES:
+                profile.avatar = form.cleaned_data['avatar']
+
+            profile.save()
+            messages.success(request, "Perfil atualizado com sucesso!")
+            return redirect('profile')
+    else:
+        initial_data = {
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'bio': profile.bio,
+            'github_url': profile.github_url,
+            'linkedin_url': profile.linkedin_url,
+        }
+        form = ProfileEditForm(initial=initial_data)
+
+    return render(request, 'accounts/profile_edit.html', {
+        'form': form,
+        'profile': profile,
+    })

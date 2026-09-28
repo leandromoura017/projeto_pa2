@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Perfil | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
+    <div class="bg-[#111827] border border-gray-800 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-8">
+        <!-- Header -->
+        <div class="border-b border-gray-800 pb-5 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Editar Perfil</h1>
+                <p class="text-xs text-gray-400 mt-1">Atualize suas informações de apresentação e foco técnico.</p>
+            </div>
+            <a href="{% url 'profile' %}" class="text-xs font-semibold text-gray-400 hover:text-white transition">
+                &larr; Voltar
+            </a>
+        </div>
+
+        {% if form.errors %}
+            <div class="p-4 bg-red-950/60 border border-red-800 rounded-xl text-sm text-red-300">
+                <p class="font-semibold mb-1">Por favor, corrija os erros abaixo:</p>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <p class="text-xs">• {{ field.label }}: {{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form method="POST" action="{% url 'profile_edit' %}" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Avatar Preview & Upload -->
+            <div class="flex flex-col sm:flex-row items-center gap-6 p-5 bg-gray-900/60 border border-gray-800 rounded-2xl">
+                <!-- Avatar Preview Image -->
+                <div class="shrink-0">
+                    <img id="avatar-preview" 
+                         src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ user.first_name|default:'Dev' }}&background=0ea5e9&color=fff&size=128{% endif %}" 
+                         alt="Preview do Avatar" 
+                         class="w-24 h-24 rounded-2xl object-cover border-2 border-cyan-500/40 shadow-lg">
+                </div>
+                <div class="flex-1 text-center sm:text-left space-y-1.5 w-full">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+                        {{ form.avatar.label }}
+                    </label>
+                    {{ form.avatar }}
+                    <p class="text-[11px] text-gray-500">{{ form.avatar.help_text }}</p>
+                </div>
+            </div>
+
+            <!-- Nome e Sobrenome Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                        {{ form.first_name.label }}
+                    </label>
+                    {{ form.first_name }}
+                </div>
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                        {{ form.last_name.label }}
+                    </label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+
+            <!-- Bio com Contador de Caracteres -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label for="{{ form.bio.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+                        {{ form.bio.label }}
+                    </label>
+                    <span id="char-counter" class="text-[11px] font-mono text-cyan-400 font-medium">0 / 250</span>
+                </div>
+                {{ form.bio }}
+                <p class="mt-1 text-[11px] text-gray-500">{{ form.bio.help_text }}</p>
+            </div>
+
+            <!-- Links Profissionais -->
+            <div class="space-y-4 pt-2 border-t border-gray-800">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Links do Portfólio Vivo</h3>
+
+                <div>
+                    <label for="{{ form.github_url.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                        {{ form.github_url.label }}
+                    </label>
+                    {{ form.github_url }}
+                </div>
+
+                <div>
+                    <label for="{{ form.linkedin_url.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                        {{ form.linkedin_url.label }}
+                    </label>
+                    {{ form.linkedin_url }}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-gray-800 flex items-center justify-end gap-3">
+                <a href="{% url 'profile' %}" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 transition">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition duration-150">
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Preview dinâmico de avatar
+    const avatarInput = document.querySelector('input[type="file"][name="avatar"]');
+    const avatarPreview = document.getElementById('avatar-preview');
+
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    avatarPreview.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Contador regressivo de caracteres para a Bio
+    const bioTextarea = document.getElementById('bio-textarea');
+    const charCounter = document.getElementById('char-counter');
+
+    function updateCounter() {
+        if (bioTextarea && charCounter) {
+            const currentLen = bioTextarea.value.length;
+            charCounter.textContent = `${currentLen} / 250`;
+            if (currentLen >= 240) {
+                charCounter.classList.add('text-amber-400');
+            } else {
+                charCounter.classList.remove('text-amber-400');
+            }
+        }
+    }
+
+    if (bioTextarea) {
+        bioTextarea.addEventListener('input', updateCounter);
+        updateCounter(); // Executa ao carregar
+    }
+</script>
+{% endblock %}
