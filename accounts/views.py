@@ -67,3 +67,9 @@ def terms_view(request):
 
 def privacy_view(request):
     return render(request, 'legal/privacy.html')
+
+
+def feed_view(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    return render(request, 'feed.html')
