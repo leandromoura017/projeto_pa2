@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar Conta | CodeView{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md space-y-8 bg-[#111827]/90 border border-gray-800 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+        <!-- Header -->
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/30 text-cyan-400 mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight text-white">Crie sua conta no CodeView</h2>
+            <p class="mt-2 text-sm text-gray-400">
+                Pílulas diárias de código e microaprendizado dinâmico.
+            </p>
+        </div>
+
+        <!-- Non-field Errors -->
+        {% if form.non_field_errors %}
+            <div class="p-3 bg-red-950/60 border border-red-800 rounded-lg text-sm text-red-300">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form class="mt-6 space-y-5" method="POST" action="{% url 'signup' %}" novalidate>
+            {% csrf_token %}
+
+            <!-- Nome Completo -->
+            <div>
+                <label for="{{ form.first_name.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                    {{ form.first_name.label }}
+                </label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <p class="mt-1 text-xs text-red-400">{{ form.first_name.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- E-mail -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                    {{ form.email.label }}
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="mt-1 text-xs text-red-400">{{ form.email.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Senha -->
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                    {{ form.password.label }}
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <p class="mt-1 text-xs text-red-400">{{ form.password.errors.0 }}</p>
+                {% else %}
+                    <p class="mt-1 text-[11px] text-gray-500">{{ form.password.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Confirmar Senha -->
+            <div>
+                <label for="{{ form.password_confirm.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+                    {{ form.password_confirm.label }}
+                </label>
+                {{ form.password_confirm }}
+                {% if form.password_confirm.errors %}
+                    <p class="mt-1 text-xs text-red-400">{{ form.password_confirm.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Consentimento LGPD -->
+            <div class="pt-2">
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.lgpd_consent }}
+                    </div>
+                    <div class="ml-3 text-xs leading-5">
+                        <label for="{{ form.lgpd_consent.id_for_label }}" class="text-gray-300">
+                            Concordo com os 
+                            <a href="{% url 'terms' %}" target="_blank" class="text-cyan-400 hover:text-cyan-300 underline font-medium">Termos de Uso</a> 
+                            e com o tratamento dos meus dados conforme a 
+                            <a href="{% url 'privacy' %}" target="_blank" class="text-cyan-400 hover:text-cyan-300 underline font-medium">Política de Privacidade (LGPD)</a>.
+                        </label>
+                    </div>
+                </div>
+                {% if form.lgpd_consent.errors %}
+                    <p class="mt-1.5 text-xs text-red-400 font-medium">{{ form.lgpd_consent.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" class="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-cyan-500 shadow-lg shadow-cyan-500/25 transition duration-150">
+                    Cadastrar e Começar a Aprender
+                </button>
+            </div>
+        </form>
+
+        <!-- Footer link to Login -->
+        <div class="text-center pt-2 border-t border-gray-800">
+            <p class="text-xs text-gray-400">
+                Já possui uma conta? 
+                <a href="{% url 'login' %}" class="text-cyan-400 hover:text-cyan-300 font-semibold underline">
+                    Entrar agora
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

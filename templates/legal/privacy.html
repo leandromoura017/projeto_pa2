@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Política de Privacidade (LGPD) | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-8 sm:p-10 shadow-xl space-y-6">
+        <div class="border-b border-gray-800 pb-4">
+            <span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold">Conformidade Legal</span>
+            <h1 class="text-3xl font-extrabold text-white mt-1">Política de Privacidade e Proteção de Dados (LGPD)</h1>
+            <p class="text-sm text-gray-400 mt-1">Versão v1.0-2026 — Em conformidade com a Lei Federal nº 13.709/2018</p>
+        </div>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">1. Princípios e Compromisso</h2>
+            <p>
+                O <strong>CodeView</strong> preza pela segurança, confidencialidade e integridade dos dados pessoais de seus usuários. Esta Política de Privacidade descreve de forma clara e transparente como coletamos, armazenamos, tratamos e protegemos seus dados em estrita observância à Lei Geral de Proteção de Dados (LGPD).
+            </p>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">2. Dados Pessoais Coletados</h2>
+            <p>Coletamos apenas os dados estritamente necessários para a operação dos serviços:</p>
+            <ul class="list-disc pl-5 space-y-1 text-gray-400">
+                <li><strong>Dados Cadastrais:</strong> Nome completo, endereço de e-mail e credencial de autenticação criptografada (hash PBKDF2/SHA256).</li>
+                <li><strong>Dados de Perfil:</strong> Biografia, foto de perfil (avatar) e links para redes profissionais (GitHub/LinkedIn), fornecidos por escolha do usuário.</li>
+                <li><strong>Registros de Conexão e Consentimento:</strong> Endereço IP, data e hora da manifestação de consentimento e versão dos termos aceitos.</li>
+            </ul>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">3. Finalidade do Tratamento</h2>
+            <p>Os dados coletados destinam-se exclusivamente às seguintes finalidades:</p>
+            <ul class="list-disc pl-5 space-y-1 text-gray-400">
+                <li>Identificação e autenticação segura do usuário na plataforma;</li>
+                <li>Construção e exibição do perfil público do dev como portfólio vivo de habilidades;</li>
+                <li>Comunicação sobre atualizações de segurança e recuperação de credenciais de acesso;</li>
+                <li>Cumprimento de obrigações legais e regulatórias (Marco Civil da Internet e LGPD).</li>
+            </ul>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">4. Não Compartilhamento e Não Monetização de Dados</h2>
+            <p>
+                O CodeView <strong>não vende, não aluga e não compartilha</strong> dados pessoais de seus usuários com terceiros para fins de marketing ou publicidade comportamental. Não utilizamos dados dos usuários para treinamento externo não-autorizado.
+            </p>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">5. Direitos do Titular de Dados</h2>
+            <p>
+                Nos termos do Art. 18 da LGPD, você possui o direito de confirmar a existência de tratamento, acessar seus dados, corrigir dados incompletos ou solicitar a exclusão definitiva da sua conta a qualquer momento mediante requisição formal.
+            </p>
+        </section>
+
+        <div class="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-400">
+            <a href="{% url 'terms' %}" class="text-cyan-400 hover:text-cyan-300 font-medium">&larr; Ver Termos de Uso</a>
+            <a href="{% url 'signup' %}" class="text-cyan-400 hover:text-cyan-300 font-medium">Voltar para o Cadastro &rarr;</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

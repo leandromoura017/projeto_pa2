@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Termos de Uso | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-8 sm:p-10 shadow-xl space-y-6">
+        <div class="border-b border-gray-800 pb-4">
+            <span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold">Legal & Transparência</span>
+            <h1 class="text-3xl font-extrabold text-white mt-1">Termos de Uso</h1>
+            <p class="text-sm text-gray-400 mt-1">Versão v1.0-2026 — Última atualização: 28 de setembro de 2026</p>
+        </div>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">1. Objeto e Aceitação</h2>
+            <p>
+                O <strong>CodeView</strong> é uma plataforma dedicada ao microaprendizado dinâmico de programação, fornecendo conteúdos em formato audiovisual vertical e recursos educacionais. Ao criar uma conta ou utilizar nossos serviços, você concorda expressamente com as condições estipuladas nestes Termos de Uso.
+            </p>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">2. Cadastro e Responsabilidade de Conta</h2>
+            <p>
+                Para acessar os recursos da plataforma, o usuário deve realizar cadastro fornecendo informações verídicas e atualizadas. A credencial de acesso (e-mail e senha) é de uso pessoal e intransferível. Qualquer atividade realizada através da sua conta é de sua inteira responsabilidade.
+            </p>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">3. Propriedade Intelectual e Uso Aceitável</h2>
+            <p>
+                Todo o conteúdo disponibilizado no CodeView (vídeos curtos, códigos exemplificativos, marca e arquitetura) pertence exclusivamente aos seus respectivos autores ou à plataforma. É expressamente proibida a cópia não autorizada, extração automatizada de dados (scraping) ou redistribuição comercial dos materiais.
+            </p>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">4. Natureza do Perfil e Portfólio Vivo</h2>
+            <p>
+                O perfil do usuário no CodeView funciona como um histórico de atividades e aprendizado técnico, substituindo o envio de arquivos de currículo. O usuário autoriza a exibição pública de suas informações cadastrais essenciais (como nome público, biografia e links de redes profissionais fornecidos voluntariamente).
+            </p>
+        </section>
+
+        <section class="space-y-3 text-sm text-gray-300 leading-relaxed">
+            <h2 class="text-lg font-bold text-white">5. Modificações e Encerramento</h2>
+            <p>
+                Reservamo-nos o direito de alterar estes termos para adequações legais ou aprimoramento de funcionalidades. Os usuários serão notificados em caso de alterações substanciais que exijam nova manifestação de consentimento.
+            </p>
+        </section>
+
+        <div class="pt-6 border-t border-gray-800 flex justify-between items-center text-xs text-gray-400">
+            <a href="{% url 'signup' %}" class="text-cyan-400 hover:text-cyan-300 font-medium">&larr; Voltar para o Cadastro</a>
+            <a href="{% url 'privacy' %}" class="text-cyan-400 hover:text-cyan-300 font-medium">Ver Política de Privacidade (LGPD) &rarr;</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
