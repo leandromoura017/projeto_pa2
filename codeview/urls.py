@@ -5,7 +5,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import feed_view, profile_view, profile_edit_view
+from accounts.views import profile_view, profile_edit_view
+from videos.views import feed_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),

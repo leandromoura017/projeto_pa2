@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Feed de Pílulas | CodeView{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Estilos do Feed com Scroll Snap Vertical */
+    .video-feed-container {
+        scroll-snap-type: y mandatory;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    .video-feed-container::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    .video-card-snap {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex flex-col items-center justify-start px-4 py-4 w-full max-w-6xl mx-auto">
+
+    <!-- Technology Filter Bar -->
+    <div class="w-full flex items-center justify-start md:justify-center gap-2 overflow-x-auto py-2 mb-4 scrollbar-none px-2">
+        <a href="{% url 'feed' %}" 
+           class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
+           {% if not current_tech %}
+               bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
+           {% else %}
+               bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
+           {% endif %}">
+            <span>✨</span> Todos os Vídeos
+        </a>
+
+        {% for tech in technologies %}
+            <a href="{% url 'feed' %}?tech={{ tech.slug }}" 
+               class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
+               {% if current_tech == tech.slug %}
+                   bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
+               {% else %}
+                   bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
+               {% endif %}">
+                <span>{{ tech.icon_name|default:'⚡' }}</span> {{ tech.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    {% if videos %}
+        <!-- Feed Wrapper with Desktop Side Controls -->
+        <div class="relative flex items-center justify-center w-full">
+            
+            <!-- Video Reel Container -->
+            <div id="video-feed" class="video-feed-container relative w-full max-w-[380px] sm:max-w-[420px] h-[640px] sm:h-[720px] overflow-y-scroll rounded-3xl border border-gray-800 shadow-2xl bg-black">
+                
+                {% for video in videos %}
+                    <div class="video-card-snap relative w-full h-full flex items-center justify-center bg-black overflow-hidden select-none" data-video-index="{{ forloop.counter0 }}">
+                        
+                        <!-- Video Element (HTML5 9:16) -->
+                        <video class="player-video w-full h-full object-cover cursor-pointer" 
+                               src="{{ video.video_file.url }}" 
+                               loop 
+                               playsinline 
+                               preload="metadata"
+                               muted></video>
+
+                        <!-- Top Controls: Technology Badge & Mute Toggle -->
+                        <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
+                            <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 pointer-events-auto flex items-center gap-1">
+                                {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
+                            </span>
+
+                            <button type="button" class="btn-mute p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:scale-110 pointer-events-auto transition">
+                                <svg class="icon-mute w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                </svg>
+                                <svg class="icon-unmute w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Center Play/Pause Indicator (Overlay on tap) -->
+                        <div class="overlay-play absolute inset-0 flex items-center justify-center z-10 pointer-events-none opacity-0 transition-opacity duration-200">
+                            <div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl">
+                                <svg class="w-8 h-8 fill-current ml-1" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Content Overlay (Title, Description, Author) -->
+                        <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none space-y-2">
+                            <!-- Author -->
+                            <div class="flex items-center gap-2 pointer-events-auto">
+                                <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-[11px] font-bold text-white border border-cyan-400/40">
+                                    {{ video.author.first_name|default:video.author.email|slice:":1"|upper }}
+                                </div>
+                                <span class="text-xs font-semibold text-white drop-shadow">
+                                    {{ video.author.first_name|default:video.author.username }}
+                                </span>
+                            </div>
+
+                            <!-- Title -->
+                            <h2 class="text-base font-bold text-white leading-snug drop-shadow-md">
+                                {{ video.title }}
+                            </h2>
+
+                            <!-- Description -->
+                            {% if video.description %}
+                                <p class="text-xs text-gray-300 line-clamp-2 leading-relaxed drop-shadow">
+                                    {{ video.description }}
+                                </p>
+                            {% endif %}
+
+                            <!-- Video Progress Bar -->
+                            <div class="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-3">
+                                <div class="video-progress h-full bg-cyan-400 w-0 transition-all duration-100"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- Desktop Up/Down Navigation Buttons -->
+            <div class="hidden lg:flex flex-col gap-3 ml-6">
+                <button id="btn-prev-video" class="p-3.5 rounded-2xl bg-gray-800/90 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 shadow-xl hover:scale-105 transition duration-150" title="Vídeo Anterior (Seta para Cima)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
+                <button id="btn-next-video" class="p-3.5 rounded-2xl bg-gray-800/90 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 shadow-xl hover:scale-105 transition duration-150" title="Próximo Vídeo (Seta para Baixo)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Keyboard navigation help hint -->
+        <p class="text-center text-[11px] text-gray-500 mt-3 hidden sm:block">
+            Dica: Navegue usando o <kbd class="px-1.5 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-400 font-mono text-[10px]">Scroll</kbd> ou as setas <kbd class="px-1.5 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-400 font-mono text-[10px]">&uarr;</kbd> <kbd class="px-1.5 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-400 font-mono text-[10px]">&darr;</kbd> do teclado. Pressione <kbd class="px-1.5 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-400 font-mono text-[10px]">Espaço</kbd> para pausar.
+        </p>
+
+    {% else %}
+        <!-- Empty State (FR-15 / Story 3.5) -->
+        <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-3xl p-10 text-center shadow-2xl my-12">
+            <div class="w-16 h-16 rounded-2xl bg-cyan-600/10 border border-cyan-500/30 flex items-center justify-center text-3xl mx-auto mb-4">
+                🔍
+            </div>
+            <h3 class="text-xl font-bold text-white">Nenhum vídeo encontrado</h3>
+            <p class="text-sm text-gray-400 mt-2 leading-relaxed">
+                Ainda não temos pílulas de código publicadas para 
+                {% if current_technology %}
+                    <strong class="text-cyan-400">{{ current_technology.name }}</strong>.
+                {% else %}
+                    este filtro.
+                {% endif %}
+            </p>
+            <div class="mt-6">
+                <a href="{% url 'feed' %}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/25 transition">
+                    Ver Todos os Vídeos
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const feed = document.getElementById('video-feed');
+        if (!feed) return;
+
+        const videoCards = feed.querySelectorAll('.video-card-snap');
+        const videos = feed.querySelectorAll('.player-video');
+        let isGlobalMuted = true;
+
+        // IntersectionObserver para Play/Pause inteligente ao rolar
+        const observerOptions = {
+            root: feed,
+            threshold: 0.65 // 65% visível para ativar
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('.player-video');
+                const playOverlay = entry.target.querySelector('.overlay-play');
+                
+                if (entry.isIntersecting) {
+                    video.muted = isGlobalMuted;
+                    video.play().then(() => {
+                        if (playOverlay) playOverlay.classList.add('opacity-0');
+                    }).catch(err => {
+                        console.log('Autoplay bloqueado pelo navegador até primeira interação:', err);
+                    });
+                } else {
+                    video.pause();
+                    video.currentTime = 0; // Reinicia para quando voltar
+                }
+            });
+        }, observerOptions);
+
+        videoCards.forEach(card => observer.observe(card));
+
+        // Controle de clique no vídeo para alternar Play / Pause
+        videoCards.forEach(card => {
+            const video = card.querySelector('.player-video');
+            const playOverlay = card.querySelector('.overlay-play');
+            const progress = card.querySelector('.video-progress');
+            const btnMute = card.querySelector('.btn-mute');
+            const iconMute = card.querySelector('.icon-mute');
+            const iconUnmute = card.querySelector('.icon-unmute');
+
+            // Click no vídeo
+            video.addEventListener('click', () => {
+                if (video.paused) {
+                    video.play();
+                    if (playOverlay) playOverlay.classList.add('opacity-0');
+                } else {
+                    video.pause();
+                    if (playOverlay) playOverlay.classList.remove('opacity-0');
+                }
+            });
+
+            // Atualização da barra de progresso
+            video.addEventListener('timeupdate', () => {
+                if (video.duration && progress) {
+                    const pct = (video.currentTime / video.duration) * 100;
+                    progress.style.width = `${pct}%`;
+                }
+            });
+
+            // Botão Mute / Unmute
+            if (btnMute) {
+                btnMute.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    isGlobalMuted = !isGlobalMuted;
+                    
+                    // Aplica para todos os vídeos
+                    videos.forEach(v => {
+                        v.muted = isGlobalMuted;
+                    });
+
+                    // Atualiza ícones
+                    document.querySelectorAll('.btn-mute').forEach(b => {
+                        const m = b.querySelector('.icon-mute');
+                        const u = b.querySelector('.icon-unmute');
+                        if (isGlobalMuted) {
+                            m.classList.remove('hidden');
+                            u.classList.add('hidden');
+                        } else {
+                            m.classList.add('hidden');
+                            u.classList.remove('hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        // Controles de Navegação Desktop (Botões Próximo / Anterior)
+        const btnNext = document.getElementById('btn-next-video');
+        const btnPrev = document.getElementById('btn-prev-video');
+
+        if (btnNext) {
+            btnNext.addEventListener('click', () => {
+                feed.scrollBy({ top: feed.clientHeight, behavior: 'smooth' });
+            });
+        }
+
+        if (btnPrev) {
+            btnPrev.addEventListener('click', () => {
+                feed.scrollBy({ top: -feed.clientHeight, behavior: 'smooth' });
+            });
+        }
+
+        // Navegação por Teclado
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                feed.scrollBy({ top: feed.clientHeight, behavior: 'smooth' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                feed.scrollBy({ top: -feed.clientHeight, behavior: 'smooth' });
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                // Encontra o vídeo visível atual e pausa/reproduz
+                videoCards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const feedRect = feed.getBoundingClientRect();
+                    if (Math.abs(rect.top - feedRect.top) < 100) {
+                        const v = card.querySelector('.player-video');
+                        const ov = card.querySelector('.overlay-play');
+                        if (v.paused) {
+                            v.play();
+                            if (ov) ov.classList.add('opacity-0');
+                        } else {
+                            v.pause();
+                            if (ov) ov.classList.remove('opacity-0');
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

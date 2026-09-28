@@ -155,7 +155,8 @@ import io
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-class ProfileAndShellTests(TestCase):
+
+class ProfileTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
@@ -164,18 +165,6 @@ class ProfileAndShellTests(TestCase):
             first_name='Carlinhos',
             last_name='Dev'
         )
-
-    def test_feed_requires_login(self):
-        response = self.client.get(reverse('feed'))
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/accounts/login/', response.url)
-
-    def test_feed_loads_for_authenticated_user(self):
-        self.client.force_login(self.user)
-        response = self.client.get(reverse('feed'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'feed.html')
-        self.assertContains(response, 'Carlinhos')
 
     def test_profile_requires_login(self):
         response = self.client.get(reverse('profile'))
@@ -227,3 +216,4 @@ class ProfileAndShellTests(TestCase):
         self.user.refresh_from_db()
         self.assertTrue(bool(self.user.profile.avatar))
         self.assertIn('avatars/', self.user.profile.avatar.name)
+

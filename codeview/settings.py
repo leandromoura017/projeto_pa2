@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     # Local apps
     'accounts',
+    'videos',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

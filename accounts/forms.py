@@ -183,3 +183,4 @@ class ProfileEditForm(forms.Form):
             if avatar.size > max_size:
                 raise ValidationError("O arquivo da foto não pode exceder 2MB.")
         return avatar
+

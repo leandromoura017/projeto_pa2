@@ -70,12 +70,6 @@ def privacy_view(request):
     return render(request, 'legal/privacy.html')
 
 
-def feed_view(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-    return render(request, 'feed.html')
-
-
 @login_required
 def profile_view(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)

@@ -59,11 +59,34 @@
                 </div>
             </a>
 
+            <!-- Center Navigation / Links -->
+            {% if user.is_authenticated %}
+            <nav class="flex items-center gap-1 sm:gap-2">
+                <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                    <span>🎬</span> <span>Feed</span>
+                </a>
+                <a href="{% url 'profile' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'profile' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                    <span>👤</span> <span>Meu Perfil</span>
+                </a>
+            </nav>
+            {% endif %}
+
             <!-- Right Actions / Auth State -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 sm:gap-3">
                 {% if user.is_authenticated %}
-                    <span class="text-sm text-gray-300 hidden md:inline">Olá, <strong class="text-white font-semibold">{{ user.first_name|default:user.username }}</strong></span>
-                    <a href="{% url 'logout' %}" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-300 bg-gray-800/80 hover:bg-gray-700 hover:text-white border border-gray-700 transition">
+                    <a href="{% url 'profile' %}" class="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl hover:bg-gray-800/70 border border-transparent hover:border-gray-700 transition group" title="Meu Perfil">
+                        {% if user.profile and user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.first_name }}" class="w-8 h-8 rounded-lg object-cover border border-cyan-500/40">
+                        {% else %}
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-xs font-bold text-white border border-cyan-400/40">
+                                {{ user.first_name|default:user.email|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <span class="text-xs font-semibold text-gray-200 group-hover:text-white hidden lg:inline">
+                            {{ user.first_name|default:user.username }}
+                        </span>
+                    </a>
+                    <a href="{% url 'logout' %}" class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 bg-gray-800/80 hover:bg-gray-700 hover:text-white border border-gray-700 transition">
                         Sair
                     </a>
                 {% else %}
