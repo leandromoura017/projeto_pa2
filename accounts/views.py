@@ -70,6 +70,12 @@ def privacy_view(request):
     return render(request, 'legal/privacy.html')
 
 
+def feed_view(request):
+    """Fallback defensivo: delega para a view oficial do feed de vídeos."""
+    from videos.views import feed_view as official_feed_view
+    return official_feed_view(request)
+
+
 @login_required
 def profile_view(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
