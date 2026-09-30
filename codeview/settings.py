@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'videos',
+    'courses',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

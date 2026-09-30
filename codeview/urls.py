@@ -13,6 +13,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('', feed_view, name='home'),
     path('feed/', feed_view, name='feed'),
+    path('courses/', include('courses.urls')),
     path('profile/', profile_view, name='profile'),
     path('profile/edit/', profile_edit_view, name='profile_edit'),
 ]

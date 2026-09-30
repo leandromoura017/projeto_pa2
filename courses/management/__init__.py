@@ -1,0 +1,1 @@
+# courses management package
