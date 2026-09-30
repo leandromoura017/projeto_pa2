@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Lesson, Enrollment
+from .models import Course, Lesson, Enrollment, Challenge, ChallengeAttempt
 
 
 class LessonInline(admin.TabularInline):
@@ -30,3 +30,18 @@ class EnrollmentAdmin(admin.ModelAdmin):
     list_display = ('user', 'course', 'enrolled_at', 'completed_at', 'is_active')
     list_filter = ('is_active', 'course')
     search_fields = ('user__email', 'course__title')
+
+
+@admin.register(Challenge)
+class ChallengeAdmin(admin.ModelAdmin):
+    list_display = ('title', 'lesson', 'correct_option', 'points', 'created_at')
+    search_fields = ('title', 'question_text', 'lesson__title')
+    list_filter = ('correct_option', 'lesson__course')
+
+
+@admin.register(ChallengeAttempt)
+class ChallengeAttemptAdmin(admin.ModelAdmin):
+    list_display = ('user', 'challenge', 'selected_option', 'is_correct', 'attempted_at')
+    list_filter = ('is_correct', 'challenge__lesson__course')
+    search_fields = ('user__email', 'challenge__title')
+

@@ -101,6 +101,11 @@ def enroll_course_view(request, slug):
     return redirect('course_detail', slug=slug)
 
 
+from django.http import JsonResponse
+import json
+from .models import Course, Lesson, Enrollment, Challenge, ChallengeAttempt
+
+
 @login_required
 def unenroll_course_view(request, slug):
     """
@@ -118,3 +123,86 @@ def unenroll_course_view(request, slug):
         messages.warning(request, f"Você cancelou sua matrícula no curso '{course.title}'.")
 
     return redirect('course_detail', slug=slug)
+
+
+@login_required
+def lesson_challenge_view(request, lesson_id):
+    """
+    Tela de Desafio Prático / Pergunta de fixação atrelada à aula,
+    com suporte a resposta via formulário clássico ou requisição AJAX/Fetch
+    para feedback instantâneo na tela.
+    """
+    lesson = get_object_or_404(
+        Lesson.objects.select_related('course', 'video'),
+        id=lesson_id
+    )
+
+    try:
+        challenge = lesson.challenge
+    except Challenge.DoesNotExist:
+        messages.info(request, "Esta aula ainda não possui um desafio prático cadastrado.")
+        return redirect('course_detail', slug=lesson.course.slug)
+
+    # Identificar tentativa anterior do aluno
+    attempt = ChallengeAttempt.objects.filter(user=request.user, challenge=challenge).first()
+
+    # Identificar próxima aula da trilha
+    next_lesson = Lesson.objects.filter(
+        course=lesson.course,
+        order__gt=lesson.order
+    ).order_by('order').first()
+
+    if request.method == 'POST':
+        selected_option = request.POST.get('selected_option', '').strip().upper()
+        if not selected_option and request.content_type == 'application/json':
+            try:
+                body_data = json.loads(request.body)
+                selected_option = body_data.get('selected_option', '').strip().upper()
+            except Exception:
+                selected_option = ''
+
+        if selected_option not in ['A', 'B', 'C', 'D']:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                return JsonResponse({'status': 'error', 'message': 'Opção inválida selecionada.'}, status=400)
+            messages.error(request, "Por favor, selecione uma opção válida.")
+            return redirect('lesson_challenge', lesson_id=lesson.id)
+
+        is_correct = (selected_option == challenge.correct_option)
+
+        if attempt:
+            attempt.selected_option = selected_option
+            attempt.is_correct = is_correct
+            attempt.save()
+        else:
+            attempt = ChallengeAttempt.objects.create(
+                user=request.user,
+                challenge=challenge,
+                selected_option=selected_option,
+                is_correct=is_correct
+            )
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            next_url = ""
+            if next_lesson:
+                next_url = f"/courses/aulas/{next_lesson.id}/desafio/"
+            else:
+                next_url = f"/courses/{lesson.course.slug}/"
+
+            return JsonResponse({
+                'status': 'success',
+                'is_correct': is_correct,
+                'selected_option': selected_option,
+                'correct_option': challenge.correct_option,
+                'explanation': challenge.explanation,
+                'points': challenge.points if is_correct else 0,
+                'next_lesson_url': next_url,
+            })
+
+    return render(request, 'courses/challenge.html', {
+        'lesson': lesson,
+        'course': lesson.course,
+        'challenge': challenge,
+        'attempt': attempt,
+        'next_lesson': next_lesson,
+    })
+

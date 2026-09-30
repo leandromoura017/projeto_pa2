@@ -124,19 +124,26 @@
                             </div>
                         </div>
 
-                        <!-- Video association & Duration -->
-                        <div class="flex items-center gap-3">
+                        <!-- Video association, Challenge & Duration -->
+                        <div class="flex items-center gap-2 sm:gap-3">
                             <span class="text-xs text-gray-400 hidden sm:inline">
                                 {{ lesson.duration_seconds }}s
                             </span>
+                            {% if lesson.challenge %}
+                                <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition shadow">
+                                    <span>⚡</span> Resolver Desafio
+                                </a>
+                            {% endif %}
                             {% if lesson.video %}
                                 <a href="{% url 'feed' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/80 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition">
                                     <span>▶</span> Ver Vídeo
                                 </a>
                             {% else %}
-                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-800 text-gray-400">
-                                    Pílula Teórica
-                                </span>
+                                {% if not lesson.challenge %}
+                                    <span class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-800 text-gray-400">
+                                        Pílula Teórica
+                                    </span>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>

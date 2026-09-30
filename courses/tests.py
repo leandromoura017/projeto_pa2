@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import IntegrityError
 from videos.models import Technology
-from .models import Course, Lesson, Enrollment
+from .models import Course, Lesson, Enrollment, Challenge, ChallengeAttempt
 
 User = get_user_model()
 
@@ -179,3 +179,105 @@ class SeedCoursesCommandTest(TestCase):
         call_command('seed_courses')
         self.assertGreaterEqual(Course.objects.count(), 3)
         self.assertGreaterEqual(Lesson.objects.count(), 6)
+        self.assertGreaterEqual(Challenge.objects.count(), 3)
+
+
+class ChallengeModelTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email='prof_c@codeview.com', password='Pass12345!', first_name='Prof')
+        self.course = Course.objects.create(title='Python Pro', description='Desc', instructor=self.user)
+        self.lesson = Lesson.objects.create(course=self.course, title='Aula 1', order=1)
+
+    def test_create_challenge(self):
+        ch = Challenge.objects.create(
+            lesson=self.lesson,
+            title='Desafio Sintaxe',
+            question_text='Qual a sintaxe correta?',
+            option_a='print("ok")',
+            option_b='echo "ok"',
+            option_c='puts "ok"',
+            correct_option='A',
+            explanation='Python usa print().',
+            points=15
+        )
+        self.assertEqual(str(ch), 'Desafio: Desafio Sintaxe (Python Pro)')
+        self.assertEqual(ch.points, 15)
+        self.assertEqual(ch.correct_option, 'A')
+
+
+class ChallengeViewIntegrationTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(email='aluno_c@codeview.com', password='Pass12345!', first_name='Aluno')
+        self.course = Course.objects.create(title='Python Básico', description='Desc', instructor=self.user)
+        self.lesson1 = Lesson.objects.create(course=self.course, title='Aula 1', order=1)
+        self.lesson2 = Lesson.objects.create(course=self.course, title='Aula 2', order=2)
+
+        self.challenge = Challenge.objects.create(
+            lesson=self.lesson1,
+            title='Desafio List Comp',
+            question_text='Qual retorna pares?',
+            code_snippet='numeros = [1, 2, 3, 4]',
+            option_a='[x for x in numeros if x % 2 == 0]',
+            option_b='[x if x % 2 == 0]',
+            option_c='numeros.filter()',
+            correct_option='A',
+            explanation='A cláusula if vai ao final.',
+            points=20
+        )
+
+    def test_challenge_requires_login(self):
+        url = reverse('lesson_challenge', kwargs={'lesson_id': self.lesson1.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+
+    def test_challenge_view_get_authenticated(self):
+        self.client.login(email='aluno_c@codeview.com', password='Pass12345!')
+        url = reverse('lesson_challenge', kwargs={'lesson_id': self.lesson1.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'courses/challenge.html')
+        self.assertContains(response, 'Desafio List Comp')
+        self.assertContains(response, 'numeros = [1, 2, 3, 4]')
+        self.assertContains(response, '+20 pontos')
+
+    def test_challenge_submit_wrong_answer_ajax(self):
+        self.client.login(email='aluno_c@codeview.com', password='Pass12345!')
+        url = reverse('lesson_challenge', kwargs={'lesson_id': self.lesson1.id})
+        response = self.client.post(
+            url,
+            data='{"selected_option": "B"}',
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertEqual(json_data['status'], 'success')
+        self.assertFalse(json_data['is_correct'])
+        self.assertEqual(json_data['points'], 0)
+
+        attempt = ChallengeAttempt.objects.get(user=self.user, challenge=self.challenge)
+        self.assertFalse(attempt.is_correct)
+        self.assertEqual(attempt.selected_option, 'B')
+
+    def test_challenge_submit_correct_answer_ajax(self):
+        self.client.login(email='aluno_c@codeview.com', password='Pass12345!')
+        url = reverse('lesson_challenge', kwargs={'lesson_id': self.lesson1.id})
+        response = self.client.post(
+            url,
+            data='{"selected_option": "A"}',
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertEqual(json_data['status'], 'success')
+        self.assertTrue(json_data['is_correct'])
+        self.assertEqual(json_data['points'], 20)
+        self.assertIn('A cláusula if vai ao final.', json_data['explanation'])
+
+        attempt = ChallengeAttempt.objects.get(user=self.user, challenge=self.challenge)
+        self.assertTrue(attempt.is_correct)
+        self.assertEqual(attempt.selected_option, 'A')
+

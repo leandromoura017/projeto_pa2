@@ -129,3 +129,77 @@ class Enrollment(models.Model):
     @property
     def is_completed(self):
         return self.completed_at is not None
+
+
+class Challenge(models.Model):
+    """
+    Desafio prático / pergunta interativa vinculada a uma aula.
+    Fornece verificação com feedback instantâneo.
+    """
+    OPTION_CHOICES = [
+        ('A', 'Opção A'),
+        ('B', 'Opção B'),
+        ('C', 'Opção C'),
+        ('D', 'Opção D'),
+    ]
+
+    lesson = models.OneToOneField(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='challenge',
+        verbose_name="Aula Associada"
+    )
+    title = models.CharField(max_length=150, verbose_name="Título do Desafio")
+    question_text = models.TextField(verbose_name="Enunciado da Questão")
+    code_snippet = models.TextField(blank=True, verbose_name="Código de Exemplo / Contexto")
+    option_a = models.CharField(max_length=255, verbose_name="Opção A")
+    option_b = models.CharField(max_length=255, verbose_name="Opção B")
+    option_c = models.CharField(max_length=255, verbose_name="Opção C")
+    option_d = models.CharField(max_length=255, blank=True, verbose_name="Opção D")
+    correct_option = models.CharField(
+        max_length=1,
+        choices=OPTION_CHOICES,
+        verbose_name="Opção Correta"
+    )
+    explanation = models.TextField(verbose_name="Explicação / Feedback da Resposta")
+    points = models.PositiveIntegerField(default=10, verbose_name="Pontos de Domínio")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+
+    class Meta:
+        verbose_name = "Desafio Prático"
+        verbose_name_plural = "Desafios Práticos"
+
+    def __str__(self):
+        return f"Desafio: {self.title} ({self.lesson.course.title})"
+
+
+class ChallengeAttempt(models.Model):
+    """
+    Registro da tentativa de resposta do aluno no desafio prático.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='challenge_attempts',
+        verbose_name="Aluno"
+    )
+    challenge = models.ForeignKey(
+        Challenge,
+        on_delete=models.CASCADE,
+        related_name='attempts',
+        verbose_name="Desafio"
+    )
+    selected_option = models.CharField(max_length=1, verbose_name="Opção Selecionada")
+    is_correct = models.BooleanField(default=False, verbose_name="Acertou?")
+    attempted_at = models.DateTimeField(auto_now=True, verbose_name="Última Tentativa")
+
+    class Meta:
+        verbose_name = "Tentativa de Desafio"
+        verbose_name_plural = "Tentativas de Desafios"
+        unique_together = ('user', 'challenge')
+        ordering = ['-attempted_at']
+
+    def __str__(self):
+        result = "Acerto" if self.is_correct else "Erro"
+        return f"{self.user.email} - {self.challenge.title} [{result}]"
+

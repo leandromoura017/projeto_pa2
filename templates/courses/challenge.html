@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Desafio: {{ challenge.title }} | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-xs text-gray-400 mb-6 flex-wrap">
+        <a href="{% url 'course_list' %}" class="hover:text-cyan-400 transition">Mini Cursos</a>
+        <span>/</span>
+        <a href="{% url 'course_detail' course.slug %}" class="hover:text-cyan-400 transition truncate max-w-xs">{{ course.title }}</a>
+        <span>/</span>
+        <span class="text-gray-400">Aula {{ lesson.order }}</span>
+        <span>/</span>
+        <span class="text-cyan-400 font-semibold">Desafio Prático</span>
+    </nav>
+
+    <!-- Main Challenge Container -->
+    <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+        
+        <!-- Header Info -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-6 border-b border-gray-800">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
+                    ⚡ Desafio de Fixação da Aula {{ lesson.order }}
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    {{ challenge.title }}
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-950/80 border border-amber-700/80 text-amber-300 flex items-center gap-1 shadow">
+                    <span>⭐</span> +{{ challenge.points }} pontos
+                </span>
+            </div>
+        </div>
+
+        <!-- Question Prompt -->
+        <div class="mb-6">
+            <h2 class="text-base sm:text-lg font-bold text-gray-200 leading-relaxed">
+                {{ challenge.question_text }}
+            </h2>
+
+            <!-- Optional Code Snippet -->
+            {% if challenge.code_snippet %}
+                <div class="mt-4 rounded-2xl bg-[#090d16] border border-gray-800 p-4 overflow-x-auto shadow-inner">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-gray-800/80 text-[11px] font-mono text-gray-500">
+                        <span>snippet.py</span>
+                        <span>Código do Exercício</span>
+                    </div>
+                    <pre class="code-font text-xs sm:text-sm text-cyan-300 leading-relaxed"><code>{{ challenge.code_snippet }}</code></pre>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Interactive Submission Form -->
+        <form id="challenge-form" method="POST" action="{% url 'lesson_challenge' lesson.id %}" class="space-y-3">
+            {% csrf_token %}
+
+            <!-- Option A -->
+            <label class="option-label group flex items-start gap-4 p-4 rounded-2xl border border-gray-800 bg-gray-900/60 hover:bg-gray-800/70 hover:border-cyan-500/50 cursor-pointer transition">
+                <input type="radio" name="selected_option" value="A" class="mt-1 w-4 h-4 text-cyan-500 focus:ring-cyan-500 bg-gray-800 border-gray-700"
+                       {% if attempt and attempt.selected_option == 'A' %}checked{% endif %}>
+                <div class="flex-1">
+                    <span class="font-bold text-xs uppercase px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-300 mr-2">A</span>
+                    <span class="text-sm font-medium text-gray-200 group-hover:text-white">{{ challenge.option_a }}</span>
+                </div>
+            </label>
+
+            <!-- Option B -->
+            <label class="option-label group flex items-start gap-4 p-4 rounded-2xl border border-gray-800 bg-gray-900/60 hover:bg-gray-800/70 hover:border-cyan-500/50 cursor-pointer transition">
+                <input type="radio" name="selected_option" value="B" class="mt-1 w-4 h-4 text-cyan-500 focus:ring-cyan-500 bg-gray-800 border-gray-700"
+                       {% if attempt and attempt.selected_option == 'B' %}checked{% endif %}>
+                <div class="flex-1">
+                    <span class="font-bold text-xs uppercase px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-300 mr-2">B</span>
+                    <span class="text-sm font-medium text-gray-200 group-hover:text-white">{{ challenge.option_b }}</span>
+                </div>
+            </label>
+
+            <!-- Option C -->
+            <label class="option-label group flex items-start gap-4 p-4 rounded-2xl border border-gray-800 bg-gray-900/60 hover:bg-gray-800/70 hover:border-cyan-500/50 cursor-pointer transition">
+                <input type="radio" name="selected_option" value="C" class="mt-1 w-4 h-4 text-cyan-500 focus:ring-cyan-500 bg-gray-800 border-gray-700"
+                       {% if attempt and attempt.selected_option == 'C' %}checked{% endif %}>
+                <div class="flex-1">
+                    <span class="font-bold text-xs uppercase px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-300 mr-2">C</span>
+                    <span class="text-sm font-medium text-gray-200 group-hover:text-white">{{ challenge.option_c }}</span>
+                </div>
+            </label>
+
+            <!-- Option D (if present) -->
+            {% if challenge.option_d %}
+                <label class="option-label group flex items-start gap-4 p-4 rounded-2xl border border-gray-800 bg-gray-900/60 hover:bg-gray-800/70 hover:border-cyan-500/50 cursor-pointer transition">
+                    <input type="radio" name="selected_option" value="D" class="mt-1 w-4 h-4 text-cyan-500 focus:ring-cyan-500 bg-gray-800 border-gray-700"
+                           {% if attempt and attempt.selected_option == 'D' %}checked{% endif %}>
+                    <div class="flex-1">
+                        <span class="font-bold text-xs uppercase px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-300 mr-2">D</span>
+                        <span class="text-sm font-medium text-gray-200 group-hover:text-white">{{ challenge.option_d }}</span>
+                    </div>
+                </label>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="pt-6 flex items-center justify-between gap-4">
+                <a href="{% url 'course_detail' course.slug %}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition">
+                    &larr; Voltar para o Curso
+                </a>
+
+                <button id="btn-submit" type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
+                    <span>🚀</span> Verificar Resposta
+                </button>
+            </div>
+        </form>
+
+        <!-- Feedback Container (Instant AJAX / Dynamic Response) -->
+        <div id="feedback-box" class="mt-8 rounded-2xl p-6 border transition-all duration-300 {% if not attempt %}hidden{% else %}{% if attempt.is_correct %}bg-emerald-950/60 border-emerald-700/80 text-emerald-200{% else %}bg-rose-950/60 border-rose-700/80 text-rose-200{% endif %}{% endif %}">
+            
+            <div class="flex items-start gap-3.5">
+                <div id="feedback-icon" class="w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 {% if attempt and attempt.is_correct %}bg-emerald-500/20 text-emerald-400{% else %}bg-rose-500/20 text-rose-400{% endif %}">
+                    {% if attempt and attempt.is_correct %}✓{% else %}✗{% endif %}
+                </div>
+                
+                <div class="flex-1">
+                    <h3 id="feedback-title" class="text-base font-bold text-white">
+                        {% if attempt and attempt.is_correct %}Parabéns! Resposta Correta! 🎉{% else %}Resposta Incorreta. Não desanime! 💪{% endif %}
+                    </h3>
+                    
+                    <p id="feedback-explanation" class="text-xs sm:text-sm mt-2 text-gray-300 leading-relaxed">
+                        {% if attempt %}{{ challenge.explanation }}{% endif %}
+                    </p>
+
+                    <!-- Next Step Navigation -->
+                    <div id="feedback-actions" class="mt-5 flex items-center gap-3">
+                        <button id="btn-retry" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 transition">
+                            Tentar Outra Opção
+                        </button>
+                        
+                        {% if next_lesson %}
+                            <a id="btn-next-lesson" href="{% if next_lesson.challenge %}{% url 'lesson_challenge' next_lesson.id %}{% else %}{% url 'course_detail' course.slug %}{% endif %}" 
+                               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow transition">
+                                Próxima Pílula &rarr;
+                            </a>
+                        {% else %}
+                            <a href="{% url 'course_detail' course.slug %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow transition">
+                                Concluir Trilha &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('challenge-form');
+        const feedbackBox = document.getElementById('feedback-box');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackExp = document.getElementById('feedback-explanation');
+        const btnRetry = document.getElementById('btn-retry');
+
+        if (btnRetry) {
+            btnRetry.addEventListener('click', () => {
+                feedbackBox.classList.add('hidden');
+                // Uncheck radios
+                form.querySelectorAll('input[name="selected_option"]').forEach(r => r.checked = false);
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const selected = form.querySelector('input[name="selected_option"]:checked');
+                if (!selected) {
+                    alert('Por favor, selecione uma das opções antes de enviar.');
+                    return;
+                }
+
+                const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            selected_option: selected.value
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        feedbackBox.classList.remove('hidden');
+
+                        if (data.is_correct) {
+                            feedbackBox.className = 'mt-8 rounded-2xl p-6 border transition-all duration-300 bg-emerald-950/60 border-emerald-700/80 text-emerald-200';
+                            feedbackIcon.className = 'w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-emerald-500/20 text-emerald-400';
+                            feedbackIcon.textContent = '✓';
+                            feedbackTitle.textContent = 'Parabéns! Resposta Correta! 🎉 (+' + data.points + ' pontos)';
+                        } else {
+                            feedbackBox.className = 'mt-8 rounded-2xl p-6 border transition-all duration-300 bg-rose-950/60 border-rose-700/80 text-rose-200';
+                            feedbackIcon.className = 'w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-rose-500/20 text-rose-400';
+                            feedbackIcon.textContent = '✗';
+                            feedbackTitle.textContent = 'Resposta Incorreta. Não desanime! 💪';
+                        }
+
+                        feedbackExp.textContent = data.explanation;
+                        feedbackBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } catch (err) {
+                    console.error('Erro ao verificar desafio:', err);
+                    form.submit(); // fallback para submit clássico
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
