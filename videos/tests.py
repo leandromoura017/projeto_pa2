@@ -166,3 +166,62 @@ class SeedCommandTest(TestCase):
         self.assertTrue(Technology.objects.filter(slug='sql').exists())
         # Verifica se os vídeos de exemplo foram criados
         self.assertGreaterEqual(Video.objects.filter(is_published=True).count(), 4)
+
+
+class VideoPublishAndLikeTests(TestCase):
+    """
+    Testes da Onda 3: Publicar vídeo (upload) e Curtir vídeos no feed.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            email="creator_onda3@codeview.com",
+            password="Password123!",
+            first_name="Criador"
+        )
+        self.tech = Technology.objects.create(name="Python", slug="python", icon_name="🐍")
+
+    def test_publish_video_view_creates_video(self):
+        self.client.force_login(self.user)
+        get_res = self.client.get(reverse('video_publish'))
+        self.assertEqual(get_res.status_code, 200)
+        self.assertTemplateUsed(get_res, 'videos/publish.html')
+
+        video_file = SimpleUploadedFile("novo_video.mp4", b"fake-mp4-bytes", content_type="video/mp4")
+        post_res = self.client.post(reverse('video_publish'), {
+            'title': 'Dica Rápida de Decorators',
+            'technology': self.tech.id,
+            'description': 'Como usar @property em Python.',
+            'duration_seconds': 40,
+            'video_file': video_file,
+        })
+        self.assertEqual(post_res.status_code, 302)
+        self.assertTrue(Video.objects.filter(title='Dica Rápida de Decorators', author=self.user).exists())
+
+    def test_toggle_video_like_ajax(self):
+        from .models import VideoLike
+        self.client.force_login(self.user)
+        video = Video.objects.create(
+            title="Vídeo para Curtir",
+            technology=self.tech,
+            author=self.user,
+            video_file=SimpleUploadedFile("like.mp4", b"bytes", content_type="video/mp4"),
+            is_published=True
+        )
+        url = reverse('video_like', kwargs={'video_id': video.id})
+
+        # 1ª chamada: curte
+        res1 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(res1.status_code, 200)
+        data1 = res1.json()
+        self.assertTrue(data1['liked'])
+        self.assertEqual(data1['likes_count'], 1)
+        self.assertTrue(VideoLike.objects.filter(user=self.user, video=video).exists())
+
+        # 2ª chamada: descurte
+        res2 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(res2.status_code, 200)
+        data2 = res2.json()
+        self.assertFalse(data2['liked'])
+        self.assertEqual(data2['likes_count'], 0)
+        self.assertFalse(VideoLike.objects.filter(user=self.user, video=video).exists())

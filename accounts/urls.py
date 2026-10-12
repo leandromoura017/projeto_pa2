@@ -8,6 +8,10 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('terms/', views.terms_view, name='terms'),
     path('privacy/', views.privacy_view, name='privacy'),
+    path('profiles/', views.profile_search_view, name='profile_search'),
+    path('profiles/<int:user_id>/', views.public_profile_view, name='public_profile'),
+    path('dms/', views.dm_inbox_view, name='dm_inbox'),
+    path('dms/<int:user_id>/', views.dm_thread_view, name='dm_thread'),
     
     # Password Reset
     path('password-reset/', 

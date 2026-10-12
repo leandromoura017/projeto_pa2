@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Profile, UserConsent
+from .models import User, Profile, UserConsent, DirectMessage
 
 
 class ProfileInline(admin.StackedInline):
@@ -32,8 +32,16 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'created_at', 'updated_at')
-    search_fields = ('user__email', 'bio')
+    list_display = ('user', 'is_mentor', 'specialties', 'created_at', 'updated_at')
+    list_filter = ('is_mentor',)
+    search_fields = ('user__email', 'bio', 'specialties')
+
+
+@admin.register(DirectMessage)
+class DirectMessageAdmin(admin.ModelAdmin):
+    list_display = ('sender', 'recipient', 'is_read', 'created_at')
+    list_filter = ('is_read', 'created_at')
+    search_fields = ('sender__email', 'recipient__email', 'content')
 
 
 @admin.register(UserConsent)

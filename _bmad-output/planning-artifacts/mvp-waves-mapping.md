@@ -7,8 +7,8 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 ## 🎯 Visão Executiva dos Marcos (Controle da Disciplina)
 
 * 🟢 **MVP 1 (O Início - Fundação & Feed Core):** Onda 1 — *100% Concluído e testado.*
-* 🟡 **MVP 2 (O Meio - Interatividade & Prática Ativa):** Ondas 2 e 3 — *Próxima etapa de desenvolvimento.*
-* 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *Fechamento do ciclo do PA2.*
+* 🟡 **MVP 2 (O Meio - Interatividade & Prática Ativa):** Ondas 2 e 3 — *100% Concluído e testado.*
+* 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *Onda 4 100% Concluída; Onda 5 próxima etapa.*
 * 🟣 **Pós-MVP (Visão de Longo Prazo / Releases Futuras):** Ondas 6, 7 e 8 — *Roadmap de produto para a banca.*
 
 ---
@@ -26,20 +26,20 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 | 5 | **Aba principal (tela principal)** | 1 | 🟢 Verde | **MVP 1 (Início - Core)** | ✅ Concluído |
 | | | | | | |
 | 6 | **Editar perfil** | 2 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
-| 7 | **Busca por palavra-chave / tecnologia** | 2 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 8 | **Aba de cursos (catálogo de trilhas)** | 2 | 🔴 Vermelho | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 9 | **Inscrição em cursos** | 2 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 10 | **Tela de perguntas/desafios com feedback** | 2 | 🔴 Vermelho | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 11 | **Publicar vídeo (upload de arquivo)** | 3 | 🟡 Amarelo | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 12 | **Curtir vídeos** | 3 | 🟡 Amarelo | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 13 | **Busca de cursos** | 3 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 14 | **Cancelamento de inscrição** | 3 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
-| 15 | **Enviar desafios (submissão de código)** | 3 | 🔴 Vermelho | **MVP 2 (Meio - Interatividade & Cursos)** | ⏳ Em Planejamento |
+| 7 | **Busca por palavra-chave / tecnologia** | 2 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 8 | **Aba de cursos (catálogo de trilhas)** | 2 | 🔴 Vermelho | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 9 | **Inscrição em cursos** | 2 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 10 | **Tela de perguntas/desafios com feedback** | 2 | 🔴 Vermelho | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 11 | **Publicar vídeo (upload de arquivo)** | 3 | 🟡 Amarelo | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 12 | **Curtir vídeos** | 3 | 🟡 Amarelo | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 13 | **Busca de cursos** | 3 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 14 | **Cancelamento de inscrição** | 3 | 🟢 Verde | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
+| 15 | **Enviar desafios (submissão de código)** | 3 | 🔴 Vermelho | **MVP 2 (Meio - Interatividade & Cursos)** | ✅ Concluído |
 | | | | | | |
-| 16 | **Busca de perfis** | 4 | 🟢 Verde | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
-| 17 | **Progresso do curso** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
-| 18 | **Emissão do Certificado** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
-| 19 | **Aba de DMs para conversas com mentores** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
+| 16 | **Busca de perfis** | 4 | 🟢 Verde | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
+| 17 | **Progresso do curso** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
+| 18 | **Emissão do Certificado** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
+| 19 | **Aba de DMs para conversas com mentores** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
 | 20 | **Baixar certificado (PDF)** | 5 | 🟢 Verde | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
 | 21 | **Compartilhar certificado (QR Code público)** | 5 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
 | 22 | **Compartilhar vídeo** | 5 | 🔴 Vermelho | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |

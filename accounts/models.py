@@ -59,6 +59,8 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Foto de Perfil")
     bio = models.CharField(max_length=250, blank=True, verbose_name="Biografia")
+    specialties = models.CharField(max_length=150, blank=True, verbose_name="Especialidades Técnicas")
+    is_mentor = models.BooleanField(default=False, verbose_name="É Mentor / Instrutor")
     github_url = models.URLField(blank=True, verbose_name="Link do GitHub")
     linkedin_url = models.URLField(blank=True, verbose_name="Link do LinkedIn")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -66,6 +68,35 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"Perfil de {self.user.email}"
+
+
+class DirectMessage(models.Model):
+    """
+    Mensagem direta (DM) entre alunos e mentores/instrutores na plataforma.
+    """
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_messages',
+        verbose_name="Remetente"
+    )
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_messages',
+        verbose_name="Destinatário"
+    )
+    content = models.TextField(max_length=1000, verbose_name="Mensagem")
+    is_read = models.BooleanField(default=False, verbose_name="Lida")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Enviada em")
+
+    class Meta:
+        verbose_name = "Mensagem Direta (DM)"
+        verbose_name_plural = "Mensagens Diretas (DMs)"
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"DM de {self.sender.email} para {self.recipient.email}"
 
 
 class UserConsent(models.Model):

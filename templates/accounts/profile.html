@@ -102,23 +102,100 @@
     <!-- Activity Stats & Badges Grid -->
     <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 text-center">
-            <span class="text-3xl font-extrabold text-cyan-400">0</span>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Vídeos Assistidos</p>
-            <p class="text-[11px] text-gray-500 mt-2">Disponível a partir da Onda 1</p>
+            <span class="text-3xl font-extrabold text-cyan-400">{{ lessons_completed_count|default:0 }}</span>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Aulas Concluídas</p>
+            <p class="text-[11px] text-gray-500 mt-2">Pílulas práticas finalizadas</p>
         </div>
 
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 text-center">
-            <span class="text-3xl font-extrabold text-blue-400">0</span>
+            <span class="text-3xl font-extrabold text-blue-400">{{ challenges_solved_count|default:0 }}</span>
             <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Desafios Práticos</p>
-            <p class="text-[11px] text-gray-500 mt-2">Disponível na Onda 2</p>
+            <p class="text-[11px] text-gray-500 mt-2">Resolvidos com sucesso</p>
         </div>
 
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 text-center">
-            <span class="text-3xl font-extrabold text-emerald-400">0</span>
+            <span class="text-3xl font-extrabold text-emerald-400">{{ certificates_count|default:0 }}</span>
             <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Certificações</p>
-            <p class="text-[11px] text-gray-500 mt-2">Disponível na Onda 5</p>
+            <p class="text-[11px] text-gray-500 mt-2">Certificados Digitais Verificados</p>
         </div>
     </div>
+
+    <!-- Digital Certificates Section (Onda 4) -->
+    <div class="mt-10">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+            <span>🎓</span> Certificados Digitais Verificados
+        </h2>
+        {% if certificates %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for cert in certificates %}
+                    <div class="bg-[#111827] border border-emerald-800/60 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-lg">
+                        <div>
+                            <span class="code-font text-[11px] font-bold text-emerald-400 bg-emerald-950/70 px-2.5 py-0.5 rounded border border-emerald-700/60">
+                                {{ cert.validation_code }}
+                            </span>
+                            <h3 class="text-base font-bold text-white mt-2">{{ cert.course.title }}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Emitido em {{ cert.issued_at|date:"d/m/Y" }}</p>
+                        </div>
+                        <a href="{% url 'certificate_detail' cert.validation_code %}" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition shrink-0">
+                            Ver Certificado &rarr;
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 text-xs text-gray-400">
+                Você ainda não emitiu certificados digitais. Conclua 100% das pílulas de um <a href="{% url 'course_list' %}" class="text-cyan-400 hover:underline font-semibold">Mini-Curso</a> para emitir seu certificado!
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Enrolled Courses & Progress (Onda 4) -->
+    {% if enrollment_cards %}
+        <div class="mt-10">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                <span>📊</span> Meus Mini-Cursos em Andamento / Concluídos
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for item in enrollment_cards %}
+                    <a href="{% url 'course_detail' item.course.slug %}" class="bg-[#111827] border border-gray-800 hover:border-cyan-500/50 rounded-2xl p-5 block transition">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-sm font-bold text-white">{{ item.course.title }}</span>
+                            <span class="text-xs font-bold text-cyan-400">{{ item.progress_pct }}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden mb-2">
+                            <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-400" style="width: {{ item.progress_pct }}%;"></div>
+                        </div>
+                        <span class="text-[11px] text-gray-400">{{ item.completed_count }} de {{ item.total_count }} pílulas concluídas</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Solved Challenges & Submitted Code History (Onda 3 & 4) -->
+    {% if solved_attempts %}
+        <div class="mt-10">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                <span>⚡</span> Desafios Práticos Resolvidos ({{ challenges_solved_count }})
+            </h2>
+            <div class="space-y-3">
+                {% for att in solved_attempts %}
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-emerald-400">✓ {{ att.challenge.title }}</span>
+                                <span class="text-xs text-gray-500 ml-2">({{ att.challenge.lesson.course.title }})</span>
+                            </div>
+                            <span class="text-xs font-bold text-amber-400">+{{ att.challenge.points }} pts</span>
+                        </div>
+                        {% if att.submitted_code %}
+                            <pre class="mt-2 p-3 rounded-xl bg-gray-950 border border-gray-800 code-font text-xs text-emerald-300 overflow-x-auto"><code>{{ att.submitted_code }}</code></pre>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
 

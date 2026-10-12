@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Busca de Perfis & Mentores | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
+            🔎 Comunidade Técnica & Validação Real
+        </span>
+        <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Busca de Perfis & Portfólios Vivos
+        </h1>
+        <p class="text-sm text-gray-400 mt-2 max-w-2xl">
+            Encontre desenvolvedores pelo histórico real de desafios resolvidos e certificados verificados, ou conecte-se diretamente com mentores da plataforma. Sem currículos em PDF ou contadores de seguidores.
+        </p>
+    </div>
+
+    <!-- Search Bar & Filter Tabs -->
+    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 sm:p-5 mb-8 shadow-xl">
+        <form method="GET" action="{% url 'profile_search' %}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {% if current_role %}
+                <input type="hidden" name="role" value="{{ current_role }}">
+            {% endif %}
+            <div class="relative flex-1">
+                <input type="text"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Buscar por nome, tecnologia, bio ou especialidade (ex: Python, Django, Mentor)..."
+                       class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-900 border border-gray-700 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500">
+                <span class="absolute left-3.5 top-3.5 text-gray-500 text-sm">🔍</span>
+            </div>
+            <button type="submit" class="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition">
+                Buscar Perfis
+            </button>
+            {% if query or current_role %}
+                <a href="{% url 'profile_search' %}" class="px-4 py-3 rounded-xl text-xs font-semibold text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 text-center transition">
+                    Limpar
+                </a>
+            {% endif %}
+        </form>
+
+        <!-- Role Filter Pills -->
+        <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-800/80">
+            <a href="{% url 'profile_search' %}{% if query %}?q={{ query }}{% endif %}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition {% if not current_role %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/40{% else %}bg-gray-800/70 text-gray-400 hover:text-white{% endif %}">
+                👥 Todos os Perfis
+            </a>
+            <a href="{% url 'profile_search' %}?role=mentor{% if query %}&q={{ query }}{% endif %}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition {% if current_role == 'mentor' %}bg-amber-500/20 text-amber-300 border border-amber-500/40{% else %}bg-gray-800/70 text-gray-400 hover:text-white{% endif %}">
+                🎓 Apenas Mentores / Instrutores
+            </a>
+        </div>
+    </div>
+
+    <!-- Profiles Grid -->
+    {% if profiles_users %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for p_user in profiles_users %}
+                <div class="bg-[#111827] border border-gray-800 hover:border-cyan-500/40 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition">
+                    <div>
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                {% if p_user.profile and p_user.profile.avatar %}
+                                    <img src="{{ p_user.profile.avatar.url }}" alt="{{ p_user.first_name }}" class="w-12 h-12 rounded-2xl object-cover border border-cyan-500/40">
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-base font-bold text-white border border-cyan-400/40">
+                                        {{ p_user.first_name|default:p_user.email|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h3 class="text-base font-bold text-white leading-snug">
+                                        {{ p_user.get_full_name|default:p_user.first_name|default:p_user.username }}
+                                    </h3>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        {% if p_user.profile and p_user.profile.is_mentor %}
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 border border-amber-700 text-amber-300">
+                                                🎓 Mentor
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300">
+                                                💻 Dev
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if p_user.profile and p_user.profile.specialties %}
+                            <p class="text-[11px] font-semibold text-cyan-400 mt-3">
+                                ⚡ {{ p_user.profile.specialties }}
+                            </p>
+                        {% endif %}
+
+                        <p class="text-xs text-gray-400 mt-2 line-clamp-2 leading-relaxed">
+                            {% if p_user.profile and p_user.profile.bio %}
+                                {{ p_user.profile.bio }}
+                            {% else %}
+                                Desenvolvedor em evolução prática na comunidade CodeView.
+                            {% endif %}
+                        </p>
+
+                        <!-- Verified Stats Mini Bar -->
+                        <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-800/80 text-center">
+                            <div class="bg-gray-900/70 rounded-xl p-2 border border-gray-800">
+                                <span class="text-sm font-extrabold text-blue-400 block">{{ p_user.solved_count|default:0 }}</span>
+                                <span class="text-[10px] text-gray-400 uppercase">Desafios</span>
+                            </div>
+                            <div class="bg-gray-900/70 rounded-xl p-2 border border-gray-800">
+                                <span class="text-sm font-extrabold text-emerald-400 block">{{ p_user.certs_count|default:0 }}</span>
+                                <span class="text-[10px] text-gray-400 uppercase">Certificados</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-5 pt-4 border-t border-gray-800 flex items-center gap-2">
+                        <a href="{% url 'public_profile' p_user.id %}" class="flex-1 text-center px-3 py-2 rounded-xl text-xs font-bold bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 transition">
+                            👤 Portfólio Vivo
+                        </a>
+                        {% if p_user.id != user.id %}
+                            <a href="{% url 'dm_thread' p_user.id %}" class="px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition" title="Conversar por DM">
+                                💬 DM
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-[#111827] border border-gray-800 rounded-3xl p-10 text-center max-w-md mx-auto my-8">
+            <div class="text-3xl mb-3">🔍</div>
+            <h3 class="text-lg font-bold text-white">Nenhum perfil encontrado</h3>
+            <p class="text-xs text-gray-400 mt-1">
+                Não encontramos perfis para "{{ query }}". Tente buscar por outra tecnologia ou limpe os filtros.
+            </p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

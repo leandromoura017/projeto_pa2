@@ -23,29 +23,35 @@
 {% block content %}
 <div class="flex-1 flex flex-col items-center justify-start px-4 py-4 w-full max-w-6xl mx-auto">
 
-    <!-- Technology Filter Bar -->
-    <div class="w-full flex items-center justify-start md:justify-center gap-2 overflow-x-auto py-2 mb-4 scrollbar-none px-2">
-        <a href="{% url 'feed' %}" 
-           class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
-           {% if not current_tech %}
-               bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
-           {% else %}
-               bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
-           {% endif %}">
-            <span>✨</span> Todos os Vídeos
-        </a>
-
-        {% for tech in technologies %}
-            <a href="{% url 'feed' %}?tech={{ tech.slug }}" 
+    <!-- Top Bar: Technology Filter Bar + Publish CTA -->
+    <div class="w-full flex flex-wrap items-center justify-between gap-3 mb-4 px-2">
+        <div class="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none flex-1">
+            <a href="{% url 'feed' %}" 
                class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
-               {% if current_tech == tech.slug %}
+               {% if not current_tech %}
                    bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
                {% else %}
                    bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
                {% endif %}">
-                <span>{{ tech.icon_name|default:'⚡' }}</span> {{ tech.name }}
+                <span>✨</span> Todos os Vídeos
             </a>
-        {% endfor %}
+
+            {% for tech in technologies %}
+                <a href="{% url 'feed' %}?tech={{ tech.slug }}" 
+                   class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
+                   {% if current_tech == tech.slug %}
+                       bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
+                   {% else %}
+                       bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
+                   {% endif %}">
+                    <span>{{ tech.icon_name|default:'⚡' }}</span> {{ tech.name }}
+                </a>
+            {% endfor %}
+        </div>
+
+        <a href="{% url 'video_publish' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 shadow-lg shadow-emerald-500/20 transition shrink-0">
+            <span>➕</span> Publicar Vídeo
+        </a>
     </div>
 
     {% if videos %}
@@ -92,25 +98,44 @@
                             </div>
                         </div>
 
-                        <!-- Bottom Content Overlay (Title, Description, Author) -->
+                        <!-- Bottom Content Overlay (Title, Description, Author, Like & Challenge) -->
                         <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none space-y-2">
-                            <!-- Author and Challenge Quick Link -->
-                            <div class="flex items-center justify-between pointer-events-auto">
-                                <div class="flex items-center gap-2">
+                            <!-- Author, Like Button and Challenge Quick Link -->
+                            <div class="flex items-center justify-between pointer-events-auto gap-2">
+                                <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-2 hover:opacity-90 transition">
                                     <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-[11px] font-bold text-white border border-cyan-400/40">
                                         {{ video.author.first_name|default:video.author.email|slice:":1"|upper }}
                                     </div>
-                                    <span class="text-xs font-semibold text-white drop-shadow">
+                                    <span class="text-xs font-semibold text-white drop-shadow hover:underline">
                                         {{ video.author.first_name|default:video.author.username }}
                                     </span>
+                                </a>
+
+                                <div class="flex items-center gap-2">
+                                    <!-- Botão Curtir Vídeo (Onda 3) -->
+                                    <form method="POST" action="{% url 'video_like' video.id %}" class="like-form inline">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                data-video-id="{{ video.id }}"
+                                                class="btn-like inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
+                                                {% if video.id in liked_video_ids %}
+                                                    bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30
+                                                {% else %}
+                                                    bg-black/60 border-white/25 text-gray-200 hover:border-rose-400 hover:text-rose-300
+                                                {% endif %}">
+                                            <span class="like-heart">{% if video.id in liked_video_ids %}❤️{% else %}🤍{% endif %}</span>
+                                            <span class="like-count">{{ video.likes.count }}</span>
+                                        </button>
+                                    </form>
+
+                                    {% with lesson=video.lessons.first %}
+                                        {% if lesson and lesson.challenge %}
+                                            <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/90 hover:bg-amber-400 text-black shadow-lg transition">
+                                                <span>⚡</span> Desafio
+                                            </a>
+                                        {% endif %}
+                                    {% endwith %}
                                 </div>
-                                {% with lesson=video.lessons.first %}
-                                    {% if lesson and lesson.challenge %}
-                                        <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/90 hover:bg-amber-400 text-black shadow-lg transition">
-                                            <span>⚡</span> Desafio
-                                        </a>
-                                    {% endif %}
-                                {% endwith %}
                             </div>
 
                             <!-- Title -->
@@ -318,6 +343,41 @@
                     }
                 });
             }
+        });
+
+        // Curtir vídeos via Fetch/AJAX instantâneo (Onda 3)
+        document.querySelectorAll('.like-form').forEach(form => {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const btn = form.querySelector('.btn-like');
+                const heart = form.querySelector('.like-heart');
+                const countEl = form.querySelector('.like-count');
+                const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        countEl.textContent = data.likes_count;
+                        if (data.liked) {
+                            heart.textContent = '❤️';
+                            btn.className = 'btn-like inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30';
+                        } else {
+                            heart.textContent = '🤍';
+                            btn.className = 'btn-like inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-black/60 border-white/25 text-gray-200 hover:border-rose-400 hover:text-rose-300';
+                        }
+                    }
+                } catch (err) {
+                    form.submit();
+                }
+            });
         });
     });
 </script>

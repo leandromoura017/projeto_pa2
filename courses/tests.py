@@ -281,3 +281,79 @@ class ChallengeViewIntegrationTest(TestCase):
         self.assertTrue(attempt.is_correct)
         self.assertEqual(attempt.selected_option, 'A')
 
+    def test_challenge_code_submission_and_auto_lesson_progress(self):
+        from .models import LessonProgress
+        self.client.force_login(self.user)
+        url = reverse('lesson_challenge', kwargs={'lesson_id': self.lesson1.id})
+        response = self.client.post(
+            url,
+            data='{"selected_option": "A", "submitted_code": "pares = [x for x in numeros if x % 2 == 0]"}',
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertTrue(json_data['is_correct'])
+        self.assertIn('pares =', json_data['submitted_code'])
+        self.assertTrue(LessonProgress.objects.filter(user=self.user, lesson=self.lesson1, is_completed=True).exists())
+
+
+class CourseProgressAndCertificateTests(TestCase):
+    """
+    Testes da Onda 4: Progresso do curso (LessonProgress) e Emissão do Certificado Digital (Certificate).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.student = User.objects.create_user(
+            email='cert_student@codeview.com',
+            password='Pass12345!',
+            first_name='Karol',
+            last_name='Sabino'
+        )
+        self.instructor = User.objects.create_user(
+            email='cert_mentor@codeview.com',
+            password='Pass12345!',
+            first_name='Mentor'
+        )
+        self.course = Course.objects.create(
+            title='Trilha Certificada Python',
+            description='Curso com certificado.',
+            instructor=self.instructor,
+            is_published=True
+        )
+        self.lesson1 = Lesson.objects.create(course=self.course, title='Aula 1', order=1)
+        self.lesson2 = Lesson.objects.create(course=self.course, title='Aula 2', order=2)
+
+    def test_course_progress_and_certificate_issuance(self):
+        from .models import Certificate
+        self.client.force_login(self.student)
+
+        # Tentar emitir certificado antes de concluir 100% deve bloquear
+        res_early = self.client.post(reverse('issue_certificate', kwargs={'slug': self.course.slug}))
+        self.assertEqual(res_early.status_code, 302)
+        self.assertFalse(Certificate.objects.filter(user=self.student, course=self.course).exists())
+
+        # Concluir Aula 1 (50%)
+        self.client.post(reverse('lesson_complete', kwargs={'lesson_id': self.lesson1.id}))
+        comp, tot, pct = self.course.get_user_progress(self.student)
+        self.assertEqual((comp, tot, pct), (1, 2, 50))
+
+        # Concluir Aula 2 (100%)
+        self.client.post(reverse('lesson_complete', kwargs={'lesson_id': self.lesson2.id}))
+        comp, tot, pct = self.course.get_user_progress(self.student)
+        self.assertEqual((comp, tot, pct), (2, 2, 100))
+
+        # Emitir Certificado com 100% concluído
+        res_cert = self.client.post(reverse('issue_certificate', kwargs={'slug': self.course.slug}))
+        self.assertEqual(res_cert.status_code, 302)
+        cert = Certificate.objects.filter(user=self.student, course=self.course).first()
+        self.assertIsNotNone(cert)
+        self.assertTrue(cert.validation_code.startswith('CV-2026-'))
+
+        # Visualizar página pública do Certificado Digital
+        res_detail = self.client.get(reverse('certificate_detail', kwargs={'validation_code': cert.validation_code}))
+        self.assertEqual(res_detail.status_code, 200)
+        self.assertContains(res_detail, 'Karol Sabino')
+        self.assertContains(res_detail, 'Trilha Certificada Python')
+        self.assertContains(res_detail, cert.validation_code)
+

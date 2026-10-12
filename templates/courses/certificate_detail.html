@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Certificado Digital {{ certificate.validation_code }} | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+
+    <!-- Top Navigation Actions -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+        <nav class="flex items-center gap-2 text-xs text-gray-400">
+            <a href="{% url 'course_list' %}" class="hover:text-cyan-400 transition">Mini Cursos</a>
+            <span>/</span>
+            <a href="{% url 'course_detail' course.slug %}" class="hover:text-cyan-400 transition">{{ course.title }}</a>
+            <span>/</span>
+            <span class="text-emerald-400 font-semibold">Certificado Digital</span>
+        </nav>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'public_profile' student.id %}" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
+                👤 Ver Portfólio Vivo
+            </a>
+            <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition">
+                <span>🖨️</span> Imprimir / Salvar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Certificate Card -->
+    <div class="bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0c192c] border-2 border-cyan-500/50 rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden">
+        <!-- Decorative Glow -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 text-center space-y-6">
+            <!-- Header Brand & Verified Badge -->
+            <div class="flex flex-col items-center justify-center gap-2">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-xl shadow-cyan-500/20 mb-2">
+                    <span class="code-font text-white font-bold text-2xl">&lt;/&gt;</span>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-emerald-950/90 border border-emerald-500/50 text-emerald-300">
+                    <span>✓</span> Certificado Digital Verificado • CodeView
+                </span>
+            </div>
+
+            <div class="py-4">
+                <p class="text-xs sm:text-sm uppercase tracking-widest text-gray-400 font-semibold">
+                    Certificamos para fins de comprovação técnica no Portfólio Vivo que
+                </p>
+                <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-3">
+                    {{ student.get_full_name|default:student.first_name|default:student.username }}
+                </h1>
+                <p class="text-xs text-gray-400 mt-1">{{ student.email }}</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto">
+                <p class="text-sm sm:text-base text-gray-300 leading-relaxed">
+                    concluiu com <strong>100% de aproveitamento prático</strong> todas as pílulas de conhecimento e desafios de código da trilha:
+                </p>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-3">
+                    {{ course.title }}
+                </h2>
+                <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-cyan-300">
+                        {{ course.technology.icon_name|default:'💻' }} {{ course.technology.name|default:'Programação' }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-gray-300">
+                        Nível: {{ course.get_level_display }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-gray-300">
+                        Carga Horária: {{ course.estimated_minutes }} min ({{ course.total_lessons }} pílulas)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Footer Metadata: Issue Date, Instructor, Authenticity Hash -->
+            <div class="pt-8 mt-8 border-t border-gray-800 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-4">
+                    <span class="text-[11px] uppercase tracking-wider text-gray-500 block font-semibold">Data de Emissão</span>
+                    <span class="text-sm font-bold text-white mt-1 block">{{ certificate.issued_at|date:"d/m/Y \à\s H:i" }}</span>
+                </div>
+
+                <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-4">
+                    <span class="text-[11px] uppercase tracking-wider text-gray-500 block font-semibold">Mentor / Instrutor Responsável</span>
+                    <span class="text-sm font-bold text-white mt-1 block">{{ course.instructor.get_full_name|default:course.instructor.first_name|default:course.instructor.username }}</span>
+                </div>
+
+                <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-2xl p-4">
+                    <span class="text-[11px] uppercase tracking-wider text-emerald-400 block font-semibold">Código de Autenticidade</span>
+                    <span class="code-font text-sm font-bold text-emerald-300 mt-1 block">{{ certificate.validation_code }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

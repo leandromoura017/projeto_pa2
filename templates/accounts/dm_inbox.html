@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Mensagens Diretas (DMs) & Mentoria | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
+                💬 Canal Direto de Mentoria
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Mensagens Diretas (DMs)
+            </h1>
+            <p class="text-sm text-gray-400 mt-1">
+                Tire dúvidas técnicas diretamente com os mentores das trilhas ou troque experiências com outros devs.
+            </p>
+        </div>
+
+        <a href="{% url 'profile_search' %}?role=mentor" class="px-4 py-2.5 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800 transition">
+            🔎 Buscar Mentores
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Left / Main Column: Active Conversations -->
+        <div class="lg:col-span-2 space-y-4">
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span>📥</span> Suas Conversas Recentes
+            </h2>
+
+            {% if conversations %}
+                <div class="space-y-3">
+                    {% for conv in conversations %}
+                        <a href="{% url 'dm_thread' conv.partner.id %}" class="bg-[#111827] border {% if conv.unread_count > 0 %}border-cyan-500/60{% else %}border-gray-800{% endif %} hover:border-cyan-500/50 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition shadow-lg block">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-base font-bold text-white shrink-0 border border-cyan-400/40">
+                                    {{ conv.partner.first_name|default:conv.partner.email|slice:":1"|upper }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm sm:text-base font-bold text-white truncate">
+                                            {{ conv.partner.get_full_name|default:conv.partner.first_name|default:conv.partner.username }}
+                                        </span>
+                                        {% if conv.partner.profile and conv.partner.profile.is_mentor %}
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 border border-amber-700 text-amber-300">
+                                                Mentor
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    {% if conv.last_message %}
+                                        <p class="text-xs text-gray-400 truncate mt-1">
+                                            {% if conv.last_message.sender_id == user.id %}Você: {% endif %}{{ conv.last_message.content }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                {% if conv.last_message %}
+                                    <span class="text-[11px] text-gray-500">{{ conv.last_message.created_at|date:"d/m H:i" }}</span>
+                                {% endif %}
+                                {% if conv.unread_count > 0 %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500 text-black">
+                                        {{ conv.unread_count }} nova{{ conv.unread_count|pluralize:"s" }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-xs text-cyan-400 font-semibold">Abrir &rarr;</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-8 text-center">
+                    <div class="text-3xl mb-2">💬</div>
+                    <h3 class="text-base font-bold text-white">Nenhuma conversa iniciada ainda</h3>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Selecione um mentor ao lado para tirar dúvidas sobre as aulas e desafios práticos!
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Available Mentors -->
+        <div class="space-y-4">
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span>🎓</span> Mentores Disponíveis
+            </h2>
+
+            {% if mentors %}
+                <div class="space-y-3">
+                    {% for mentor in mentors %}
+                        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-col gap-3 shadow">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-sm font-bold text-black shrink-0">
+                                    {{ mentor.first_name|default:mentor.email|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-white">
+                                        {{ mentor.get_full_name|default:mentor.first_name|default:mentor.username }}
+                                    </h3>
+                                    {% if mentor.profile and mentor.profile.specialties %}
+                                        <span class="text-[11px] text-cyan-400 block">{{ mentor.profile.specialties }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <a href="{% url 'dm_thread' mentor.id %}" class="w-full text-center px-3 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 transition">
+                                💬 Iniciar Conversa
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-xs text-gray-400">
+                    Use a <a href="{% url 'profile_search' %}" class="text-cyan-400 hover:underline">Busca de Perfis</a> para encontrar instrutores e colegas.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

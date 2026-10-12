@@ -101,6 +101,23 @@
                 </label>
             {% endif %}
 
+            <!-- Practical Code Submission Box (Onda 3 - Enviar desafios / submissão de código) -->
+            <div class="pt-4">
+                <div class="rounded-2xl bg-[#090d16] border border-gray-800 p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="submitted-code" class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                            <span>💻</span> Submissão de Código Prático (Portfólio Vivo)
+                        </label>
+                        <span class="text-[11px] text-gray-500 font-mono">Opcional ou Resposta Direta em Código</span>
+                    </div>
+                    <textarea id="submitted-code"
+                              name="submitted_code"
+                              rows="4"
+                              placeholder="// Escreva ou teste sua solução em código aqui para registrar no seu Portfólio Vivo..."
+                              class="w-full rounded-xl bg-gray-950 border border-gray-800 focus:border-cyan-500 p-3 code-font text-xs sm:text-sm text-emerald-300 placeholder-gray-600 focus:outline-none">{{ attempt.submitted_code|default:'' }}</textarea>
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="pt-6 flex items-center justify-between gap-4">
                 <a href="{% url 'course_detail' course.slug %}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition">
@@ -108,7 +125,7 @@
                 </a>
 
                 <button id="btn-submit" type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
-                    <span>🚀</span> Verificar Resposta
+                    <span>🚀</span> Enviar Desafio / Verificar
                 </button>
             </div>
         </form>
@@ -166,11 +183,11 @@
         const feedbackTitle = document.getElementById('feedback-title');
         const feedbackExp = document.getElementById('feedback-explanation');
         const btnRetry = document.getElementById('btn-retry');
+        const codeInput = document.getElementById('submitted-code');
 
         if (btnRetry) {
             btnRetry.addEventListener('click', () => {
                 feedbackBox.classList.add('hidden');
-                // Uncheck radios
                 form.querySelectorAll('input[name="selected_option"]').forEach(r => r.checked = false);
             });
         }
@@ -180,8 +197,10 @@
                 e.preventDefault();
 
                 const selected = form.querySelector('input[name="selected_option"]:checked');
-                if (!selected) {
-                    alert('Por favor, selecione uma das opções antes de enviar.');
+                const codeVal = codeInput ? codeInput.value.trim() : '';
+
+                if (!selected && !codeVal) {
+                    alert('Por favor, selecione uma das alternativas ou escreva seu código prático antes de enviar.');
                     return;
                 }
 
@@ -196,7 +215,8 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         },
                         body: JSON.stringify({
-                            selected_option: selected.value
+                            selected_option: selected ? selected.value : '',
+                            submitted_code: codeVal
                         })
                     });
 
@@ -209,7 +229,7 @@
                             feedbackBox.className = 'mt-8 rounded-2xl p-6 border transition-all duration-300 bg-emerald-950/60 border-emerald-700/80 text-emerald-200';
                             feedbackIcon.className = 'w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-emerald-500/20 text-emerald-400';
                             feedbackIcon.textContent = '✓';
-                            feedbackTitle.textContent = 'Parabéns! Resposta Correta! 🎉 (+' + data.points + ' pontos)';
+                            feedbackTitle.textContent = 'Parabéns! Resposta Correta! 🎉 (+' + data.points + ' pontos | Aula Concluída)';
                         } else {
                             feedbackBox.className = 'mt-8 rounded-2xl p-6 border transition-all duration-300 bg-rose-950/60 border-rose-700/80 text-rose-200';
                             feedbackIcon.className = 'w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-rose-500/20 text-rose-400';
@@ -222,7 +242,7 @@
                     }
                 } catch (err) {
                     console.error('Erro ao verificar desafio:', err);
-                    form.submit(); // fallback para submit clássico
+                    form.submit();
                 }
             });
         }

@@ -10,10 +10,50 @@ class Command(BaseCommand):
     help = "Popula o banco de dados com mini-cursos, aulas e desafios práticos para a Onda 2."
 
     def handle(self, *args, **options):
-        # 1. Obter instrutor padrão (admin)
+        from accounts.models import Profile, DirectMessage
+
+        # 1. Obter instrutor padrão (admin) e configurar como Mentor
         instructor = User.objects.filter(is_superuser=True).first()
         if not instructor:
-            instructor = User.objects.create_superuser('admin@codeview.com', 'admin12345', first_name='Admin')
+            instructor = User.objects.create_superuser('admin@codeview.com', 'admin12345', first_name='Prof. Lucas (Mentor)')
+        elif not instructor.first_name:
+            instructor.first_name = 'Prof. Lucas (Mentor)'
+            instructor.save()
+
+        inst_profile, _ = Profile.objects.get_or_create(user=instructor)
+        inst_profile.is_mentor = True
+        inst_profile.specialties = 'Python, Django, Arquitetura Backend'
+        if not inst_profile.bio:
+            inst_profile.bio = 'Engenheiro de Software Sênior e Mentor no CodeView. Focado em Python, Django e automações práticas.'
+        inst_profile.save()
+
+        # Criar segunda mentora para o diretório de Perfis & DMs (Onda 4)
+        mentor_ana, created_ana = User.objects.get_or_create(
+            email='mentora.ana@codeview.com',
+            defaults={
+                'username': 'mentora_ana',
+                'first_name': 'Ana Clara',
+                'last_name': 'Silva',
+                'is_active': True,
+            }
+        )
+        if created_ana:
+            mentor_ana.set_password('Mentor123!')
+            mentor_ana.save()
+        ana_profile, _ = Profile.objects.get_or_create(user=mentor_ana)
+        ana_profile.is_mentor = True
+        ana_profile.specialties = 'JavaScript Assíncrono, APIs REST & Frontend'
+        ana_profile.bio = 'Tech Lead e Mentora Fullstack no CodeView. Ajudo devs a destravarem no JavaScript e conquistarem certificações práticas.'
+        ana_profile.save()
+
+        # Semear mensagem de boas-vindas de mentoria se houver usuário de teste
+        student_user = User.objects.filter(email='test_nav@codeview.com').first()
+        if student_user and not DirectMessage.objects.filter(sender=mentor_ana, recipient=student_user).exists():
+            DirectMessage.objects.create(
+                sender=mentor_ana,
+                recipient=student_user,
+                content='Olá! Sou a mentora Ana Clara. Qualquer dúvida nos desafios práticos ou nos mini-cursos, pode me chamar aqui na DM!'
+            )
 
         # 2. Obter Tecnologias
         tech_python = Technology.objects.filter(slug='python').first()

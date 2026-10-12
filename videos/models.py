@@ -57,3 +57,35 @@ class Video(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.technology.name})"
+
+    @property
+    def likes_count(self):
+        return self.likes.count()
+
+
+class VideoLike(models.Model):
+    """
+    Registro de curtida (like) de um usuário em um micro-vídeo do feed.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='video_likes',
+        verbose_name="Usuário"
+    )
+    video = models.ForeignKey(
+        Video,
+        on_delete=models.CASCADE,
+        related_name='likes',
+        verbose_name="Vídeo"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Curtido em")
+
+    class Meta:
+        verbose_name = "Curtida em Vídeo"
+        verbose_name_plural = "Curtidas em Vídeos"
+        unique_together = ('user', 'video')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.email} curtiu {self.video.title}"

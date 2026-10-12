@@ -217,3 +217,71 @@ class ProfileTests(TestCase):
         self.assertTrue(bool(self.user.profile.avatar))
         self.assertIn('avatars/', self.user.profile.avatar.name)
 
+
+class ProfileSearchAndDirectMessageTests(TestCase):
+    """
+    Testes da Onda 4: Busca de perfis (#16) e Aba de DMs para conversas com mentores (#19).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.student = User.objects.create_user(
+            email='aluno.dm@codeview.com',
+            password='Password123!',
+            first_name='Carlinhos',
+            last_name='Sabino'
+        )
+        self.mentor = User.objects.create_user(
+            email='mentora.dm@codeview.com',
+            password='Password123!',
+            first_name='Ana',
+            last_name='Mentora'
+        )
+        self.mentor.profile.is_mentor = True
+        self.mentor.profile.specialties = 'Python, Django & Arquitetura'
+        self.mentor.profile.save()
+
+    def test_profile_search_and_mentor_filter(self):
+        self.client.force_login(self.student)
+        res_all = self.client.get(reverse('profile_search'))
+        self.assertEqual(res_all.status_code, 200)
+        self.assertContains(res_all, 'Ana Mentora')
+        self.assertContains(res_all, 'Carlinhos Sabino')
+
+        res_mentor = self.client.get(reverse('profile_search'), {'role': 'mentor'})
+        self.assertEqual(res_mentor.status_code, 200)
+        self.assertContains(res_mentor, 'Ana Mentora')
+        self.assertNotContains(res_mentor, 'Carlinhos Sabino')
+
+        res_query = self.client.get(reverse('profile_search'), {'q': 'Arquitetura'})
+        self.assertEqual(res_query.status_code, 200)
+        self.assertContains(res_query, 'Ana Mentora')
+
+    def test_public_profile_view(self):
+        self.client.force_login(self.student)
+        res = self.client.get(reverse('public_profile', kwargs={'user_id': self.mentor.id}))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Ana Mentora')
+        self.assertContains(res, 'Python, Django &amp; Arquitetura')
+
+    def test_dm_inbox_and_thread_conversation(self):
+        from .models import DirectMessage
+        self.client.force_login(self.student)
+
+        # Enviar DM para a mentora
+        thread_url = reverse('dm_thread', kwargs={'user_id': self.mentor.id})
+        post_res = self.client.post(thread_url, {
+            'content': 'Olá Mentora Ana! Pode me ajudar no desafio de List Comprehension?'
+        })
+        self.assertEqual(post_res.status_code, 302)
+        self.assertTrue(DirectMessage.objects.filter(
+            sender=self.student,
+            recipient=self.mentor,
+            content__icontains='List Comprehension'
+        ).exists())
+
+        # Verificar se aparece na caixa de entrada (dm_inbox)
+        inbox_res = self.client.get(reverse('dm_inbox'))
+        self.assertEqual(inbox_res.status_code, 200)
+        self.assertContains(inbox_res, 'Ana Mentora')
+        self.assertContains(inbox_res, 'List Comprehension')
+

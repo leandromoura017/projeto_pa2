@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversa com {{ other_user.get_full_name|default:other_user.first_name|default:other_user.username }} | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 flex flex-col">
+
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between gap-4 mb-4">
+        <a href="{% url 'dm_inbox' %}" class="text-xs font-semibold text-gray-400 hover:text-cyan-400 transition flex items-center gap-1">
+            &larr; Voltar para Caixa de Mensagens (DMs)
+        </a>
+        <a href="{% url 'public_profile' other_user.id %}" class="text-xs font-semibold text-cyan-400 hover:underline">
+            👤 Ver Portfólio Vivo de {{ other_user.first_name|default:other_user.username }}
+        </a>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="bg-[#111827] border border-gray-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden flex-1 min-h-[500px]">
+
+        <!-- Partner Header -->
+        <div class="p-4 sm:p-5 bg-gray-900/90 border-b border-gray-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40">
+                    {{ other_user.first_name|default:other_user.email|slice:":1"|upper }}
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm sm:text-base font-bold text-white">
+                            {{ other_user.get_full_name|default:other_user.first_name|default:other_user.username }}
+                        </h1>
+                        {% if other_user.profile and other_user.profile.is_mentor %}
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 border border-amber-700 text-amber-300">
+                                🎓 Mentor Oficial
+                            </span>
+                        {% endif %}
+                    </div>
+                    {% if other_user.profile and other_user.profile.specialties %}
+                        <p class="text-[11px] text-cyan-400">{{ other_user.profile.specialties }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages List -->
+        <div id="chat-messages" class="flex-1 p-5 space-y-4 overflow-y-auto max-h-[420px]">
+            {% if thread_messages %}
+                {% for msg in thread_messages %}
+                    <div class="flex {% if msg.sender_id == user.id %}justify-end{% else %}justify-start{% endif %}">
+                        <div class="max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow
+                            {% if msg.sender_id == user.id %}
+                                bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-br-none
+                            {% else %}
+                                bg-gray-800 border border-gray-700 text-gray-100 rounded-bl-none
+                            {% endif %}">
+                            <p class="whitespace-pre-wrap">{{ msg.content }}</p>
+                            <span class="block text-[10px] mt-1.5 {% if msg.sender_id == user.id %}text-cyan-100/80 text-right{% else %}text-gray-400{% endif %}">
+                                {{ msg.created_at|date:"d/m H:i" }}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-12 text-gray-400 text-xs">
+                    Envie uma mensagem abaixo para iniciar sua mentoria ou conversa técnica com <strong>{{ other_user.first_name|default:other_user.username }}</strong>!
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Message Input Form -->
+        <form method="POST" action="{% url 'dm_thread' other_user.id %}" class="p-4 bg-gray-900/90 border-t border-gray-800 flex items-center gap-3">
+            {% csrf_token %}
+            <input type="text"
+                   name="content"
+                   required
+                   autocomplete="off"
+                   placeholder="Escreva sua dúvida técnica ou mensagem para {{ other_user.first_name|default:other_user.username }}..."
+                   class="flex-1 px-4 py-3 rounded-xl bg-gray-950 border border-gray-700 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500">
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition shrink-0">
+                <span>Enviar</span> <span>➤</span>
+            </button>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatBox = document.getElementById('chat-messages');
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    });
+</script>
+{% endblock %}

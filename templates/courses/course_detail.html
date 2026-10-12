@@ -45,12 +45,21 @@
             <!-- Instructor Info & Meta -->
             <div class="mt-6 pt-6 border-t border-gray-800 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40">
+                    <a href="{% url 'public_profile' course.instructor.id %}" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40 hover:scale-105 transition">
                         {{ course.instructor.first_name|default:course.instructor.email|slice:":1"|upper }}
-                    </div>
+                    </a>
                     <div>
-                        <span class="text-xs text-gray-400 block">Instrutor da Trilha</span>
-                        <span class="text-sm font-bold text-white">{{ course.instructor.first_name|default:course.instructor.username }}</span>
+                        <span class="text-xs text-gray-400 block">Instrutor / Mentor da Trilha</span>
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'public_profile' course.instructor.id %}" class="text-sm font-bold text-white hover:text-cyan-400 transition">
+                                {{ course.instructor.first_name|default:course.instructor.username }}
+                            </a>
+                            {% if user.is_authenticated and user.id != course.instructor.id %}
+                                <a href="{% url 'dm_thread' course.instructor.id %}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition">
+                                    <span>💬</span> Enviar DM ao Mentor
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -58,7 +67,7 @@
                 <div>
                     {% if user.is_authenticated %}
                         {% if is_enrolled %}
-                            <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
                                 <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow">
                                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                     Matriculado
@@ -87,6 +96,46 @@
                 </div>
             </div>
 
+            <!-- Course Progress & Digital Certificate Bar (Onda 4) -->
+            {% if user.is_authenticated %}
+                <div class="mt-6 pt-6 border-t border-gray-800/80">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                                📊 Progresso na Trilha
+                            </span>
+                            <p class="text-xs text-gray-400 mt-0.5">
+                                {{ completed_count }} de {{ total_count }} pílula{{ total_count|pluralize:"s" }} concluída{{ completed_count|pluralize:"s" }} ({{ progress_pct }}%)
+                            </p>
+                        </div>
+
+                        <div>
+                            {% if certificate %}
+                                <a href="{% url 'certificate_detail' certificate.validation_code %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-emerald-950 bg-emerald-400 hover:bg-emerald-300 shadow-lg shadow-emerald-500/20 transition">
+                                    <span>🎓</span> Ver Certificado Digital ({{ certificate.validation_code }})
+                                </a>
+                            {% elif progress_pct >= 100 and total_count > 0 %}
+                                <form method="POST" action="{% url 'issue_certificate' course.slug %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 shadow-xl shadow-amber-500/25 hover:scale-105 transition">
+                                        <span>🎓</span> Emitir Certificado Digital
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium bg-gray-800/80 border border-gray-700 text-gray-400">
+                                    <span>🔒</span> Certificado liberado ao atingir 100%
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar Visual -->
+                    <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+                        <div class="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 transition-all duration-500" style="width: {{ progress_pct }}%;"></div>
+                    </div>
+                </div>
+            {% endif %}
+
         </div>
     </div>
 
@@ -104,18 +153,31 @@
         {% if lessons %}
             <div class="space-y-3">
                 {% for lesson in lessons %}
-                    <div class="bg-[#111827] border border-gray-800/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between hover:border-gray-700 transition shadow">
+                    <div class="bg-[#111827] border {% if lesson.id in completed_lesson_ids %}border-emerald-700/60{% else %}border-gray-800/90{% endif %} rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 hover:border-gray-700 transition shadow">
                         <div class="flex items-center gap-4">
-                            <!-- Order Badge -->
-                            <div class="w-9 h-9 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center text-sm font-bold text-cyan-400">
-                                {{ lesson.order }}
-                            </div>
+                            <!-- Order / Completed Badge -->
+                            {% if lesson.id in completed_lesson_ids %}
+                                <div class="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-600 flex items-center justify-center text-sm font-bold text-emerald-400" title="Aula Concluída">
+                                    ✓
+                                </div>
+                            {% else %}
+                                <div class="w-9 h-9 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center text-sm font-bold text-cyan-400">
+                                    {{ lesson.order }}
+                                </div>
+                            {% endif %}
 
                             <!-- Lesson Info -->
                             <div>
-                                <h3 class="text-sm sm:text-base font-bold text-white">
-                                    {{ lesson.title }}
-                                </h3>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-sm sm:text-base font-bold text-white">
+                                        {{ lesson.title }}
+                                    </h3>
+                                    {% if lesson.id in completed_lesson_ids %}
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950/80 border border-emerald-700/60 text-emerald-300">
+                                            Concluída
+                                        </span>
+                                    {% endif %}
+                                </div>
                                 {% if lesson.content %}
                                     <p class="text-xs text-gray-400 mt-1 line-clamp-1">
                                         {{ lesson.content }}
@@ -124,8 +186,8 @@
                             </div>
                         </div>
 
-                        <!-- Video association, Challenge & Duration -->
-                        <div class="flex items-center gap-2 sm:gap-3">
+                        <!-- Video association, Challenge, Completion & Duration -->
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                             <span class="text-xs text-gray-400 hidden sm:inline">
                                 {{ lesson.duration_seconds }}s
                             </span>
@@ -138,12 +200,14 @@
                                 <a href="{% url 'feed' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/80 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition">
                                     <span>▶</span> Ver Vídeo
                                 </a>
-                            {% else %}
-                                {% if not lesson.challenge %}
-                                    <span class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-800 text-gray-400">
-                                        Pílula Teórica
-                                    </span>
-                                {% endif %}
+                            {% endif %}
+                            {% if user.is_authenticated and lesson.id not in completed_lesson_ids %}
+                                <form method="POST" action="{% url 'lesson_complete' lesson.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-800 hover:bg-emerald-950/80 text-gray-300 hover:text-emerald-300 border border-gray-700 hover:border-emerald-700 transition">
+                                        <span>✓</span> Concluir Aula
+                                    </button>
+                                </form>
                             {% endif %}
                         </div>
                     </div>

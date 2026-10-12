@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+import uuid
 from videos.models import Technology, Video
 
 
@@ -60,6 +61,24 @@ class Course(models.Model):
     @property
     def total_lessons(self):
         return self.lessons.count()
+
+    def get_user_progress(self, user):
+        """
+        Retorna (completed_count, total_count, percentage) para um aluno.
+        """
+        if not user or not user.is_authenticated:
+            total = self.total_lessons
+            return (0, total, 0)
+        total = self.lessons.count()
+        if total == 0:
+            return (0, 0, 0)
+        completed = LessonProgress.objects.filter(
+            user=user,
+            lesson__course=self,
+            is_completed=True
+        ).count()
+        pct = int(round((completed / total) * 100))
+        return (completed, total, min(pct, 100))
 
 
 class Lesson(models.Model):
@@ -131,10 +150,39 @@ class Enrollment(models.Model):
         return self.completed_at is not None
 
 
+class LessonProgress(models.Model):
+    """
+    Rastreamento de conclusão individual de cada aula da trilha pelo aluno (Onda 4).
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='lesson_progress',
+        verbose_name="Aluno"
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='user_progress',
+        verbose_name="Aula"
+    )
+    is_completed = models.BooleanField(default=True, verbose_name="Concluída")
+    completed_at = models.DateTimeField(auto_now_add=True, verbose_name="Concluída em")
+
+    class Meta:
+        verbose_name = "Progresso de Aula"
+        verbose_name_plural = "Progressos de Aulas"
+        unique_together = ('user', 'lesson')
+        ordering = ['-completed_at']
+
+    def __str__(self):
+        return f"{self.user.email} concluiu {self.lesson.title}"
+
+
 class Challenge(models.Model):
     """
     Desafio prático / pergunta interativa vinculada a uma aula.
-    Fornece verificação com feedback instantâneo.
+    Fornece verificação com feedback instantâneo (múltipla escolha e/ou submissão de código).
     """
     OPTION_CHOICES = [
         ('A', 'Opção A'),
@@ -161,6 +209,11 @@ class Challenge(models.Model):
         choices=OPTION_CHOICES,
         verbose_name="Opção Correta"
     )
+    expected_code_keyword = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Token/Palavra-chave Esperada no Código (Opcional)"
+    )
     explanation = models.TextField(verbose_name="Explicação / Feedback da Resposta")
     points = models.PositiveIntegerField(default=10, verbose_name="Pontos de Domínio")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -175,7 +228,7 @@ class Challenge(models.Model):
 
 class ChallengeAttempt(models.Model):
     """
-    Registro da tentativa de resposta do aluno no desafio prático.
+    Registro da tentativa de resposta ou submissão de código do aluno no desafio prático.
     """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -189,7 +242,8 @@ class ChallengeAttempt(models.Model):
         related_name='attempts',
         verbose_name="Desafio"
     )
-    selected_option = models.CharField(max_length=1, verbose_name="Opção Selecionada")
+    selected_option = models.CharField(max_length=1, blank=True, default='', verbose_name="Opção Selecionada")
+    submitted_code = models.TextField(blank=True, default='', verbose_name="Código Submetido")
     is_correct = models.BooleanField(default=False, verbose_name="Acertou?")
     attempted_at = models.DateTimeField(auto_now=True, verbose_name="Última Tentativa")
 
@@ -202,4 +256,44 @@ class ChallengeAttempt(models.Model):
     def __str__(self):
         result = "Acerto" if self.is_correct else "Erro"
         return f"{self.user.email} - {self.challenge.title} [{result}]"
+
+
+class Certificate(models.Model):
+    """
+    Certificado Digital verificável emitido ao concluir 100% de um Mini-Curso (Onda 4).
+    Integra automaticamente o Portfólio Vivo do aluno.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='certificates',
+        verbose_name="Aluno Certificado"
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='certificates',
+        verbose_name="Mini-Curso Concluído"
+    )
+    validation_code = models.CharField(
+        max_length=32,
+        unique=True,
+        verbose_name="Código de Autenticidade"
+    )
+    issued_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Emissão")
+
+    class Meta:
+        verbose_name = "Certificado Digital"
+        verbose_name_plural = "Certificados Digitais"
+        unique_together = ('user', 'course')
+        ordering = ['-issued_at']
+
+    def __str__(self):
+        return f"Certificado {self.validation_code} - {self.user.email} ({self.course.title})"
+
+    def save(self, *args, **kwargs):
+        if not self.validation_code:
+            self.validation_code = f"CV-2026-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+
 

@@ -62,13 +62,19 @@
             <!-- Center Navigation / Links -->
             {% if user.is_authenticated %}
             <nav class="flex items-center gap-1 sm:gap-2">
-                <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
                     <span>🎬</span> <span>Feed</span>
                 </a>
-                <a href="{% url 'course_list' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'course' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                <a href="{% url 'course_list' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'course' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name or 'certificate' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
                     <span>📚</span> <span>Mini Cursos</span>
                 </a>
-                <a href="{% url 'profile' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'profile' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                <a href="{% url 'profile_search' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'profile_search' or request.resolver_match.url_name == 'public_profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                    <span>🔎</span> <span>Perfis</span>
+                </a>
+                <a href="{% url 'dm_inbox' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'dm_' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                    <span>💬</span> <span>DMs</span>
+                </a>
+                <a href="{% url 'profile' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'profile_edit' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
                     <span>👤</span> <span>Meu Perfil</span>
                 </a>
             </nav>
