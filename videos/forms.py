@@ -32,3 +32,4 @@ class VideoPublishForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['technology'].queryset = Technology.objects.filter(is_active=True).order_by('name')
+
