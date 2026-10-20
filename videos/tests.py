@@ -292,3 +292,69 @@ class VideoShareAndNotificationTests(TestCase):
         self.assertIsNotNone(notif)
         self.assertIn('3 Regras de Clean Code', notif.message)
         self.assertEqual(notif.icon, '🎬')
+
+
+
+class VideoCommentTests(TestCase):
+    """
+    Testes da Onda 6:
+    Item #24: Aba / Seção de comentários em vídeos.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.creator = User.objects.create_user(
+            email='creator_comment@codeview.com',
+            password='Password123!',
+            first_name='Criador Coment'
+        )
+        self.commenter = User.objects.create_user(
+            email='student_comment@codeview.com',
+            password='Password123!',
+            first_name='Estudante Coment'
+        )
+        self.tech = Technology.objects.create(name='Python', slug='python', icon_name='🐍')
+        self.dummy_file = SimpleUploadedFile("com_video.mp4", b"bytes", content_type="video/mp4")
+        self.video = Video.objects.create(
+            title='Como funciona o GIL em Python',
+            description='Explicação rápida do Global Interpreter Lock.',
+            technology=self.tech,
+            author=self.creator,
+            video_file=self.dummy_file,
+            duration_seconds=45,
+            is_published=True
+        )
+
+    def test_add_video_comment_authenticated(self):
+        self.client.force_login(self.commenter)
+        url = reverse('video_comment', kwargs={'video_id': self.video.id})
+
+        response = self.client.post(url, {'content': 'Excelente explicação! Me ajudou muito.'})
+        self.assertEqual(response.status_code, 302)
+
+        from .models import VideoComment
+        comment = VideoComment.objects.filter(video=self.video, user=self.commenter).first()
+        self.assertIsNotNone(comment)
+        self.assertEqual(comment.content, 'Excelente explicação! Me ajudou muito.')
+        self.assertEqual(self.video.comments_count, 1)
+
+    def test_commenting_by_other_user_notifies_video_author(self):
+        from accounts.models import Notification
+        self.client.force_login(self.commenter)
+        url = reverse('video_comment', kwargs={'video_id': self.video.id})
+
+        self.client.post(url, {'content': 'Dúvida: isso afeta multiprocessing?'})
+
+        notif = Notification.objects.filter(user=self.creator, title__icontains='Novo comentário').first()
+        self.assertIsNotNone(notif)
+        self.assertEqual(notif.icon, '💬')
+        self.assertIn('multiprocessing', notif.message)
+
+    def test_empty_comment_rejected(self):
+        self.client.force_login(self.commenter)
+        url = reverse('video_comment', kwargs={'video_id': self.video.id})
+
+        res = self.client.post(url, {'content': '   '})
+        self.assertEqual(res.status_code, 302)
+
+        from .models import VideoComment
+        self.assertFalse(VideoComment.objects.filter(video=self.video).exists())

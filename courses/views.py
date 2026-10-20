@@ -85,7 +85,7 @@ def course_list_view(request):
 
 def course_detail_view(request, slug):
     """
-    Página de detalhes do Mini-Curso: ementa de pílulas/aulas,
+    Página de detalhes do Mini-Curso: ementa de pílulas/aulas, cronograma de estudos sugerido,
     progresso percentual, informações do instrutor, matrícula e emissão de certificado.
     """
     course = get_object_or_404(
@@ -117,10 +117,44 @@ def course_detail_view(request, slug):
         certificate = Certificate.objects.filter(user=request.user, course=course).first()
 
     lessons = course.lessons.all().order_by('order', 'id')
+    lessons_list = list(lessons)
+
+    # Geração do Cronograma de Estudos Recomendado (Onda 6 - #25)
+    schedule_stages = []
+    stage_size = max(1, (len(lessons_list) + 2) // 3) if lessons_list else 1
+    stage_titles = [
+        "Etapa 1: Aquecimento & Fundamentos",
+        "Etapa 2: Aplicação Prática & Resolução",
+        "Etapa 3: Domínio Técnico & Desafios Finais",
+    ]
+    stage_days = ["Dia 1 (Sugerido)", "Dia 2 (Sugerido)", "Dia 3 (Sugerido)"]
+
+    for i in range(0, max(len(lessons_list), 1), stage_size):
+        chunk = lessons_list[i:i + stage_size]
+        if not chunk:
+            continue
+        idx = i // stage_size
+        title = stage_titles[idx] if idx < len(stage_titles) else f"Etapa {idx + 1}: Prática Avançada"
+        timing = stage_days[idx] if idx < len(stage_days) else f"Dia {idx + 1}"
+
+        chunk_completed = [l.id in completed_lesson_ids for l in chunk]
+        is_all_completed = all(chunk_completed) if chunk_completed else False
+        is_in_progress = any(chunk_completed) and not is_all_completed
+        status = 'completed' if is_all_completed else ('in_progress' if is_in_progress else 'pending')
+
+        schedule_stages.append({
+            'title': title,
+            'timing': timing,
+            'lessons': chunk,
+            'status': status,
+            'total_lessons': len(chunk),
+            'completed_lessons': sum(chunk_completed),
+        })
 
     return render(request, 'courses/course_detail.html', {
         'course': course,
         'lessons': lessons,
+        'schedule_stages': schedule_stages,
         'is_enrolled': is_enrolled,
         'enrollment': enrollment,
         'completed_lesson_ids': completed_lesson_ids,
@@ -135,6 +169,7 @@ def course_detail_view(request, slug):
 def enroll_course_view(request, slug):
     """
     Ação de matrícula do aluno no curso.
+    Dispara notificação de matrícula confirmada (Onda 6 - #27).
     """
     if request.method != 'POST':
         return redirect('course_detail', slug=slug)
@@ -152,6 +187,14 @@ def enroll_course_view(request, slug):
         enrollment.save()
         messages.success(request, f"Matrícula reativada com sucesso no curso '{course.title}'!")
     elif created:
+        # Notificação de matrícula confirmada (Onda 6 - #27)
+        Notification.objects.create(
+            user=request.user,
+            title="📚 Inscrição Confirmada!",
+            message=f"Sua matrícula na trilha '{course.title}' foi confirmada! Explore as pílulas de código e conclua os desafios práticos.",
+            link=reverse('course_detail', kwargs={'slug': course.slug}),
+            icon='🚀'
+        )
         messages.success(request, f"Parabéns! Você se matriculou no curso '{course.title}'!")
     else:
         messages.info(request, f"Você já está matriculado no curso '{course.title}'.")

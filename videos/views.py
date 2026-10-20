@@ -1,10 +1,11 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
 from django.urls import reverse
-from .models import Technology, Video, VideoLike
+from .models import Technology, Video, VideoLike, VideoComment
 from .forms import VideoPublishForm
 
 
@@ -18,7 +19,7 @@ def feed_view(request):
     query = request.GET.get('q', '').strip()
     
     technologies = Technology.objects.filter(is_active=True).order_by('name')
-    videos = Video.objects.filter(is_published=True).select_related('technology', 'author').prefetch_related('likes', 'lessons')
+    videos = Video.objects.filter(is_published=True).select_related('technology', 'author').prefetch_related('likes', 'lessons', 'comments')
 
     current_technology = None
     if tech_slug:
@@ -120,11 +121,11 @@ def toggle_video_like_view(request, video_id):
 
 def video_detail_view(request, video_id):
     """
-    Página individual de compartilhamento de vídeo público (Onda 5 - #22).
-    Acessível via link direto compartilhado por redes sociais, WhatsApp ou no feed.
+    Página individual de compartilhamento de vídeo público (Onda 5 - #22)
+    com aba/seção de comentários técnicos e dúvidas da comunidade (Onda 6 - #24).
     """
     video = get_object_or_404(
-        Video.objects.select_related('technology', 'author').prefetch_related('likes', 'lessons'),
+        Video.objects.select_related('technology', 'author').prefetch_related('likes', 'lessons', 'comments__user__profile'),
         id=video_id,
         is_published=True
     )
@@ -137,10 +138,75 @@ def video_detail_view(request, video_id):
     if request.user.is_authenticated:
         is_liked = VideoLike.objects.filter(user=request.user, video=video).exists()
 
+    comments = video.comments.select_related('user', 'user__profile').order_by('created_at')
+
     absolute_url = request.build_absolute_uri()
 
     return render(request, 'videos/video_detail.html', {
         'video': video,
         'is_liked': is_liked,
+        'comments': comments,
         'absolute_url': absolute_url,
     })
+
+
+@login_required
+def add_video_comment_view(request, video_id):
+    """
+    Adiciona um comentário ou dúvida técnica na pílula de vídeo (Onda 6 - #24).
+    Dispara notificação para o criador do vídeo se for outro usuário.
+    """
+    if request.method != 'POST':
+        return redirect('video_detail', video_id=video_id)
+
+    video = get_object_or_404(Video, id=video_id, is_published=True)
+    content = request.POST.get('content', '').strip()
+
+    if request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            content = data.get('content', content).strip()
+        except Exception:
+            pass
+
+    if not content:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'status': 'error', 'message': 'O comentário não pode ser vazio.'}, status=400)
+        messages.error(request, "O comentário não pode ser vazio.")
+        return redirect('video_detail', video_id=video_id)
+
+    comment = VideoComment.objects.create(
+        video=video,
+        user=request.user,
+        content=content
+    )
+
+    # Dispara alerta para o criador da pílula se quem comentou não foi ele mesmo (#23/#24)
+    if video.author != request.user:
+        from accounts.models import Notification
+        author_name = request.user.first_name or request.user.username
+        Notification.objects.create(
+            user=video.author,
+            title="💬 Novo comentário no seu vídeo!",
+            message=f"{author_name} comentou na pílula '{video.title}': \"{content[:60]}{'...' if len(content)>60 else ''}\"",
+            link=reverse('video_detail', kwargs={'video_id': video.id}),
+            icon='💬'
+        )
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        user_name = request.user.first_name or request.user.username
+        initial = (user_name[:1] or 'D').upper()
+        avatar_url = request.user.profile.avatar.url if hasattr(request.user, 'profile') and request.user.profile.avatar else None
+        return JsonResponse({
+            'status': 'success',
+            'comment_id': comment.id,
+            'user_name': user_name,
+            'user_initial': initial,
+            'avatar_url': avatar_url,
+            'content': comment.content,
+            'created_at': comment.created_at.strftime('%d/%m/%Y às %H:%M'),
+            'comments_count': video.comments.count(),
+        })
+
+    messages.success(request, "Comentário publicado com sucesso!")
+    return redirect('video_detail', video_id=video_id)

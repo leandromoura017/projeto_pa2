@@ -135,6 +135,14 @@
                                         <span>🔗</span>
                                     </a>
 
+                                    <!-- Botão Comentários (Onda 6 - #24) -->
+                                    <a href="{% url 'video_detail' video.id %}#comments" 
+                                       class="btn-comments-direct inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
+                                       title="Ver Comentários">
+                                        <span>💬</span>
+                                        <span class="text-[11px] font-bold">{{ video.comments.count }}</span>
+                                    </a>
+
                                     {% with lesson=video.lessons.first %}
                                         {% if lesson and lesson.challenge %}
                                             <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/90 hover:bg-amber-400 text-black shadow-lg transition">

@@ -8,8 +8,8 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 
 * 🟢 **MVP 1 (O Início - Fundação & Feed Core):** Onda 1 — *100% Concluído e testado.*
 * 🟡 **MVP 2 (O Meio - Interatividade & Prática Ativa):** Ondas 2 e 3 — *100% Concluído e testado.*
-* 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *100% Concluído e testado (61 testes automatizados passando).*
-* 🟣 **Pós-MVP (Visão de Longo Prazo / Releases Futuras):** Ondas 6, 7 e 8 — *Roadmap de produto estruturado para apresentação da banca.*
+* 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *100% Concluído e testado.*
+* 🟣 **Pós-MVP / Expansões Contínuas:** Onda 6 — *100% Concluído e testado (68 testes automatizados passando).* Ondas 7 e 8 — *Roadmap de produto estruturado para apresentação da banca.*
 
 ---
 
@@ -45,10 +45,10 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 | 22 | **Compartilhar vídeo** | 5 | 🔴 Vermelho | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
 | 23 | **Alerta (sininho) de novas publicações** | 5 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
 | | | | | | |
-| 24 | **Aba de comentários** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 25 | **Cronograma do curso** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 26 | **Notificações de mensagens recebidas** | 6 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 27 | **Notificações de inscrição confirmada** | 6 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
+| 24 | **Aba de comentários** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 25 | **Cronograma do curso** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 26 | **Notificações de mensagens recebidas** | 6 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 27 | **Notificações de inscrição confirmada** | 6 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
 | 28 | **Anotações privadas nos vídeos** | 7 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
 | 29 | **Selo/votação "Conteúdo Confiável"** | 7 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
 | 30 | **Aba de cadastrar cursos** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |

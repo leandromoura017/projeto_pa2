@@ -430,3 +430,64 @@ class CertificateDownloadAndQrTests(TestCase):
         self.assertIsNotNone(notif)
         self.assertEqual(notif.icon, '🎓')
         self.assertIn('Nova Trilha Fullstack', notif.message)
+
+
+class Onda6CourseFeaturesTests(TestCase):
+    """
+    Testes da Onda 6:
+    Item #25: Cronograma do curso (schedule_stages na view de detalhes).
+    Item #27: Notificações de inscrição confirmada.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.student = User.objects.create_user(
+            email='aluno_onda6@codeview.com',
+            password='Pass12345!',
+            first_name='Aluno Onda 6'
+        )
+        self.instructor = User.objects.create_user(
+            email='prof_onda6@codeview.com',
+            password='Pass12345!',
+            first_name='Instrutor Onda 6'
+        )
+        self.course = Course.objects.create(
+            title='Docker e Containers',
+            slug='docker-e-containers',
+            description='Domine Docker em pílulas.',
+            instructor=self.instructor,
+            is_published=True
+        )
+        self.lesson1 = Lesson.objects.create(course=self.course, title='Introdução Docker', order=1)
+        self.lesson2 = Lesson.objects.create(course=self.course, title='Dockerfile e Imagens', order=2)
+        self.lesson3 = Lesson.objects.create(course=self.course, title='Docker Compose e Redes', order=3)
+
+    def test_course_detail_includes_schedule_stages(self):
+        response = self.client.get(reverse('course_detail', kwargs={'slug': self.course.slug}))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('schedule_stages', response.context)
+        stages = response.context['schedule_stages']
+        self.assertGreater(len(stages), 0)
+        self.assertTrue(all(stage['status'] == 'pending' for stage in stages))
+        self.assertContains(response, 'Cronograma de Estudos Sugerido')
+
+    def test_course_detail_schedule_stages_dynamic_progress(self):
+        from courses.models import LessonProgress
+        self.client.force_login(self.student)
+
+        LessonProgress.objects.create(user=self.student, lesson=self.lesson1, is_completed=True)
+        response = self.client.get(reverse('course_detail', kwargs={'slug': self.course.slug}))
+        self.assertEqual(response.status_code, 200)
+        stages = response.context['schedule_stages']
+        self.assertEqual(stages[0]['completed_lessons'], 1)
+
+    def test_enrollment_triggers_notification(self):
+        from accounts.models import Notification
+        self.client.force_login(self.student)
+        response = self.client.post(reverse('course_enroll', kwargs={'slug': self.course.slug}))
+        self.assertEqual(response.status_code, 302)
+
+        notif = Notification.objects.filter(user=self.student, title__icontains='Inscrição Confirmada').first()
+        self.assertIsNotNone(notif)
+        self.assertIn('Docker e Containers', notif.message)
+        self.assertEqual(notif.icon, '🚀')
+

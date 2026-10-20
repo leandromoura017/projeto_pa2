@@ -1,13 +1,13 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from videos.models import Technology, Video
+from videos.models import Technology, Video, VideoComment
 from courses.models import Course, Lesson, Challenge
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Popula o banco de dados com mini-cursos, aulas, desafios práticos e notificações para a Onda 5."
+    help = "Popula o banco de dados com mini-cursos, aulas, desafios práticos, notificações e comentários para a Onda 6."
 
     def handle(self, *args, **options):
         from accounts.models import Profile, DirectMessage, Notification
@@ -55,14 +55,14 @@ class Command(BaseCommand):
                 content='Olá! Sou a mentora Ana Clara. Qualquer dúvida nos desafios práticos ou nos mini-cursos, pode me chamar aqui na DM!'
             )
 
-        # Semear notificações de demonstração da Onda 5 (#23 - Alerta de Sininho)
+        # Semear notificações de demonstração da Onda 5 e 6
         target_users = [u for u in [student_user, instructor] if u is not None]
         for target in target_users:
             if not Notification.objects.filter(user=target, title__icontains="Bem-vindo").exists():
                 Notification.objects.create(
                     user=target,
-                    title="🎉 Bem-vindo à Onda 5 do CodeView!",
-                    message="Agora você pode baixar seus Certificados em PDF, compartilhar via QR Code e receber alertas em tempo real.",
+                    title="🎉 Bem-vindo ao CodeView!",
+                    message="Explore as pílulas de vídeo, responda aos desafios práticos e conquiste seus Certificados Digitais.",
                     link="/courses/",
                     icon="🎓",
                     is_read=False
@@ -85,6 +85,22 @@ class Command(BaseCommand):
         video_python = Video.objects.filter(technology=tech_python).first()
         video_js = Video.objects.filter(technology=tech_js).first()
         video_django = Video.objects.filter(technology=tech_django).first()
+
+        # Semear comentários de demonstração (Onda 6 - #24)
+        if video_python and mentor_ana:
+            if not VideoComment.objects.filter(video=video_python, user=mentor_ana).exists():
+                VideoComment.objects.create(
+                    video=video_python,
+                    user=mentor_ana,
+                    content="Excelente dica! List Comprehensions em Python tornam o código mais performático e limpo quando usadas sem exageros."
+                )
+        if video_python and student_user:
+            if not VideoComment.objects.filter(video=video_python, user=student_user).exists():
+                VideoComment.objects.create(
+                    video=video_python,
+                    user=student_user,
+                    content="Muito bom! Consegui resolver o desafio interativo da aula graças à sintaxe explicada no vídeo."
+                )
 
         # 3. Criar Cursos com Desafios
         courses_data = [
@@ -259,4 +275,4 @@ class Command(BaseCommand):
                     if c_created:
                         self.stdout.write(self.style.SUCCESS(f"    [DESAFIO] Desafio cadastrado: {challenge.title}"))
 
-        self.stdout.write(self.style.SUCCESS("Catalogo, Desafios e Notificacoes da Onda 5 semeados com sucesso!"))
+        self.stdout.write(self.style.SUCCESS("Catalogo, Desafios, Notificacoes e Comentarios da Onda 6 semeados com sucesso!"))

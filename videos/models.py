@@ -62,6 +62,10 @@ class Video(models.Model):
     def likes_count(self):
         return self.likes.count()
 
+    @property
+    def comments_count(self):
+        return self.comments.count()
+
 
 class VideoLike(models.Model):
     """
@@ -89,3 +93,31 @@ class VideoLike(models.Model):
 
     def __str__(self):
         return f"{self.user.email} curtiu {self.video.title}"
+
+
+class VideoComment(models.Model):
+    """
+    Comentário ou dúvida técnica em um micro-vídeo (Onda 6 - #24).
+    """
+    video = models.ForeignKey(
+        Video,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name="Vídeo"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='video_comments',
+        verbose_name="Autor do Comentário"
+    )
+    content = models.TextField(max_length=500, verbose_name="Comentário")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Enviado em")
+
+    class Meta:
+        verbose_name = "Comentário de Vídeo"
+        verbose_name_plural = "Comentários de Vídeos"
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Comentário de {self.user.email} em {self.video.title}"

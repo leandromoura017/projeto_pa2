@@ -217,6 +217,7 @@ class ProfileTests(TestCase):
 class ProfileSearchAndDirectMessageTests(TestCase):
     """
     Testes da Onda 4: Busca de perfis (#16) e Aba de DMs para conversas com mentores (#19).
+    Testes da Onda 6: Notificação automática ao receber mensagem (#26).
     """
     def setUp(self):
         self.client = Client()
@@ -280,6 +281,19 @@ class ProfileSearchAndDirectMessageTests(TestCase):
         self.assertEqual(inbox_res.status_code, 200)
         self.assertContains(inbox_res, 'Ana Mentora')
         self.assertContains(inbox_res, 'List Comprehension')
+
+    def test_sending_dm_triggers_notification_for_recipient(self):
+        """Onda 6 (#26): Notificação de mensagem recebida"""
+        from .models import Notification
+        self.client.force_login(self.student)
+        thread_url = reverse('dm_thread', kwargs={'user_id': self.mentor.id})
+        self.client.post(thread_url, {'content': 'Olá Mentora! Dúvida técnica aqui.'})
+
+        notif = Notification.objects.filter(user=self.mentor, title__icontains='Nova mensagem').first()
+        self.assertIsNotNone(notif)
+        self.assertEqual(notif.icon, '💬')
+        self.assertIn('Carlinhos', notif.title)
+        self.assertIn('Dúvida técnica aqui', notif.message)
 
 
 class NotificationBellTests(TestCase):

@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Count
 from django.http import JsonResponse
+from django.urls import reverse
 from .forms import SignUpForm, LoginForm, ProfileEditForm
 from .models import User, Profile, DirectMessage, Notification
 
@@ -261,6 +262,7 @@ def dm_inbox_view(request):
 def dm_thread_view(request, user_id):
     """
     Tela de conversa direta (chat/DM) com um mentor ou usuário específico (Onda 4 - #19).
+    Dispara notificação para o destinatário da mensagem (Onda 6 - #26).
     """
     other_user = get_object_or_404(User.objects.select_related('profile'), id=user_id, is_active=True)
 
@@ -283,6 +285,18 @@ def dm_thread_view(request, user_id):
                 recipient=other_user,
                 content=content
             )
+
+            # Notificação para o destinatário da mensagem (Onda 6 - #26)
+            sender_name = request.user.first_name or request.user.username
+            preview_text = content[:80] + ('...' if len(content) > 80 else '')
+            Notification.objects.create(
+                user=other_user,
+                title=f"💬 Nova mensagem de {sender_name}",
+                message=preview_text,
+                link=reverse('dm_thread', kwargs={'user_id': request.user.id}),
+                icon='💬'
+            )
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     'status': 'success',

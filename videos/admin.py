@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Technology, Video, VideoLike
+from .models import Technology, Video, VideoLike, VideoComment
 
 
 @admin.register(Technology)
@@ -28,3 +28,11 @@ class VideoLikeAdmin(admin.ModelAdmin):
     list_display = ('user', 'video', 'created_at')
     list_filter = ('created_at', 'video__technology')
     search_fields = ('user__email', 'video__title')
+
+
+@admin.register(VideoComment)
+class VideoCommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'video', 'created_at')
+    list_filter = ('created_at', 'video__technology')
+    search_fields = ('user__email', 'video__title', 'content')
+    ordering = ('-created_at',)
