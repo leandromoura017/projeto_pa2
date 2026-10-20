@@ -1,6 +1,9 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+import io
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
 from .models import Profile, UserConsent
 
 User = get_user_model()
@@ -76,7 +79,6 @@ class SignUpAndLGPDTests(TestCase):
         user = User.objects.filter(email='carlos@example.com').first()
         self.assertIsNotNone(user)
         self.assertEqual(user.first_name, 'Carlos Aluno')
-        # Verifica se o consentimento LGPD foi registrado
         consent = UserConsent.objects.filter(user=user).first()
         self.assertIsNotNone(consent)
         self.assertEqual(consent.terms_version, 'v1.0-2026')
@@ -120,7 +122,6 @@ class AuthenticationViewsTests(TestCase):
             'password': 'MinhaSenha123!'
         })
         self.assertEqual(response.status_code, 302)
-        # O usuário deve estar autenticado na sessão do client
         self.assertTrue('_auth_user_id' in self.client.session)
 
     def test_login_fails_with_wrong_password(self):
@@ -149,11 +150,6 @@ class LegalPagesTests(TestCase):
         response = self.client.get(reverse('privacy'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'LGPD')
-
-
-import io
-from PIL import Image
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class ProfileTests(TestCase):
@@ -285,3 +281,68 @@ class ProfileSearchAndDirectMessageTests(TestCase):
         self.assertContains(inbox_res, 'Ana Mentora')
         self.assertContains(inbox_res, 'List Comprehension')
 
+
+class NotificationBellTests(TestCase):
+    """
+    Testes da Onda 5:
+    Item #23: Alerta (sininho) de novas publicações e conquistas.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            email='bell_user@codeview.com',
+            password='Password123!',
+            first_name='Dev Alerta'
+        )
+        from .models import Notification
+        self.n1 = Notification.objects.create(
+            user=self.user,
+            title='Alerta 1',
+            message='Primeira mensagem de teste.',
+            icon='🔔',
+            is_read=False
+        )
+        self.n2 = Notification.objects.create(
+            user=self.user,
+            title='Alerta 2',
+            message='Segunda mensagem de teste.',
+            icon='🚀',
+            is_read=False
+        )
+
+    def test_notification_list_view_authenticated(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('notifications'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/notifications.html')
+        self.assertContains(response, 'Alerta 1')
+        self.assertContains(response, 'Alerta 2')
+
+    def test_mark_single_notification_read(self):
+        self.client.force_login(self.user)
+        url = reverse('notification_read', kwargs={'notification_id': self.n1.id})
+        response = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['unread_count'], 1)
+
+        self.n1.refresh_from_db()
+        self.assertTrue(self.n1.is_read)
+
+    def test_mark_all_notifications_read(self):
+        self.client.force_login(self.user)
+        url = reverse('notifications_read_all')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+
+        self.n1.refresh_from_db()
+        self.n2.refresh_from_db()
+        self.assertTrue(self.n1.is_read)
+        self.assertTrue(self.n2.is_read)
+
+    def test_notifications_context_processor(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['unread_notifications_count'], 2)

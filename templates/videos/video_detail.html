@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ video.title }} | CodeView{% endblock %}
+
+{% block extra_head %}
+<!-- Open Graph Meta Tags para pré-visualização rica no WhatsApp, LinkedIn e Twitter -->
+<meta property="og:title" content="{{ video.title }} | CodeView">
+<meta property="og:description" content="{{ video.description|default:'Pílula prática de código no CodeView.' }}">
+<meta property="og:type" content="video.other">
+<meta property="og:url" content="{{ absolute_url }}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <!-- Top Navigation -->
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <nav class="flex items-center gap-2 text-xs text-gray-400">
+            <a href="{% url 'feed' %}" class="hover:text-cyan-400 transition">🎬 Feed de Vídeos</a>
+            <span>/</span>
+            <span class="text-gray-200 font-semibold truncate">{{ video.title }}</span>
+        </nav>
+
+        <a href="{% url 'feed' %}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
+            <span>&larr;</span> Voltar ao Feed
+        </a>
+    </div>
+
+    <!-- Main Player & Details Card -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Left: 9:16 Video Player -->
+        <div class="lg:col-span-5 flex justify-center">
+            <div class="relative w-full max-w-[340px] sm:max-w-[380px] h-[600px] sm:h-[660px] bg-black rounded-3xl border border-gray-800 shadow-2xl overflow-hidden flex items-center justify-center">
+                <video class="w-full h-full object-cover" 
+                       src="{{ video.video_file.url }}" 
+                       controls 
+                       playsinline 
+                       autoplay 
+                       loop></video>
+
+                <!-- Technology Badge -->
+                <div class="absolute top-4 left-4 pointer-events-none">
+                    <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
+                        {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Information & Sharing Tools (Onda 5 - #22) -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- Title & Meta -->
+            <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+                <div class="flex items-center justify-between gap-3">
+                    <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-3 group">
+                        {% if video.author.profile and video.author.profile.avatar %}
+                            <img src="{{ video.author.profile.avatar.url }}" alt="{{ video.author.first_name }}" class="w-10 h-10 rounded-xl object-cover border border-cyan-500/40">
+                        {% else %}
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40">
+                                {{ video.author.first_name|default:video.author.email|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <span class="text-xs text-gray-400 block">Autor da Pílula</span>
+                            <span class="text-sm font-bold text-white group-hover:text-cyan-400 transition">
+                                {{ video.author.get_full_name|default:video.author.first_name|default:video.author.username }}
+                            </span>
+                        </div>
+                    </a>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl">
+                            👁️ {{ video.views_count }} views
+                        </span>
+                        <span class="text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/60 px-3 py-1.5 rounded-xl">
+                            ❤️ {{ video.likes_count }} likes
+                        </span>
+                    </div>
+                </div>
+
+                <h1 class="text-xl sm:text-2xl font-extrabold text-white leading-snug">
+                    {{ video.title }}
+                </h1>
+
+                {% if video.description %}
+                    <p class="text-sm text-gray-300 leading-relaxed pt-2 border-t border-gray-800">
+                        {{ video.description }}
+                    </p>
+                {% endif %}
+
+                <!-- Challenge Link (if linked) -->
+                {% with lesson=video.lessons.first %}
+                    {% if lesson and lesson.challenge %}
+                        <div class="pt-4 border-t border-gray-800 flex items-center justify-between gap-4">
+                            <div>
+                                <span class="text-xs font-bold text-amber-300 block">⚡ Desafio Prático Disponível</span>
+                                <span class="text-[11px] text-gray-400">Esta pílula faz parte de uma trilha com exercício interativo.</span>
+                            </div>
+                            <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg transition">
+                                Resolver Desafio &rarr;
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Compartilhar Vídeo Card (Onda 5 - #22) -->
+            <div class="bg-[#111827] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                        <span>🔗</span> Compartilhar Pílula de Código
+                    </span>
+                    <span class="text-[11px] text-gray-400">Link direto e redes</span>
+                </div>
+
+                <!-- Copy Link Bar -->
+                <div class="flex items-center gap-2">
+                    <input id="share-link-input" 
+                           type="text" 
+                           readonly 
+                           value="{{ absolute_url }}" 
+                           class="flex-1 px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-xs text-gray-300 font-mono focus:outline-none select-all">
+                    <button id="btn-copy-link" 
+                            type="button" 
+                            class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md transition shrink-0">
+                        <span id="copy-text">Copiar Link</span>
+                    </button>
+                </div>
+
+                <!-- Quick Share Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                    <!-- WhatsApp -->
+                    <a href="https://api.whatsapp.com/send?text=Confira%20esta%20p%C3%ADlula%20de%20c%C3%B3digo%20sobre%20{{ video.title|urlencode }}%20no%20CodeView:%20{{ absolute_url|urlencode }}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 transition">
+                        <span>💬</span> WhatsApp
+                    </a>
+
+                    <!-- LinkedIn -->
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ absolute_url|urlencode }}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-blue-950/80 hover:bg-blue-900 border border-blue-700/80 text-blue-300 transition">
+                        <span>💼</span> LinkedIn
+                    </a>
+
+                    <!-- Twitter / X -->
+                    <a href="https://twitter.com/intent/tweet?text=Confira%20esta%20p%C3%ADlula%20de%20c%C3%B3digo:%20{{ video.title|urlencode }}&url={{ absolute_url|urlencode }}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 transition">
+                        <span>🐦</span> X/Twitter
+                    </a>
+
+                    <!-- Web Share API (Dispositivos Móveis e Navegadores Modernos) -->
+                    <button id="btn-native-share" 
+                            type="button" 
+                            class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-300 transition">
+                        <span>📱</span> Mais Opções
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const copyBtn = document.getElementById('btn-copy-link');
+        const copyInput = document.getElementById('share-link-input');
+        const copyText = document.getElementById('copy-text');
+        const nativeShareBtn = document.getElementById('btn-native-share');
+
+        if (copyBtn && copyInput) {
+            copyBtn.addEventListener('click', () => {
+                copyInput.select();
+                navigator.clipboard.writeText(copyInput.value).then(() => {
+                    copyText.textContent = '✓ Copiado!';
+                    copyBtn.classList.add('bg-emerald-600');
+                    setTimeout(() => {
+                        copyText.textContent = 'Copiar Link';
+                        copyBtn.classList.remove('bg-emerald-600');
+                    }, 2500);
+                }).catch(() => {
+                    document.execCommand('copy');
+                    copyText.textContent = '✓ Copiado!';
+                });
+            });
+        }
+
+        if (nativeShareBtn) {
+            nativeShareBtn.addEventListener('click', () => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: '{{ video.title|escapejs }} | CodeView',
+                        text: 'Confira esta pílula de programação no CodeView!',
+                        url: '{{ absolute_url|escapejs }}'
+                    }).catch(console.error);
+                } else {
+                    if (copyBtn) copyBtn.click();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+

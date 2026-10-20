@@ -3,10 +3,10 @@
 {% block title %}Certificado Digital {{ certificate.validation_code }} | CodeView{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-6">
 
     <!-- Top Navigation Actions -->
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+    <div class="flex flex-wrap items-center justify-between gap-4 print:hidden">
         <nav class="flex items-center gap-2 text-xs text-gray-400">
             <a href="{% url 'course_list' %}" class="hover:text-cyan-400 transition">Mini Cursos</a>
             <span>/</span>
@@ -15,18 +15,21 @@
             <span class="text-emerald-400 font-semibold">Certificado Digital</span>
         </nav>
 
-        <div class="flex items-center gap-3">
-            <a href="{% url 'public_profile' student.id %}" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
-                👤 Ver Portfólio Vivo
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <a href="{% url 'public_profile' student.id %}" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
+                👤 Portfólio Vivo
             </a>
-            <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition">
-                <span>🖨️</span> Imprimir / Salvar PDF
+            <a href="{% url 'certificate_pdf' certificate.validation_code %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 shadow-lg shadow-emerald-500/20 transition">
+                <span>⬇️</span> Baixar PDF Oficial
+            </a>
+            <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-700 transition">
+                <span>🖨️</span> Imprimir
             </button>
         </div>
     </div>
 
     <!-- Certificate Card -->
-    <div class="bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0c192c] border-2 border-cyan-500/50 rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden">
+    <div class="bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0c192c] border-2 border-cyan-500/50 rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden">
         <!-- Decorative Glow -->
         <div class="absolute -top-24 -right-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -42,7 +45,7 @@
                 </span>
             </div>
 
-            <div class="py-4">
+            <div class="py-2">
                 <p class="text-xs sm:text-sm uppercase tracking-widest text-gray-400 font-semibold">
                     Certificamos para fins de comprovação técnica no Portfólio Vivo que
                 </p>
@@ -59,7 +62,7 @@
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-3">
                     {{ course.title }}
                 </h2>
-                <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+                <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4">
                     <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-cyan-300">
                         {{ course.technology.icon_name|default:'💻' }} {{ course.technology.name|default:'Programação' }}
                     </span>
@@ -72,8 +75,35 @@
                 </div>
             </div>
 
+            <!-- Validation & QR Code Highlight -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-gray-900/90 border border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+                <div class="flex items-center gap-4">
+                    <img src="{% url 'certificate_qr' certificate.validation_code %}"
+                         alt="QR Code de Autenticidade"
+                         class="w-20 h-20 rounded-xl bg-white p-1 border-2 border-emerald-500/40 shadow-md shrink-0">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Autenticidade Garantida</span>
+                        </div>
+                        <p class="text-xs text-gray-300 mt-1 max-w-md">
+                            Escaneie o QR Code ou consulte a URL pública oficial para comprovar a realização das pílulas e desafios práticos.
+                        </p>
+                        <p class="text-[11px] code-font text-cyan-400 mt-1">
+                            Código: <strong>{{ certificate.validation_code }}</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="shrink-0 w-full sm:w-auto text-right print:hidden">
+                    <a href="{% url 'certificate_pdf' certificate.validation_code %}"
+                       class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 transition shadow-lg shadow-cyan-500/20">
+                        <span>⬇️</span> Baixar PDF
+                    </a>
+                </div>
+            </div>
+
             <!-- Footer Metadata: Issue Date, Instructor, Authenticity Hash -->
-            <div class="pt-8 mt-8 border-t border-gray-800 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+            <div class="pt-6 border-t border-gray-800 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-left">
                 <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-4">
                     <span class="text-[11px] uppercase tracking-wider text-gray-500 block font-semibold">Data de Emissão</span>
                     <span class="text-sm font-bold text-white mt-1 block">{{ certificate.issued_at|date:"d/m/Y \à\s H:i" }}</span>
@@ -92,6 +122,106 @@
         </div>
     </div>
 
-</div>
-{% endblock %}
+    <!-- Share Certificate Section (Onda 5 - #21) -->
+    <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 print:hidden space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <span>📢</span> Compartilhe seu Certificado no Portfólio & Redes
+                </h3>
+                <p class="text-xs text-gray-400">
+                    Mostre aos recrutadores suas habilidades validadas na prática.
+                </p>
+            </div>
+            {% if request.user == student %}
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-800 self-start sm:self-auto">
+                Seu Certificado
+            </span>
+            {% endif %}
+        </div>
 
+        <!-- Copy Link Field -->
+        <div class="flex items-center gap-2">
+            <input type="text"
+                   id="certShareUrl"
+                   readonly
+                   value="{{ request.build_absolute_uri }}"
+                   class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-gray-300 font-mono focus:outline-none focus:border-cyan-500 select-all">
+            <button onclick="copyCertLink()"
+                    id="copyCertBtn"
+                    class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition shrink-0 flex items-center gap-1.5 shadow-lg shadow-cyan-500/20">
+                <span>📋</span> Copiar Link
+            </button>
+        </div>
+
+        <!-- Social Share Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5 pt-1">
+            <!-- LinkedIn -->
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0A66C2]/20 hover:bg-[#0A66C2]/30 text-[#0A66C2] border border-[#0A66C2]/40 transition">
+                <span>💼</span> Compartilhar no LinkedIn
+            </a>
+
+            <!-- WhatsApp -->
+            <a href="https://api.whatsapp.com/send?text={{ 'Confira meu Certificado Digital em '|urlencode }}{{ course.title|urlencode }}{{ ' emitido pela plataforma CodeView: '|urlencode }}{{ request.build_absolute_uri|urlencode }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 transition">
+                <span>💬</span> WhatsApp
+            </a>
+
+            <!-- Twitter / X -->
+            <a href="https://twitter.com/intent/tweet?text={{ 'Concluí o curso de '|urlencode }}{{ course.title|urlencode }}{{ ' na plataforma @CodeView! Confira meu certificado: '|urlencode }}&url={{ request.build_absolute_uri|urlencode }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+                <span>🐦</span> X / Twitter
+            </a>
+
+            <!-- Native Web Share API -->
+            <button onclick="shareCertNative()"
+                    id="nativeCertShareBtn"
+                    class="hidden inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 transition">
+                <span>📲</span> Compartilhar no Celular
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function copyCertLink() {
+    const input = document.getElementById('certShareUrl');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('copyCertBtn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<span>✅</span> Copiado!';
+        btn.classList.remove('bg-cyan-600', 'hover:bg-cyan-500');
+        btn.classList.add('bg-emerald-600');
+        setTimeout(() => {
+            btn.innerHTML = origText;
+            btn.classList.remove('bg-emerald-600');
+            btn.classList.add('bg-cyan-600', 'hover:bg-cyan-500');
+        }, 2000);
+    });
+}
+
+function shareCertNative() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Certificado Digital - {{ course.title|escapejs }} | CodeView',
+            text: 'Concluí com 100% de aproveitamento o curso {{ course.title|escapejs }} no CodeView!',
+            url: window.location.href,
+        }).catch(() => {});
+    }
+}
+
+if (navigator.share) {
+    document.getElementById('nativeCertShareBtn')?.classList.remove('hidden');
+}
+</script>
+{% endblock %}

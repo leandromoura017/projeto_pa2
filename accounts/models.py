@@ -99,6 +99,33 @@ class DirectMessage(models.Model):
         return f"DM de {self.sender.email} para {self.recipient.email}"
 
 
+class Notification(models.Model):
+    """
+    Notificação / Alerta (sininho) para o usuário sobre novas publicações,
+    conquistas e mensagens (Onda 5 - #23).
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        verbose_name="Usuário Notificado"
+    )
+    title = models.CharField(max_length=150, verbose_name="Título do Alerta")
+    message = models.TextField(verbose_name="Mensagem")
+    link = models.CharField(max_length=255, blank=True, verbose_name="Link de Destino")
+    icon = models.CharField(max_length=20, default='🔔', verbose_name="Ícone")
+    is_read = models.BooleanField(default=False, verbose_name="Lida")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data/Hora")
+
+    class Meta:
+        verbose_name = "Notificação"
+        verbose_name_plural = "Notificações"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Alerta ({self.icon}) para {self.user.email}: {self.title}"
+
+
 class UserConsent(models.Model):
     """
     Registro formal e auditável de consentimento aos Termos de Uso e LGPD.

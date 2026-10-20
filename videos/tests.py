@@ -225,3 +225,70 @@ class VideoPublishAndLikeTests(TestCase):
         self.assertFalse(data2['liked'])
         self.assertEqual(data2['likes_count'], 0)
         self.assertFalse(VideoLike.objects.filter(user=self.user, video=video).exists())
+
+
+class VideoShareAndNotificationTests(TestCase):
+    """
+    Testes da Onda 5:
+    Item #22: Compartilhar vídeo (página pública com player 9:16 e links sociais).
+    Item #23: Notificação automática ao publicar novo vídeo.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.creator = User.objects.create_user(
+            email='creator5@codeview.com',
+            password='Password123!',
+            first_name='Criador 5'
+        )
+        self.subscriber = User.objects.create_user(
+            email='subscriber5@codeview.com',
+            password='Password123!',
+            first_name='Aluno Inscrito'
+        )
+        self.tech = Technology.objects.create(name='TypeScript', slug='typescript', icon_name='🔷')
+        self.dummy_file = SimpleUploadedFile("ts_tip.mp4", b"ts content", content_type="video/mp4")
+        self.video = Video.objects.create(
+            title='Generics em TypeScript no Dia a Dia',
+            description='Domine tipos flexíveis e reutilizáveis em 50 segundos.',
+            technology=self.tech,
+            author=self.creator,
+            video_file=self.dummy_file,
+            duration_seconds=50,
+            is_published=True
+        )
+
+    def test_video_detail_view_increments_views_and_renders_share_page(self):
+        url = reverse('video_detail', kwargs={'video_id': self.video.id})
+        initial_views = self.video.views_count
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'videos/video_detail.html')
+        self.assertContains(response, 'Generics em TypeScript no Dia a Dia')
+        self.assertContains(response, 'Compartilhar Pílula de Código')
+
+        self.video.refresh_from_db()
+        self.assertEqual(self.video.views_count, initial_views + 1)
+
+    def test_publishing_video_creates_notifications_for_other_users(self):
+        from accounts.models import Notification
+        self.client.force_login(self.creator)
+
+        new_video_file = SimpleUploadedFile("clean_code.mp4", b"clean code bytes", content_type="video/mp4")
+        res = self.client.post(reverse('video_publish'), {
+            'title': '3 Regras de Clean Code',
+            'technology': self.tech.id,
+            'description': 'Código legível e fácil de manter.',
+            'duration_seconds': 45,
+            'video_file': new_video_file,
+        })
+        self.assertEqual(res.status_code, 302)
+
+        # O outro usuário (subscriber) deve ter recebido a notificação
+        notif = Notification.objects.filter(
+            user=self.subscriber,
+            title__icontains='Nova pílula'
+        ).first()
+        self.assertIsNotNone(notif)
+        self.assertIn('3 Regras de Clean Code', notif.message)
+        self.assertEqual(notif.icon, '🎬')

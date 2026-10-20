@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
+from django.urls import reverse
 from .models import Technology, Video, VideoLike
 from .forms import VideoPublishForm
 
@@ -46,7 +47,8 @@ def feed_view(request):
 @login_required
 def publish_video_view(request):
     """
-    Tela e processamento de publicação (upload) de novo micro-vídeo no feed (Onda 3).
+    Tela e processamento de publicação (upload) de novo micro-vídeo no feed (Onda 3)
+    com disparo automático de alerta/notificação para outros membros (Onda 5 - #23).
     """
     if request.method == 'POST':
         form = VideoPublishForm(request.POST, request.FILES)
@@ -55,6 +57,26 @@ def publish_video_view(request):
             video.author = request.user
             video.is_published = True
             video.save()
+
+            # Disparo de Notificações / Alerta no Sininho (Onda 5 - #23)
+            from accounts.models import User, Notification
+            other_users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+            author_name = request.user.first_name or request.user.username
+            video_share_url = reverse('video_detail', kwargs={'video_id': video.id})
+            
+            notifications = [
+                Notification(
+                    user=u,
+                    title=f"Nova pílula de {video.technology.name}!",
+                    message=f"{author_name} publicou '{video.title}'. Assista agora!",
+                    link=video_share_url,
+                    icon='🎬'
+                )
+                for u in other_users
+            ]
+            if notifications:
+                Notification.objects.bulk_create(notifications)
+
             messages.success(request, f"Vídeo '{video.title}' publicado com sucesso no Feed!")
             return redirect('feed')
     else:
@@ -94,3 +116,31 @@ def toggle_video_like_view(request, video_id):
         })
 
     return redirect('feed')
+
+
+def video_detail_view(request, video_id):
+    """
+    Página individual de compartilhamento de vídeo público (Onda 5 - #22).
+    Acessível via link direto compartilhado por redes sociais, WhatsApp ou no feed.
+    """
+    video = get_object_or_404(
+        Video.objects.select_related('technology', 'author').prefetch_related('likes', 'lessons'),
+        id=video_id,
+        is_published=True
+    )
+    
+    # Incrementa contador de visualizações
+    Video.objects.filter(id=video.id).update(views_count=video.views_count + 1)
+    video.views_count += 1
+
+    is_liked = False
+    if request.user.is_authenticated:
+        is_liked = VideoLike.objects.filter(user=request.user, video=video).exists()
+
+    absolute_url = request.build_absolute_uri()
+
+    return render(request, 'videos/video_detail.html', {
+        'video': video,
+        'is_liked': is_liked,
+        'absolute_url': absolute_url,
+    })

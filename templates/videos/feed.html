@@ -98,9 +98,9 @@
                             </div>
                         </div>
 
-                        <!-- Bottom Content Overlay (Title, Description, Author, Like & Challenge) -->
+                        <!-- Bottom Content Overlay (Title, Description, Author, Like, Share & Challenge) -->
                         <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none space-y-2">
-                            <!-- Author, Like Button and Challenge Quick Link -->
+                            <!-- Author, Like Button, Share Button and Challenge Quick Link -->
                             <div class="flex items-center justify-between pointer-events-auto gap-2">
                                 <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-2 hover:opacity-90 transition">
                                     <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-[11px] font-bold text-white border border-cyan-400/40">
@@ -111,13 +111,13 @@
                                     </span>
                                 </a>
 
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5 sm:gap-2">
                                     <!-- Botão Curtir Vídeo (Onda 3) -->
                                     <form method="POST" action="{% url 'video_like' video.id %}" class="like-form inline">
                                         {% csrf_token %}
                                         <button type="submit" 
                                                 data-video-id="{{ video.id }}"
-                                                class="btn-like inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
+                                                class="btn-like inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
                                                 {% if video.id in liked_video_ids %}
                                                     bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30
                                                 {% else %}
@@ -127,6 +127,13 @@
                                             <span class="like-count">{{ video.likes.count }}</span>
                                         </button>
                                     </form>
+
+                                    <!-- Botão Compartilhar Vídeo (Onda 5 - #22) -->
+                                    <a href="{% url 'video_detail' video.id %}" 
+                                       class="btn-share-direct inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
+                                       title="Compartilhar Vídeo">
+                                        <span>🔗</span>
+                                    </a>
 
                                     {% with lesson=video.lessons.first %}
                                         {% if lesson and lesson.challenge %}
@@ -368,10 +375,10 @@
                         countEl.textContent = data.likes_count;
                         if (data.liked) {
                             heart.textContent = '❤️';
-                            btn.className = 'btn-like inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30';
+                            btn.className = 'btn-like inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30';
                         } else {
                             heart.textContent = '🤍';
-                            btn.className = 'btn-like inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-black/60 border-white/25 text-gray-200 hover:border-rose-400 hover:text-rose-300';
+                            btn.className = 'btn-like inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-black/60 border-white/25 text-gray-200 hover:border-rose-400 hover:text-rose-300';
                         }
                     }
                 } catch (err) {

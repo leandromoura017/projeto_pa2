@@ -12,6 +12,9 @@ urlpatterns = [
     path('profiles/<int:user_id>/', views.public_profile_view, name='public_profile'),
     path('dms/', views.dm_inbox_view, name='dm_inbox'),
     path('dms/<int:user_id>/', views.dm_thread_view, name='dm_thread'),
+    path('notifications/', views.notification_list_view, name='notifications'),
+    path('notifications/<int:notification_id>/read/', views.mark_notification_read_view, name='notification_read'),
+    path('notifications/read-all/', views.mark_all_notifications_read_view, name='notifications_read_all'),
     
     # Password Reset
     path('password-reset/', 

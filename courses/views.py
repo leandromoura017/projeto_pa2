@@ -1,11 +1,20 @@
+import io
+import json
+import qrcode
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
-import json
+from django.urls import reverse
+from reportlab.lib.pagesizes import landscape, A4
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.utils import ImageReader
+
 from videos.models import Technology
+from accounts.models import Notification
 from .models import (
     Course,
     Lesson,
@@ -323,6 +332,7 @@ def lesson_challenge_view(request, lesson_id):
 def issue_certificate_view(request, slug):
     """
     Emite o Certificado Digital verificável para o aluno que concluiu 100% do Mini-Curso (Onda 4).
+    Dispara notificação para o usuário (Onda 5 - #23).
     """
     if request.method != 'POST':
         return redirect('course_detail', slug=slug)
@@ -343,6 +353,13 @@ def issue_certificate_view(request, slug):
     )
 
     if created:
+        Notification.objects.create(
+            user=request.user,
+            title="🎓 Certificado Emitido!",
+            message=f"Parabéns! Você concluiu a trilha '{course.title}' e seu Certificado Digital já está disponível para validação pública e download.",
+            link=reverse('certificate_detail', args=[certificate.validation_code]),
+            icon='🎓'
+        )
         messages.success(request, f"Parabéns! Seu Certificado Digital do curso '{course.title}' foi emitido com sucesso!")
     else:
         messages.info(request, f"Exibindo seu Certificado Digital emitido para '{course.title}'.")
@@ -364,3 +381,192 @@ def certificate_detail_view(request, validation_code):
         'student': certificate.user,
     })
 
+
+def certificate_qr_code_view(request, validation_code):
+    """
+    Gera dinamicamente a imagem PNG do QR Code que aponta
+    para a página pública de validação de autenticidade do certificado (Onda 5 - #21).
+    """
+    certificate = get_object_or_404(Certificate, validation_code=validation_code)
+    public_url = request.build_absolute_uri(
+        reverse('certificate_detail', args=[certificate.validation_code])
+    )
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=6,
+        border=2,
+    )
+    qr.add_data(public_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="#0F172A", back_color="#FFFFFF")
+
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return HttpResponse(buf.getvalue(), content_type='image/png')
+
+
+def download_certificate_pdf_view(request, validation_code):
+    """
+    Gera o Certificado de Conclusão em formato PDF de alta fidelidade
+    para download oficial pelo aluno (Onda 5 - #20).
+    """
+    certificate = get_object_or_404(
+        Certificate.objects.select_related('user', 'course', 'course__technology', 'course__instructor'),
+        validation_code=validation_code
+    )
+    course = certificate.course
+    student = certificate.user
+    instructor = course.instructor
+
+    # Gerar QR Code para embutir no PDF
+    public_url = request.build_absolute_uri(
+        reverse('certificate_detail', args=[certificate.validation_code])
+    )
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=4,
+        border=1,
+    )
+    qr.add_data(public_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="#0F172A", back_color="#FFFFFF")
+    qr_buf = io.BytesIO()
+    qr_img.save(qr_buf, format='PNG')
+    qr_buf.seek(0)
+
+    # Canvas do ReportLab em Landscape A4
+    buf = io.BytesIO()
+    p = canvas.Canvas(buf, pagesize=landscape(A4))
+    width, height = landscape(A4)
+
+    # --- DESIGN DO CERTIFICADO ---
+    # Fundo moderno escuro (Navy / Dark Slate)
+    p.setFillColor(colors.HexColor('#0F172A'))
+    p.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # Moldura externa em Ciano
+    p.setStrokeColor(colors.HexColor('#06B6D4'))
+    p.setLineWidth(3)
+    p.rect(24, 24, width - 48, height - 48, fill=False, stroke=True)
+
+    # Moldura interna sutil em Esmeralda
+    p.setStrokeColor(colors.HexColor('#10B981'))
+    p.setLineWidth(1)
+    p.rect(30, 30, width - 60, height - 60, fill=False, stroke=True)
+
+    # Cantoneiras decorativas tech
+    p.setFillColor(colors.HexColor('#38BDF8'))
+    for cx, cy in [(24, 24), (width-24, 24), (24, height-24), (width-24, height-24)]:
+        p.circle(cx, cy, 4, fill=True, stroke=False)
+
+    # Logo / Badge Superior
+    p.setFillColor(colors.HexColor('#06B6D4'))
+    p.setFont("Helvetica-Bold", 16)
+    p.drawCentredString(width / 2.0, height - 70, "</> CODEVIEW")
+
+    p.setFillColor(colors.HexColor('#94A3B8'))
+    p.setFont("Helvetica-Bold", 10)
+    p.drawCentredString(width / 2.0, height - 88, "PLATAFORMA DE MICROAPRENDIZAGEM & PORTFÓLIO VIVO")
+
+    # Linha separadora decorativa superior
+    p.setStrokeColor(colors.HexColor('#1E293B'))
+    p.setLineWidth(1)
+    p.line(width/2.0 - 150, height - 98, width/2.0 + 150, height - 98)
+
+    # Título do Certificado
+    p.setFillColor(colors.HexColor('#38BDF8'))
+    p.setFont("Helvetica-Bold", 26)
+    p.drawCentredString(width / 2.0, height - 135, "CERTIFICADO DE CONCLUSÃO")
+
+    # Texto de introdução
+    p.setFillColor(colors.HexColor('#94A3B8'))
+    p.setFont("Helvetica", 12)
+    p.drawCentredString(width / 2.0, height - 170, "Certificamos para fins de comprovação técnica no Portfólio Vivo que")
+
+    # Nome do Aluno
+    student_name = student.get_full_name() or student.first_name or student.username
+    p.setFillColor(colors.HexColor('#FFFFFF'))
+    p.setFont("Helvetica-Bold", 28)
+    p.drawCentredString(width / 2.0, height - 215, student_name)
+
+    # Linha de destaque sob o nome
+    p.setStrokeColor(colors.HexColor('#06B6D4'))
+    p.setLineWidth(2)
+    text_width = p.stringWidth(student_name, "Helvetica-Bold", 28)
+    line_w = max(text_width + 40, 260)
+    p.line(width/2.0 - line_w/2.0, height - 225, width/2.0 + line_w/2.0, height - 225)
+
+    # Texto descritivo de conclusão
+    p.setFillColor(colors.HexColor('#CBD5E1'))
+    p.setFont("Helvetica", 12)
+    p.drawCentredString(
+        width / 2.0,
+        height - 255,
+        "concluiu com êxito todas as aulas práticas e desafios técnicos da trilha de conhecimento:"
+    )
+
+    # Nome do Curso
+    p.setFillColor(colors.HexColor('#22D3EE'))
+    p.setFont("Helvetica-Bold", 20)
+    p.drawCentredString(width / 2.0, height - 290, course.title)
+
+    # Metadados do Curso (Tecnologia, Nível, Carga Horária)
+    tech_name = course.technology.name if course.technology else "Programação"
+    level_display = course.get_level_display()
+    workload = f"{course.estimated_minutes} min ({course.total_lessons} pílulas)"
+    metadata_text = f"Tecnologia: {tech_name}   |   Nível: {level_display}   |   Carga Horária: {workload}"
+    p.setFillColor(colors.HexColor('#94A3B8'))
+    p.setFont("Helvetica", 10)
+    p.drawCentredString(width / 2.0, height - 315, metadata_text)
+
+    # Bloco Inferior: Instrutor, Data & Código de Autenticidade + QR Code
+    y_footer = 85
+
+    # Coluna 1: Instrutor
+    p.setStrokeColor(colors.HexColor('#334155'))
+    p.setLineWidth(1)
+    p.line(70, y_footer + 50, 260, y_footer + 50)
+    instructor_name = instructor.get_full_name() or instructor.first_name or instructor.username
+    p.setFillColor(colors.HexColor('#FFFFFF'))
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(70, y_footer + 36, instructor_name)
+    p.setFillColor(colors.HexColor('#64748B'))
+    p.setFont("Helvetica", 8)
+    p.drawString(70, y_footer + 24, "Mentor / Instrutor Responsável")
+
+    # Coluna 2: Data de Emissão & Código de Autenticidade
+    issue_date_str = certificate.issued_at.strftime('%d/%m/%Y às %H:%M')
+    p.setFillColor(colors.HexColor('#94A3B8'))
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(300, y_footer + 46, f"Data de Emissão: {issue_date_str}")
+    p.setFillColor(colors.HexColor('#10B981'))
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(300, y_footer + 30, f"Autenticidade: {certificate.validation_code}")
+    p.setFillColor(colors.HexColor('#64748B'))
+    p.setFont("Helvetica", 8)
+    p.drawString(300, y_footer + 16, "Validação pública via CodeView Authenticity Engine")
+
+    # Coluna 3: QR Code embutido
+    p.drawImage(
+        ImageReader(qr_buf),
+        width - 170,
+        y_footer + 5,
+        width=70,
+        height=70
+    )
+    p.setFillColor(colors.HexColor('#94A3B8'))
+    p.setFont("Helvetica", 7)
+    p.drawCentredString(width - 135, y_footer - 4, "Escaneie para validar")
+
+    p.showPage()
+    p.save()
+    buf.seek(0)
+
+    response = HttpResponse(buf.getvalue(), content_type='application/pdf')
+    filename = f"certificado_codeview_{certificate.validation_code}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

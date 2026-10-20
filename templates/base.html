@@ -62,7 +62,7 @@
             <!-- Center Navigation / Links -->
             {% if user.is_authenticated %}
             <nav class="flex items-center gap-1 sm:gap-2">
-                <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' or request.resolver_match.url_name == 'video_detail' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
                     <span>🎬</span> <span>Feed</span>
                 </a>
                 <a href="{% url 'course_list' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'course' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name or 'certificate' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
@@ -83,6 +83,59 @@
             <!-- Right Actions / Auth State -->
             <div class="flex items-center gap-2 sm:gap-3">
                 {% if user.is_authenticated %}
+                    <!-- Notification Bell (Onda 5 - #23) -->
+                    <div class="relative" id="notifications-container">
+                        <button id="btn-notifications" type="button" class="relative p-2 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/80 transition" title="Notificações & Alertas">
+                            <span class="text-base sm:text-lg">🔔</span>
+                            {% if unread_notifications_count > 0 %}
+                                <span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center shadow-lg shadow-rose-500/40 animate-pulse">
+                                    {{ unread_notifications_count }}
+                                </span>
+                            {% endif %}
+                        </button>
+
+                        <!-- Dropdown Panel -->
+                        <div id="dropdown-notifications" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                            <div class="p-4 border-b border-gray-800 flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                                    <span>🔔</span> Alertas & Novidades
+                                </span>
+                                <a href="{% url 'notifications' %}" class="text-[11px] font-semibold text-cyan-400 hover:underline">
+                                    Ver Todas
+                                </a>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto divide-y divide-gray-800/60">
+                                {% if recent_notifications %}
+                                    {% for notif in recent_notifications %}
+                                        <a href="{% if notif.link %}{% url 'notification_read' notif.id %}{% else %}{% url 'notifications' %}{% endif %}" class="block p-3.5 hover:bg-gray-800/60 transition {% if not notif.is_read %}bg-cyan-950/20{% endif %}">
+                                            <div class="flex items-start gap-2.5">
+                                                <span class="text-base shrink-0 mt-0.5">{{ notif.icon|default:'🔔' }}</span>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-xs font-bold text-white truncate">{{ notif.title }}</p>
+                                                    <p class="text-[11px] text-gray-400 line-clamp-2 mt-0.5 leading-snug">{{ notif.message }}</p>
+                                                    <span class="text-[10px] text-gray-500 mt-1 block">{{ notif.created_at|date:"d/m H:i" }}</span>
+                                                </div>
+                                                {% if not notif.is_read %}
+                                                    <span class="w-2 h-2 rounded-full bg-cyan-400 shrink-0 mt-1.5"></span>
+                                                {% endif %}
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="p-6 text-center text-xs text-gray-400">
+                                        Nenhum alerta recente.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="p-2.5 bg-gray-900 border-t border-gray-800 text-center">
+                                <a href="{% url 'notifications' %}" class="text-xs font-bold text-cyan-400 hover:text-cyan-300">
+                                    Abrir Central Completa &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Button -->
                     <a href="{% url 'profile' %}" class="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl hover:bg-gray-800/70 border border-transparent hover:border-gray-700 transition group" title="Meu Perfil">
                         {% if user.profile and user.profile.avatar %}
                             <img src="{{ user.profile.avatar.url }}" alt="{{ user.first_name }}" class="w-8 h-8 rounded-lg object-cover border border-cyan-500/40">
@@ -146,6 +199,28 @@
             </div>
         </div>
     </footer>
+
+    <!-- Notification Bell Dropdown Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btn-notifications');
+            const dropdown = document.getElementById('dropdown-notifications');
+            const container = document.getElementById('notifications-container');
+
+            if (btn && dropdown) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (container && !container.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

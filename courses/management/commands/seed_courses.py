@@ -7,10 +7,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Popula o banco de dados com mini-cursos, aulas e desafios práticos para a Onda 2."
+    help = "Popula o banco de dados com mini-cursos, aulas, desafios práticos e notificações para a Onda 5."
 
     def handle(self, *args, **options):
-        from accounts.models import Profile, DirectMessage
+        from accounts.models import Profile, DirectMessage, Notification
 
         # 1. Obter instrutor padrão (admin) e configurar como Mentor
         instructor = User.objects.filter(is_superuser=True).first()
@@ -54,6 +54,28 @@ class Command(BaseCommand):
                 recipient=student_user,
                 content='Olá! Sou a mentora Ana Clara. Qualquer dúvida nos desafios práticos ou nos mini-cursos, pode me chamar aqui na DM!'
             )
+
+        # Semear notificações de demonstração da Onda 5 (#23 - Alerta de Sininho)
+        target_users = [u for u in [student_user, instructor] if u is not None]
+        for target in target_users:
+            if not Notification.objects.filter(user=target, title__icontains="Bem-vindo").exists():
+                Notification.objects.create(
+                    user=target,
+                    title="🎉 Bem-vindo à Onda 5 do CodeView!",
+                    message="Agora você pode baixar seus Certificados em PDF, compartilhar via QR Code e receber alertas em tempo real.",
+                    link="/courses/",
+                    icon="🎓",
+                    is_read=False
+                )
+            if not Notification.objects.filter(user=target, title__icontains="Novo Mini-Curso").exists():
+                Notification.objects.create(
+                    user=target,
+                    title="🔥 Novo Mini-Curso Disponível!",
+                    message="O curso 'Automação de Processos com Python' possui desafios de código práticos e emissão de certificado.",
+                    link="/courses/automacao-processos-python/",
+                    icon="🐍",
+                    is_read=False
+                )
 
         # 2. Obter Tecnologias
         tech_python = Technology.objects.filter(slug='python').first()
@@ -237,4 +259,4 @@ class Command(BaseCommand):
                     if c_created:
                         self.stdout.write(self.style.SUCCESS(f"    [DESAFIO] Desafio cadastrado: {challenge.title}"))
 
-        self.stdout.write(self.style.SUCCESS("Catalogo e Desafios da Onda 2 semeados com sucesso!"))
+        self.stdout.write(self.style.SUCCESS("Catalogo, Desafios e Notificacoes da Onda 5 semeados com sucesso!"))

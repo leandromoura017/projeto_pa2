@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Count
 from django.http import JsonResponse
 from .forms import SignUpForm, LoginForm, ProfileEditForm
-from .models import User, Profile, DirectMessage
+from .models import User, Profile, DirectMessage, Notification
 
 
 def _build_portfolio_context(target_user):
@@ -303,3 +303,54 @@ def dm_thread_view(request, user_id):
         'other_user': other_user,
         'thread_messages': thread_messages,
     })
+
+
+@login_required
+def notification_list_view(request):
+    """
+    Central de Notificações / Alertas (sininho) de novas publicações e avisos (Onda 5 - #23).
+    """
+    notifications = request.user.notifications.all()
+    unread_count = notifications.filter(is_read=False).count()
+    return render(request, 'accounts/notifications.html', {
+        'notifications': notifications,
+        'unread_count': unread_count,
+    })
+
+
+@login_required
+def mark_notification_read_view(request, notification_id):
+    """
+    Marca uma notificação individual como lida e redireciona para o link associado se houver.
+    """
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+
+    unread_count = request.user.notifications.filter(is_read=False).count()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'status': 'success',
+            'notification_id': notification.id,
+            'unread_count': unread_count,
+        })
+
+    if notification.link:
+        return redirect(notification.link)
+    return redirect('notifications')
+
+
+@login_required
+def mark_all_notifications_read_view(request):
+    """
+    Marca todas as notificações pendentes do usuário como lidas.
+    """
+    if request.method == 'POST':
+        request.user.notifications.filter(is_read=False).update(is_read=True)
+        messages.success(request, "Todas as notificações foram marcadas como lidas.")
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'unread_count': 0})
+
+    return redirect('notifications')

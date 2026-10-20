@@ -8,8 +8,8 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 
 * 🟢 **MVP 1 (O Início - Fundação & Feed Core):** Onda 1 — *100% Concluído e testado.*
 * 🟡 **MVP 2 (O Meio - Interatividade & Prática Ativa):** Ondas 2 e 3 — *100% Concluído e testado.*
-* 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *Onda 4 100% Concluída; Onda 5 próxima etapa.*
-* 🟣 **Pós-MVP (Visão de Longo Prazo / Releases Futuras):** Ondas 6, 7 e 8 — *Roadmap de produto para a banca.*
+* 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *100% Concluído e testado (61 testes automatizados passando).*
+* 🟣 **Pós-MVP (Visão de Longo Prazo / Releases Futuras):** Ondas 6, 7 e 8 — *Roadmap de produto estruturado para apresentação da banca.*
 
 ---
 
@@ -40,10 +40,10 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 | 17 | **Progresso do curso** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
 | 18 | **Emissão do Certificado** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
 | 19 | **Aba de DMs para conversas com mentores** | 4 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
-| 20 | **Baixar certificado (PDF)** | 5 | 🟢 Verde | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
-| 21 | **Compartilhar certificado (QR Code público)** | 5 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
-| 22 | **Compartilhar vídeo** | 5 | 🔴 Vermelho | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
-| 23 | **Alerta (sininho) de novas publicações** | 5 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | 📅 Onda Futura |
+| 20 | **Baixar certificado (PDF)** | 5 | 🟢 Verde | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
+| 21 | **Compartilhar certificado (QR Code público)** | 5 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
+| 22 | **Compartilhar vídeo** | 5 | 🔴 Vermelho | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
+| 23 | **Alerta (sininho) de novas publicações** | 5 | 🟡 Amarelo | **MVP 3 (Fim - Certificação & Validação)** | ✅ Concluído |
 | | | | | | |
 | 24 | **Aba de comentários** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
 | 25 | **Cronograma do curso** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | 🚀 Roadmap |

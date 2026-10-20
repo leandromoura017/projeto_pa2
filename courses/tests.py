@@ -357,3 +357,76 @@ class CourseProgressAndCertificateTests(TestCase):
         self.assertContains(res_detail, 'Trilha Certificada Python')
         self.assertContains(res_detail, cert.validation_code)
 
+
+
+class CertificateDownloadAndQrTests(TestCase):
+    """
+    Testes da Onda 5:
+    Item #20: Baixar certificado (PDF).
+    Item #21: Compartilhar certificado (QR Code público).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.student = User.objects.create_user(
+            email='cert_download@codeview.com',
+            password='Pass12345!',
+            first_name='Mariana',
+            last_name='Dev'
+        )
+        self.instructor = User.objects.create_user(
+            email='mentor_pdf@codeview.com',
+            password='Pass12345!',
+            first_name='Instrutor Rodrigo'
+        )
+        self.tech = Technology.objects.create(name='Django', slug='django', icon_name='🎯')
+        self.course = Course.objects.create(
+            title='Django Rest Framework Avançado',
+            slug='drf-avancado',
+            description='APIs profissionais.',
+            technology=self.tech,
+            instructor=self.instructor,
+            is_published=True
+        )
+        from .models import Certificate
+        self.certificate = Certificate.objects.create(
+            user=self.student,
+            course=self.course,
+            validation_code='CV-2026-DRFTEST1'
+        )
+
+    def test_certificate_qr_code_view_returns_png_image(self):
+        url = reverse('certificate_qr', kwargs={'validation_code': self.certificate.validation_code})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/png')
+        self.assertGreater(len(response.content), 100)
+
+    def test_download_certificate_pdf_view_returns_pdf(self):
+        url = reverse('certificate_pdf', kwargs={'validation_code': self.certificate.validation_code})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment;', response['Content-Disposition'])
+        self.assertIn('CV-2026-DRFTEST1.pdf', response['Content-Disposition'])
+        self.assertGreater(len(response.content), 500)
+
+    def test_certificate_issuance_triggers_notification(self):
+        from accounts.models import Notification
+        new_course = Course.objects.create(
+            title='Nova Trilha Fullstack',
+            slug='nova-trilha-fullstack',
+            description='Curso completo.',
+            instructor=self.instructor,
+            is_published=True
+        )
+        l1 = Lesson.objects.create(course=new_course, title='Aula Única', order=1)
+        self.client.force_login(self.student)
+        self.client.post(reverse('lesson_complete', kwargs={'lesson_id': l1.id}))
+
+        # Emitir
+        self.client.post(reverse('issue_certificate', kwargs={'slug': new_course.slug}))
+
+        notif = Notification.objects.filter(user=self.student, title__icontains='Certificado Emitido').first()
+        self.assertIsNotNone(notif)
+        self.assertEqual(notif.icon, '🎓')
+        self.assertIn('Nova Trilha Fullstack', notif.message)
