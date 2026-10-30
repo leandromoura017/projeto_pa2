@@ -139,6 +139,117 @@ class UserConsent(models.Model):
         return f"Consentimento LGPD ({self.terms_version}) - {self.user.email}"
 
 
+class TAMEvaluation(models.Model):
+    """
+    Coleta estruturada de dados empíricos de aceitação da tecnologia
+    baseado no Technology Acceptance Model (Davis, 1989) para o PA2.
+    """
+    ROLE_CHOICES = [
+        ('estudante', 'Estudante de TI / Computação'),
+        ('dev_junior', 'Desenvolvedor(a) Júnior / Estagiário(a)'),
+        ('dev_pleno_senior', 'Desenvolvedor(a) Pleno / Sênior / Lead'),
+        ('recruiter', 'Recrutador(a) / Tech Recruiter / RH'),
+        ('professor', 'Professor(a) / Instrutor(a) / Mentor(a)'),
+        ('outro', 'Outro perfil profissional'),
+    ]
+
+    EXPERIENCE_CHOICES = [
+        ('menos_1_ano', 'Menos de 1 ano (Iniciante)'),
+        ('1_a_3_anos', 'De 1 a 3 anos'),
+        ('3_a_5_anos', 'De 3 a 5 anos'),
+        ('mais_5_anos', 'Mais de 5 anos'),
+    ]
+
+    DEVICE_CHOICES = [
+        ('desktop', 'Computador Desktop / Notebook'),
+        ('mobile', 'Smartphone / Celular'),
+        ('tablet', 'Tablet'),
+    ]
+
+    LIKERT_CHOICES = [
+        (1, '1 - Discordo Totalmente'),
+        (2, '2 - Discordo Parcialmente'),
+        (3, '3 - Neutro / Indiferente'),
+        (4, '4 - Concordo Parcialmente'),
+        (5, '5 - Concordo Totalmente'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tam_evaluations',
+        verbose_name="Usuário (se logado)"
+    )
+    evaluator_name = models.CharField(max_length=120, blank=True, verbose_name="Nome (ou Iniciais)")
+    evaluator_email = models.EmailField(blank=True, verbose_name="E-mail de Contato")
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES, verbose_name="Perfil de Atuação")
+    experience = models.CharField(max_length=50, choices=EXPERIENCE_CHOICES, verbose_name="Tempo de Experiência")
+    device = models.CharField(max_length=50, choices=DEVICE_CHOICES, verbose_name="Dispositivo Utilizado")
+
+    # Construto PU: Utilidade Percebida (Perceived Usefulness)
+    pu1 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PU1: Pílulas curtas agilizam aprendizado")
+    pu2 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PU2: Desafios instantâneos aumentam fixação")
+    pu3 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PU3: Portfólio Vivo demonstra melhor competências")
+    pu4 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PU4: Cronograma e Certificado com QR agregam valor")
+    pu5 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PU5: CodeView é uma ferramenta útil e vantajosa")
+
+    # Construto PEOU: Facilidade de Uso Percebida (Perceived Ease of Use)
+    peou1 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PEOU1: Navegação clara e intuitiva")
+    peou2 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PEOU2: Interface visual limpa e agradável")
+    peou3 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PEOU3: Submissão de desafios simples")
+    peou4 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PEOU4: Progresso e certificado sem burocracia")
+    peou5 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="PEOU5: Fácil de operar sem treinamento")
+
+    # Construto ATU: Atitude em Relação ao Uso (Attitude Toward Using)
+    atu1 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="ATU1: Experiência agradável e estimulante")
+    atu2 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="ATU2: Formato moderno e engajador")
+    atu3 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="ATU3: Percepção geral muito positiva")
+
+    # Construto BIU: Intenção Comportamental de Uso (Behavioral Intention to Use)
+    biu1 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="BIU1: Usaria regularmente para atualizar-me")
+    biu2 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="BIU2: Indicaria a amigos e colegas de TI")
+    biu3 = models.PositiveSmallIntegerField(choices=LIKERT_CHOICES, verbose_name="BIU3: Preferiria ao invés de cursos longos")
+
+    # Avaliação Qualitativa Aberta
+    highlights = models.TextField(blank=True, verbose_name="Pontos Fortes / Destaques")
+    difficulties = models.TextField(blank=True, verbose_name="Dificuldades ou Atritos")
+    suggestions = models.TextField(blank=True, verbose_name="Sugestões de Melhoria")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Submissão")
+
+    class Meta:
+        verbose_name = "Avaliação TAM"
+        verbose_name_plural = "Avaliações TAM (Pesquisa PA2)"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        nome = self.evaluator_name or (self.user.email if self.user else "Avaliador Anônimo")
+        return f"TAM #{self.id} - {nome} ({self.get_role_display()}) - Média Geral: {self.overall_score:.2f}"
+
+    @property
+    def pu_score(self):
+        return (self.pu1 + self.pu2 + self.pu3 + self.pu4 + self.pu5) / 5.0
+
+    @property
+    def peou_score(self):
+        return (self.peou1 + self.peou2 + self.peou3 + self.peou4 + self.peou5) / 5.0
+
+    @property
+    def atu_score(self):
+        return (self.atu1 + self.atu2 + self.atu3) / 3.0
+
+    @property
+    def biu_score(self):
+        return (self.biu1 + self.biu2 + self.biu3) / 3.0
+
+    @property
+    def overall_score(self):
+        return (self.pu_score + self.peou_score + self.atu_score + self.biu_score) / 4.0
+
+
+
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:

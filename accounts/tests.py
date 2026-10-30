@@ -360,3 +360,71 @@ class NotificationBellTests(TestCase):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['unread_notifications_count'], 2)
+
+
+class TAMEvaluationTests(TestCase):
+    """
+    Testes do instrumento empírico de Aceitação de Tecnologia (TAM - Davis, 1989).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            email='evaluator@codeview.com',
+            password='Password123!',
+            first_name='Avaliador Teste'
+        )
+        self.tam_url = reverse('tam_evaluation')
+
+    def test_tam_get_view_renders_properly(self):
+        response = self.client.get(self.tam_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/tam_evaluation.html')
+        self.assertContains(response, 'Formulário de Aceitação de Tecnologia')
+        self.assertContains(response, 'PU1: Pílulas Curtas')
+        self.assertContains(response, 'PEOU1: Navegação Intuitiva')
+
+    def test_tam_submit_anonymous_success(self):
+        from accounts.models import TAMEvaluation
+        payload = {
+            'evaluator_name': 'Dev Externo',
+            'evaluator_email': 'dev.externo@empresa.com',
+            'role': 'dev_junior',
+            'experience': '1_a_3_anos',
+            'device': 'desktop',
+            'pu1': 5, 'pu2': 5, 'pu3': 4, 'pu4': 4, 'pu5': 5,
+            'peou1': 5, 'peou2': 4, 'peou3': 5, 'peou4': 4, 'peou5': 5,
+            'atu1': 5, 'atu2': 5, 'atu3': 5,
+            'biu1': 4, 'biu2': 5, 'biu3': 5,
+            'highlights': 'Muito prático e direto ao ponto.',
+            'difficulties': 'Nenhuma.',
+            'suggestions': 'Mais trilhas de cloud.'
+        }
+        response = self.client.post(self.tam_url, data=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/tam_success.html')
+
+        eval_obj = TAMEvaluation.objects.get(evaluator_email='dev.externo@empresa.com')
+        self.assertEqual(eval_obj.role, 'dev_junior')
+        self.assertEqual(eval_obj.pu_score, 4.6)
+        self.assertEqual(eval_obj.peou_score, 4.6)
+        self.assertEqual(eval_obj.atu_score, 5.0)
+        self.assertAlmostEqual(eval_obj.overall_score, 4.7166, places=2)
+
+    def test_tam_submit_authenticated_links_user(self):
+        from accounts.models import TAMEvaluation
+        self.client.force_login(self.user)
+        payload = {
+            'role': 'estudante',
+            'experience': 'menos_1_ano',
+            'device': 'mobile',
+            'pu1': 4, 'pu2': 4, 'pu3': 4, 'pu4': 4, 'pu5': 4,
+            'peou1': 4, 'peou2': 4, 'peou3': 4, 'peou4': 4, 'peou5': 4,
+            'atu1': 4, 'atu2': 4, 'atu3': 4,
+            'biu1': 4, 'biu2': 4, 'biu3': 4,
+        }
+        response = self.client.post(self.tam_url, data=payload)
+        self.assertEqual(response.status_code, 200)
+
+        eval_obj = TAMEvaluation.objects.get(user=self.user)
+        self.assertEqual(eval_obj.overall_score, 4.0)
+

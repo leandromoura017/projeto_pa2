@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block title %}Avaliação TAM | Pesquisa Acadêmica PA2 - CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+
+    <!-- Header / Banner da Pesquisa Acadêmica -->
+    <div class="bg-gradient-to-r from-blue-900/40 via-cyan-900/30 to-gray-900/60 border border-cyan-500/30 rounded-3xl p-6 sm:p-8 mb-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider border border-cyan-500/30">
+                Pesquisa Científica • PA2
+            </span>
+            <span class="text-xs text-gray-400">Modelo TAM (Davis, 1989)</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Formulário de Aceitação de Tecnologia <span class="text-cyan-400">(TAM)</span>
+        </h1>
+        <p class="text-sm sm:text-base text-gray-300 mt-2 max-w-2xl leading-relaxed">
+            Bem-vindo(a) ao teste de validação do <strong>CodeView</strong>! Este instrumento avalia a 
+            <strong>Utilidade Percebida</strong>, <strong>Facilidade de Uso</strong>, <strong>Atitude</strong> e 
+            <strong>Intenção de Adoção</strong> da nossa plataforma de microaprendizado e portfólio vivo de código.
+        </p>
+    </div>
+
+    <!-- Guia Rápido de Tarefas de Usabilidade -->
+    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 sm:p-6 mb-8">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-2 mb-3">
+            <span>📋</span> Roteiro Recomendado antes de responder (5 a 10 min)
+        </h2>
+        <p class="text-xs text-gray-400 mb-4 leading-relaxed">
+            Para garantir que sua avaliação reflita a experiência real com o CodeView, recomendamos experimentar as funções abaixo:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-300">
+            <div class="flex items-start gap-2.5 bg-gray-900/70 p-3 rounded-xl border border-gray-800">
+                <span class="text-emerald-400 font-bold shrink-0">1.</span>
+                <span>Assistir a um vídeo no <strong>Feed</strong>, curtir e postar um comentário técnico.</span>
+            </div>
+            <div class="flex items-start gap-2.5 bg-gray-900/70 p-3 rounded-xl border border-gray-800">
+                <span class="text-emerald-400 font-bold shrink-0">2.</span>
+                <span>Abrir a aba <strong>Mini Cursos</strong>, ver o cronograma sugerido e se matricular.</span>
+            </div>
+            <div class="flex items-start gap-2.5 bg-gray-900/70 p-3 rounded-xl border border-gray-800">
+                <span class="text-emerald-400 font-bold shrink-0">3.</span>
+                <span>Resolver um <strong>Desafio Instantâneo</strong> com feedback imediato de acerto/erro.</span>
+            </div>
+            <div class="flex items-start gap-2.5 bg-gray-900/70 p-3 rounded-xl border border-gray-800">
+                <span class="text-emerald-400 font-bold shrink-0">4.</span>
+                <span>Concluir o curso e emitir seu <strong>Certificado Digital</strong> com validação por QR Code.</span>
+            </div>
+            <div class="flex items-start gap-2.5 bg-gray-900/70 p-3 rounded-xl border border-gray-800 sm:col-span-2">
+                <span class="text-emerald-400 font-bold shrink-0">5.</span>
+                <span>Explorar a aba <strong>Perfis</strong> (Portfólio Vivo) e testar o envio de uma <strong>DM</strong> para um mentor.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário TAM Principal -->
+    <form method="POST" action="{% url 'tam_evaluation' %}" class="space-y-8">
+        {% csrf_token %}
+
+        <!-- Seção 1: Dados Demográficos -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-7 shadow-xl">
+            <div class="flex items-center gap-2 border-b border-gray-800 pb-3 mb-5">
+                <span class="text-xl">👤</span>
+                <div>
+                    <h2 class="text-base font-bold text-white">1. Caracterização do Avaliador</h2>
+                    <p class="text-xs text-gray-400">Identificação para contextualização demográfica (opções anônimas aceitas)</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Nome ou Iniciais <span class="text-gray-500 font-normal">(Opcional)</span>
+                    </label>
+                    <input type="text" name="evaluator_name" value="{{ user.first_name|default:'' }}" placeholder="Ex: Lucas M. ou anônimo" class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">
+                        E-mail de Contato <span class="text-gray-500 font-normal">(Opcional)</span>
+                    </label>
+                    <input type="email" name="evaluator_email" value="{{ user.email|default:'' }}" placeholder="seu.email@exemplo.com" class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Perfil de Atuação <span class="text-cyan-400">*</span>
+                    </label>
+                    <select name="role" required class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        <option value="">Selecione...</option>
+                        {% for code, label in role_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Tempo de Experiência em TI <span class="text-cyan-400">*</span>
+                    </label>
+                    <select name="experience" required class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        <option value="">Selecione...</option>
+                        {% for code, label in experience_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Dispositivo do Teste <span class="text-cyan-400">*</span>
+                    </label>
+                    <select name="device" required class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        <option value="">Selecione...</option>
+                        {% for code, label in device_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legenda da Escala Likert -->
+        <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-xs text-gray-300">
+            <span class="font-bold text-white block mb-2">⭐ Escala de Avaliação (1 a 5):</span>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-[11px]">
+                <div class="bg-gray-800/80 p-1.5 rounded-lg border border-gray-700/60"><strong class="text-rose-400">1</strong>: Discordo Totalmente</div>
+                <div class="bg-gray-800/80 p-1.5 rounded-lg border border-gray-700/60"><strong class="text-orange-400">2</strong>: Discordo Parcialmente</div>
+                <div class="bg-gray-800/80 p-1.5 rounded-lg border border-gray-700/60"><strong class="text-yellow-400">3</strong>: Neutro / Indiferente</div>
+                <div class="bg-gray-800/80 p-1.5 rounded-lg border border-gray-700/60"><strong class="text-cyan-400">4</strong>: Concordo Parcialmente</div>
+                <div class="bg-gray-800/80 p-1.5 rounded-lg border border-gray-700/60"><strong class="text-emerald-400">5</strong>: Concordo Totalmente</div>
+            </div>
+        </div>
+
+        <!-- Seção 2: Utilidade Percebida (PU) -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div class="border-b border-gray-800 pb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Construto 1</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">💡 Utilidade Percebida (Perceived Usefulness - PU)</h2>
+                <p class="text-xs text-gray-400 mt-1">O quanto você acredita que o CodeView melhora sua aprendizagem e desenvolvimento profissional.</p>
+            </div>
+
+            {% for field_name, title, description in pu_questions %}
+                <div class="bg-gray-900/60 border border-gray-800/80 rounded-xl p-4 sm:p-5">
+                    <div class="mb-3">
+                        <span class="text-xs font-bold text-cyan-300 uppercase tracking-wide">{{ title }}</span>
+                        <p class="text-sm text-gray-200 mt-1 font-medium leading-snug">{{ description }}</p>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2 sm:gap-3 pt-2">
+                        {% for val, val_str, val_label in likert_scale %}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="{{ field_name }}" value="{{ val }}" required class="peer sr-only">
+                                <div class="text-center py-2.5 px-1 sm:px-2 rounded-xl bg-gray-800/80 border border-gray-700/80 text-gray-300 text-xs font-bold peer-checked:bg-cyan-500 peer-checked:text-white peer-checked:border-cyan-400 peer-checked:shadow-lg peer-checked:shadow-cyan-500/30 hover:border-gray-600 transition flex flex-col items-center justify-center gap-1">
+                                    <span class="text-sm sm:text-base font-extrabold">{{ val }}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-normal opacity-80 hidden sm:inline leading-tight">{{ val_label }}</span>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Seção 3: Facilidade de Uso (PEOU) -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div class="border-b border-gray-800 pb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Construto 2</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">✨ Facilidade de Uso Percebida (Perceived Ease of Use - PEOU)</h2>
+                <p class="text-xs text-gray-400 mt-1">O quanto a interação com a plataforma foi simples, intuitiva e sem esforço excessivo.</p>
+            </div>
+
+            {% for field_name, title, description in peou_questions %}
+                <div class="bg-gray-900/60 border border-gray-800/80 rounded-xl p-4 sm:p-5">
+                    <div class="mb-3">
+                        <span class="text-xs font-bold text-cyan-300 uppercase tracking-wide">{{ title }}</span>
+                        <p class="text-sm text-gray-200 mt-1 font-medium leading-snug">{{ description }}</p>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2 sm:gap-3 pt-2">
+                        {% for val, val_str, val_label in likert_scale %}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="{{ field_name }}" value="{{ val }}" required class="peer sr-only">
+                                <div class="text-center py-2.5 px-1 sm:px-2 rounded-xl bg-gray-800/80 border border-gray-700/80 text-gray-300 text-xs font-bold peer-checked:bg-cyan-500 peer-checked:text-white peer-checked:border-cyan-400 peer-checked:shadow-lg peer-checked:shadow-cyan-500/30 hover:border-gray-600 transition flex flex-col items-center justify-center gap-1">
+                                    <span class="text-sm sm:text-base font-extrabold">{{ val }}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-normal opacity-80 hidden sm:inline leading-tight">{{ val_label }}</span>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Seção 4: Atitude em Relação ao Uso (ATU) -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div class="border-b border-gray-800 pb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Construto 3</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">🚀 Atitude em Relação ao Uso (Attitude Toward Using - ATU)</h2>
+                <p class="text-xs text-gray-400 mt-1">O seu sentimento e engajamento geral gerados pela metodologia do CodeView.</p>
+            </div>
+
+            {% for field_name, title, description in atu_questions %}
+                <div class="bg-gray-900/60 border border-gray-800/80 rounded-xl p-4 sm:p-5">
+                    <div class="mb-3">
+                        <span class="text-xs font-bold text-cyan-300 uppercase tracking-wide">{{ title }}</span>
+                        <p class="text-sm text-gray-200 mt-1 font-medium leading-snug">{{ description }}</p>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2 sm:gap-3 pt-2">
+                        {% for val, val_str, val_label in likert_scale %}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="{{ field_name }}" value="{{ val }}" required class="peer sr-only">
+                                <div class="text-center py-2.5 px-1 sm:px-2 rounded-xl bg-gray-800/80 border border-gray-700/80 text-gray-300 text-xs font-bold peer-checked:bg-cyan-500 peer-checked:text-white peer-checked:border-cyan-400 peer-checked:shadow-lg peer-checked:shadow-cyan-500/30 hover:border-gray-600 transition flex flex-col items-center justify-center gap-1">
+                                    <span class="text-sm sm:text-base font-extrabold">{{ val }}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-normal opacity-80 hidden sm:inline leading-tight">{{ val_label }}</span>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Seção 5: Intenção Comportamental de Uso (BIU) -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div class="border-b border-gray-800 pb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Construto 4</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">🎯 Intenção de Uso e Recomendação (Behavioral Intention - BIU)</h2>
+                <p class="text-xs text-gray-400 mt-1">A probabilidade de você adotar o CodeView como ferramenta contínua e recomendá-lo.</p>
+            </div>
+
+            {% for field_name, title, description in biu_questions %}
+                <div class="bg-gray-900/60 border border-gray-800/80 rounded-xl p-4 sm:p-5">
+                    <div class="mb-3">
+                        <span class="text-xs font-bold text-cyan-300 uppercase tracking-wide">{{ title }}</span>
+                        <p class="text-sm text-gray-200 mt-1 font-medium leading-snug">{{ description }}</p>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2 sm:gap-3 pt-2">
+                        {% for val, val_str, val_label in likert_scale %}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="{{ field_name }}" value="{{ val }}" required class="peer sr-only">
+                                <div class="text-center py-2.5 px-1 sm:px-2 rounded-xl bg-gray-800/80 border border-gray-700/80 text-gray-300 text-xs font-bold peer-checked:bg-cyan-500 peer-checked:text-white peer-checked:border-cyan-400 peer-checked:shadow-lg peer-checked:shadow-cyan-500/30 hover:border-gray-600 transition flex flex-col items-center justify-center gap-1">
+                                    <span class="text-sm sm:text-base font-extrabold">{{ val }}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-normal opacity-80 hidden sm:inline leading-tight">{{ val_label }}</span>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Seção 6: Avaliação Qualitativa Aberta -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-5">
+            <div class="border-b border-gray-800 pb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Avaliação Aberta</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">💬 Percepções Qualitativas & Sugestões</h2>
+                <p class="text-xs text-gray-400 mt-1">Seus comentários ajudam diretamente na fundamentação teórica e nas melhorias de produto.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-200 mb-1.5">
+                    1. O que você mais gostou ou achou mais inovador no CodeView?
+                </label>
+                <textarea name="highlights" rows="3" placeholder="Ex: Adorei os desafios práticos imediatos e a ausência de currículo em anexo..." class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-200 mb-1.5">
+                    2. Você encontrou alguma dificuldade, lentidão, tela confusa ou bug durante o teste?
+                </label>
+                <textarea name="difficulties" rows="3" placeholder="Ex: Tive dúvida ao localizar o botão de cronograma ou achei a fonte um pouco pequena em tal tela..." class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-200 mb-1.5">
+                    3. Quais novos recursos ou melhorias você gostaria de ver nas próximas versões?
+                </label>
+                <textarea name="suggestions" rows="3" placeholder="Ex: Gostaria de poder fazer anotações privadas em cada vídeo ou ver ranking de devs..." class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"></textarea>
+            </div>
+        </div>
+
+        <!-- Botão de Submissão -->
+        <div class="pt-2 text-center">
+            <button type="submit" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 text-white font-bold text-base shadow-xl shadow-cyan-500/25 hover:from-blue-500 hover:to-cyan-400 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 mx-auto">
+                <span>📝 Enviar Avaliação TAM (Gravar Dados de Pesquisa)</span>
+                <span>&rarr;</span>
+            </button>
+            <p class="text-[11px] text-gray-500 mt-3">
+                Suas respostas serão salvas de forma segura para apuração estatística da disciplina de Projeto Aplicado 2 (PA2).
+            </p>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

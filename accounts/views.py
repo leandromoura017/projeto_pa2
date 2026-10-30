@@ -6,7 +6,7 @@ from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.urls import reverse
 from .forms import SignUpForm, LoginForm, ProfileEditForm
-from .models import User, Profile, DirectMessage, Notification
+from .models import User, Profile, DirectMessage, Notification, TAMEvaluation
 
 
 def _build_portfolio_context(target_user):
@@ -368,3 +368,96 @@ def mark_all_notifications_read_view(request):
         return JsonResponse({'status': 'success', 'unread_count': 0})
 
     return redirect('notifications')
+
+
+def tam_evaluation_view(request):
+    """
+    Formulário empírico de Aceitação de Tecnologia (TAM - Davis, 1989)
+    para validação da plataforma CodeView com avaliadores externos (PA2).
+    """
+    pu_questions = [
+        ('pu1', 'PU1: Pílulas Curtas', 'O formato de pílulas curtas em vídeo (< 90 segundos) agiliza meu aprendizado e me ajuda a assimilar conceitos de programação mais rápido do que aulas longas.'),
+        ('pu2', 'PU2: Desafios Instantâneos', 'Resolver desafios práticos instantâneos logo após assistir à pílula aumenta a fixação e o entendimento real do código.'),
+        ('pu3', 'PU3: Portfólio Vivo', 'A proposta de "Portfólio Vivo" (onde a própria atuação prática e certificados substituem o currículo em anexo) demonstra com mais precisão a competência real de um dev.'),
+        ('pu4', 'PU4: Cronograma e Certificado com QR', 'O cronograma de estudos sugerido e as certificações digitais com QR Code público agregam valor concreto à minha carreira e credibilidade técnica.'),
+        ('pu5', 'PU5: Utilidade Geral', 'No geral, considero o CodeView uma plataforma útil e vantajosa para o ecossistema de aprendizado e contratação em tecnologia.'),
+    ]
+
+    peou_questions = [
+        ('peou1', 'PEOU1: Navegação Intuitiva', 'A navegação geral entre as telas (Feed, Mini Cursos, Perfis, DMs e Notificações) é clara e intuitiva.'),
+        ('peou2', 'PEOU2: Clareza Visual', 'A interface visual é agradável, com tipografia legível, contraste adequado em modo escuro e boa disposição dos elementos.'),
+        ('peou3', 'PEOU3: Resolução de Desafios', 'Foi fácil e compreensível submeter as respostas dos desafios técnicos e entender o feedback imediato do sistema.'),
+        ('peou4', 'PEOU4: Progresso e Certificação', 'A visualização do progresso do curso e as instruções para emitir/baixar o certificado são claras e sem burocracia.'),
+        ('peou5', 'PEOU5: Independência de Treinamento', 'Consegui operar as principais funções do CodeView sem necessidade de treinamento ou manual de instruções.'),
+    ]
+
+    atu_questions = [
+        ('atu1', 'ATU1: Experiência Agradável', 'A experiência de utilizar o CodeView foi agradável, engajadora e estimulante.'),
+        ('atu2', 'ATU2: Formato Moderno', 'A dinâmica de micro-vídeos verticais de programação é uma ideia atraente que moderniza o ensino tradicional de software.'),
+        ('atu3', 'ATU3: Percepção Positiva', 'Minha percepção global em relação ao propósito e à identidade do CodeView é bastante positiva.'),
+    ]
+
+    biu_questions = [
+        ('biu1', 'BIU1: Uso Recorrente', 'Eu utilizaria o CodeView com frequência no meu dia a dia para aprender novas tecnologias ou revisar tópicos de programação.'),
+        ('biu2', 'BIU2: Recomendação a Colegas', 'Eu indicaria o CodeView para colegas estudantes, desenvolvedores ou recrutadores de tecnologia.'),
+        ('biu3', 'BIU3: Preferência Formativa', 'Ao buscar resolver uma dúvida ou praticar um conceito pontual de código, eu preferiria recorrer ao CodeView antes de buscar cursos extensos ou tutoriais prolixos.'),
+    ]
+
+    likert_scale = [
+        (1, '1', 'Discordo Totalmente'),
+        (2, '2', 'Discordo Parcialmente'),
+        (3, '3', 'Neutro / Indiferente'),
+        (4, '4', 'Concordo Parcialmente'),
+        (5, '5', 'Concordo Totalmente'),
+    ]
+
+    if request.method == 'POST':
+        try:
+            evaluator_name = request.POST.get('evaluator_name', '').strip()
+            evaluator_email = request.POST.get('evaluator_email', '').strip()
+            role = request.POST.get('role', '').strip()
+            experience = request.POST.get('experience', '').strip()
+            device = request.POST.get('device', '').strip()
+
+            if not role or not experience or not device:
+                messages.error(request, "Por favor, preencha os dados do seu perfil de atuação e dispositivo.")
+                raise ValueError("Campos demográficos incompletos.")
+
+            likert_values = {}
+            for q_name, _, _ in pu_questions + peou_questions + atu_questions + biu_questions:
+                val = request.POST.get(q_name)
+                if not val or not val.isdigit() or int(val) not in range(1, 6):
+                    messages.error(request, f"Por favor, responda a afirmativa '{q_name.upper()}' na escala de 1 a 5.")
+                    raise ValueError(f"Campo {q_name} ausente ou inválido.")
+                likert_values[q_name] = int(val)
+
+            evaluation = TAMEvaluation.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                evaluator_name=evaluator_name,
+                evaluator_email=evaluator_email,
+                role=role,
+                experience=experience,
+                device=device,
+                highlights=request.POST.get('highlights', '').strip(),
+                difficulties=request.POST.get('difficulties', '').strip(),
+                suggestions=request.POST.get('suggestions', '').strip(),
+                **likert_values
+            )
+
+            return render(request, 'accounts/tam_success.html', {
+                'evaluation': evaluation,
+            })
+        except ValueError:
+            pass
+
+    return render(request, 'accounts/tam_evaluation.html', {
+        'role_choices': TAMEvaluation.ROLE_CHOICES,
+        'experience_choices': TAMEvaluation.EXPERIENCE_CHOICES,
+        'device_choices': TAMEvaluation.DEVICE_CHOICES,
+        'pu_questions': pu_questions,
+        'peou_questions': peou_questions,
+        'atu_questions': atu_questions,
+        'biu_questions': biu_questions,
+        'likert_scale': likert_scale,
+    })
+
