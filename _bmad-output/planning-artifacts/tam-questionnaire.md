@@ -177,3 +177,4 @@ Ao tabular as respostas dos avaliadores externos (recomendado: mínimo de 5 a 15
      * $\alpha \ge 0,70$ indica alta confiabilidade e consistência estatística do questionário.
 3. **Cruzamento Demográfico:**
    * Comparar a média de aceitação entre iniciantes (< 1 ano) e desenvolvedores mais experientes para demonstrar a aderência do produto a diferentes personas.
+
