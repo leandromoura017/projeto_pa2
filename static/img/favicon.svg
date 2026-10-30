@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="codeview-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#030712" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded card -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#codeview-gradient)" filter="url(#shadow)" />
+
+  <!-- Inner subtle border highlight -->
+  <rect x="2.5" y="2.5" width="59" height="59" rx="14.5" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.25" />
+
+  <!-- Code glyph </ > -->
+  <g fill="none" stroke="#ffffff" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bracket < -->
+    <path d="M22 22 L13 32 L22 42" />
+    <!-- Slash / -->
+    <path d="M35 19 L29 45" />
+    <!-- Right bracket > -->
+    <path d="M42 22 L51 32 L42 42" />
+  </g>
+</svg>
