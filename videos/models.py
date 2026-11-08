@@ -66,6 +66,24 @@ class Video(models.Model):
     def comments_count(self):
         return self.comments.count()
 
+    @property
+    def trust_count(self):
+        """Total de votos de confiança positivos (Onda 7 - #29)."""
+        return self.trust_votes.filter(is_trusted=True).count()
+
+    @property
+    def has_mentor_trust(self):
+        """Verifica se pelo menos um Mentor/Instrutor avaliou positivamente."""
+        return self.trust_votes.filter(is_trusted=True, user__profile__is_mentor=True).exists()
+
+    @property
+    def is_trusted_content(self):
+        """
+        Selo 'Conteúdo Confiável' (Onda 7 - #29):
+        Atribuído se um Mentor homologou o vídeo OU se acumulou 3+ votos positivos da comunidade.
+        """
+        return self.has_mentor_trust or (self.trust_count >= 3)
+
 
 class VideoLike(models.Model):
     """
@@ -121,3 +139,65 @@ class VideoComment(models.Model):
 
     def __str__(self):
         return f"Comentário de {self.user.email} em {self.video.title}"
+
+
+class VideoNote(models.Model):
+    """
+    Bloco de notas pessoal e privado do aluno em cada pílula/vídeo (Onda 7 - #28).
+    Apenas o autor da anotação pode visualizar e editar suas notas.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='video_notes',
+        verbose_name="Usuário"
+    )
+    video = models.ForeignKey(
+        Video,
+        on_delete=models.CASCADE,
+        related_name='private_notes',
+        verbose_name="Vídeo"
+    )
+    content = models.TextField(max_length=2000, blank=True, verbose_name="Minhas Anotações Privadas")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criada em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizada em")
+
+    class Meta:
+        verbose_name = "Anotação Privada de Vídeo"
+        verbose_name_plural = "Anotações Privadas de Vídeos"
+        unique_together = ('user', 'video')
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Anotação de {self.user.email} em {self.video.title}"
+
+
+class VideoTrustVote(models.Model):
+    """
+    Voto de confiança da comunidade técnica e mentores (Onda 7 - #29).
+    Selo 'Conteúdo Confiável' atribuído a vídeos validados pela comunidade ou mentores.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='trust_votes',
+        verbose_name="Avaliador"
+    )
+    video = models.ForeignKey(
+        Video,
+        on_delete=models.CASCADE,
+        related_name='trust_votes',
+        verbose_name="Vídeo"
+    )
+    is_trusted = models.BooleanField(default=True, verbose_name="É Confiável")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Votado em")
+
+    class Meta:
+        verbose_name = "Voto de Confiança"
+        verbose_name_plural = "Votos de Confiança"
+        unique_together = ('user', 'video')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        status = "Confiável" if self.is_trusted else "Não Confiável"
+        return f"{self.user.email} marcou '{self.video.title}' como {status}"

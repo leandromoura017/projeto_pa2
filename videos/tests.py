@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -358,3 +359,105 @@ class VideoCommentTests(TestCase):
 
         from .models import VideoComment
         self.assertFalse(VideoComment.objects.filter(video=self.video).exists())
+
+
+class Onda7VideoTests(TestCase):
+    """
+    Testes da Onda 7:
+    Item #28: Anotações privadas nos vídeos.
+    Item #29: Selo/votação 'Conteúdo Confiável'.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.author = User.objects.create_user(
+            email='author7@codeview.com',
+            password='Password123!',
+            first_name='Autor Onda 7'
+        )
+        self.student = User.objects.create_user(
+            email='student7@codeview.com',
+            password='Password123!',
+            first_name='Aluno Onda 7'
+        )
+        self.mentor = User.objects.create_user(
+            email='mentor7@codeview.com',
+            password='Password123!',
+            first_name='Mentor Onda 7'
+        )
+        p = self.mentor.profile
+        p.is_mentor = True
+        p.save()
+        self.mentor.refresh_from_db()
+
+        self.tech = Technology.objects.create(name='Go', slug='go', icon_name='🐹')
+        self.dummy_file = SimpleUploadedFile("go.mp4", b"go bytes", content_type="video/mp4")
+        self.video = Video.objects.create(
+            title='Goroutines e Channels em 60s',
+            description='Concorrência simplificada.',
+            technology=self.tech,
+            author=self.author,
+            video_file=self.dummy_file,
+            duration_seconds=60,
+            is_published=True
+        )
+
+    def test_save_private_note(self):
+        from .models import VideoNote
+        self.client.force_login(self.student)
+        url = reverse('video_note', kwargs={'video_id': self.video.id})
+
+        response = self.client.post(url, {'content': 'go func() dispara goroutine leve.'})
+        self.assertEqual(response.status_code, 302)
+
+        note = VideoNote.objects.filter(user=self.student, video=self.video).first()
+        self.assertIsNotNone(note)
+        self.assertEqual(note.content, 'go func() dispara goroutine leve.')
+
+        # Verificar se a anotação é renderizada na página de detalhes
+        detail_res = self.client.get(reverse('video_detail', kwargs={'video_id': self.video.id}))
+        self.assertContains(detail_res, 'go func() dispara goroutine leve.')
+
+    def test_save_private_note_ajax(self):
+        from .models import VideoNote
+        self.client.force_login(self.student)
+        url = reverse('video_note', kwargs={'video_id': self.video.id})
+
+        res = self.client.post(
+            url,
+            data=json.dumps({'content': 'Nota via AJAX'}),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['content'], 'Nota via AJAX')
+        self.assertTrue(VideoNote.objects.filter(user=self.student, video=self.video, content='Nota via AJAX').exists())
+
+    def test_trust_vote_toggle_and_mentor_verified_seal(self):
+        from .models import VideoTrustVote
+        from accounts.models import Notification
+
+        self.client.force_login(self.mentor)
+        url = reverse('video_trust_vote', kwargs={'video_id': self.video.id})
+
+        # 1. Mentor vota confiável
+        res = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['is_trusted'])
+        self.assertEqual(data['trust_count'], 1)
+        self.assertTrue(data['is_verified_content'])
+
+        # Notificação disparada para o autor
+        notif = Notification.objects.filter(user=self.author, title__icontains='Selo de Confiança').first()
+        self.assertIsNotNone(notif)
+        self.assertIn('Goroutines e Channels', notif.message)
+        self.assertEqual(notif.icon, '🛡️')
+
+        # 2. Mentor retira o voto
+        res2 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        data2 = res2.json()
+        self.assertFalse(data2['is_trusted'])
+        self.assertEqual(data2['trust_count'], 0)
+

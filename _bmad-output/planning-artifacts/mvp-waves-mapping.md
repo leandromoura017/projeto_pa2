@@ -9,7 +9,7 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 * 🟢 **MVP 1 (O Início - Fundação & Feed Core):** Onda 1 — *100% Concluído e testado.*
 * 🟡 **MVP 2 (O Meio - Interatividade & Prática Ativa):** Ondas 2 e 3 — *100% Concluído e testado.*
 * 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *100% Concluído e testado.*
-* 🟣 **Pós-MVP / Expansões Contínuas:** Onda 6 — *100% Concluído e testado (68 testes automatizados passando).* Ondas 7 e 8 — *Roadmap de produto estruturado para apresentação da banca.*
+* 🟣 **Pós-MVP / Expansões Contínuas:** Ondas 6 e 7 — *100% Concluído e testado (77 testes automatizados passando).* Onda 8 — *Roadmap de produto estruturado para encerramento.*
 
 ---
 
@@ -49,10 +49,16 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 | 25 | **Cronograma do curso** | 6 | 🟡 Amarelo | **Pós-MVP (Release Futura)** | ✅ Concluído |
 | 26 | **Notificações de mensagens recebidas** | 6 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
 | 27 | **Notificações de inscrição confirmada** | 6 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
-| 28 | **Anotações privadas nos vídeos** | 7 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 29 | **Selo/votação "Conteúdo Confiável"** | 7 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 30 | **Aba de cadastrar cursos** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 31 | **Notificações de inscrição cancelada** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
+| | | | | | |
+| 28 | **Anotações privadas nos vídeos** | 7 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 29 | **Selo/votação "Conteúdo Confiável"** | 7 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 30 | **Aba de cadastrar cursos** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 31 | **Notificações de inscrição cancelada** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| | | | | | |
+| 32 | **Compartilhar perfil** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
+| 33 | **Encerrar conta** | 8 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
+| 34 | **Aba de câmera (gravação direta)** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
+| 35 | **Medidor de conhecimento técnico** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
 | 32 | **Compartilhar perfil** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
 | 33 | **Encerrar conta** | 8 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
 | 34 | **Aba de câmera (gravação direta)** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |

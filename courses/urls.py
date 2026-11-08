@@ -8,6 +8,7 @@ urlpatterns = [
     path('certificados/<str:validation_code>/qr/', views.certificate_qr_code_view, name='certificate_qr'),
     path('aulas/<int:lesson_id>/desafio/', views.lesson_challenge_view, name='lesson_challenge'),
     path('aulas/<int:lesson_id>/concluir/', views.complete_lesson_view, name='lesson_complete'),
+    path('cadastrar/', views.course_create_view, name='course_create'),
     path('<slug:slug>/', views.course_detail_view, name='course_detail'),
     path('<slug:slug>/enroll/', views.enroll_course_view, name='course_enroll'),
     path('<slug:slug>/unenroll/', views.unenroll_course_view, name='course_unenroll'),

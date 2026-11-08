@@ -275,4 +275,19 @@ class Command(BaseCommand):
                     if c_created:
                         self.stdout.write(self.style.SUCCESS(f"    [DESAFIO] Desafio cadastrado: {challenge.title}"))
 
-        self.stdout.write(self.style.SUCCESS("Catalogo, Desafios, Notificacoes e Comentarios da Onda 6 semeados com sucesso!"))
+        # 4. Semente da Onda 7: Anotações Privadas (#28) e Selo de Confiança (#29)
+        from videos.models import VideoNote, VideoTrustVote
+        if video_python:
+            note_user = student_user or instructor
+            VideoNote.objects.get_or_create(
+                user=note_user,
+                video=video_python,
+                defaults={'content': 'Macete: [x for x in lista if x % 2 == 0] é mais rápido que for clássico com append!\nRevisar para o desafio final.'}
+            )
+            VideoTrustVote.objects.get_or_create(
+                user=mentor_ana,
+                video=video_python,
+                defaults={'is_trusted': True}
+            )
+
+        self.stdout.write(self.style.SUCCESS("Catalogo, Desafios, Notificacoes, Comentarios, Anotacoes e Selos da Onda 7 semeados com sucesso!"))

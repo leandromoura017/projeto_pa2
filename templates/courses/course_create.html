@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastrar Novo Mini-Curso | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8 sm:py-12 w-full">
+
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-blue-900/40 via-cyan-900/30 to-gray-900 border border-cyan-800/40 rounded-3xl p-6 sm:p-8 mb-8 shadow-2xl relative overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider border border-cyan-500/30">
+                Onda 7 • Área do Instrutor / Mentor
+            </span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Cadastrar Novo <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Mini-Curso</span>
+        </h1>
+        <p class="text-sm text-gray-300 mt-2 max-w-2xl leading-relaxed">
+            Crie uma trilha rápida focada em pílulas de código e desafios práticos. Compartilhe seu conhecimento técnico com a comunidade do CodeView!
+        </p>
+    </div>
+
+    <!-- Grid: Formulário + Dicas de Mentoria -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Formulário Principal (2 colunas) -->
+        <div class="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+            <form method="POST" action="{% url 'course_create' %}" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Título -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                        Título da Trilha <span class="text-cyan-400">*</span>
+                    </label>
+                    <input type="text" name="title" required placeholder="Ex: Docker para Desenvolvedores Backend" 
+                           class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                    <span class="text-[11px] text-gray-500 mt-1 block">Dê um nome direto ao ponto indicando o aprendizado prático.</span>
+                </div>
+
+                <!-- Tecnologia & Nível (lado a lado) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                            Tecnologia Principal <span class="text-cyan-400">*</span>
+                        </label>
+                        <select name="technology" required class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                            <option value="">Selecione uma tecnologia...</option>
+                            {% for tech in technologies %}
+                                <option value="{{ tech.id }}">{{ tech.icon_name|default:'⚡' }} {{ tech.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                            Nível de Dificuldade <span class="text-cyan-400">*</span>
+                        </label>
+                        <select name="level" required class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                            {% for code, label in levels %}
+                                <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Duração Estimada & Capa -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                            Duração Estimada (minutos) <span class="text-cyan-400">*</span>
+                        </label>
+                        <input type="number" name="estimated_minutes" value="30" min="5" max="300" required
+                               class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                        <span class="text-[11px] text-gray-500 mt-1 block">Tempo total sugerido para assistir e resolver os desafios.</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                            Imagem de Capa (Opcional)
+                        </label>
+                        <input type="file" name="thumbnail" accept="image/*"
+                               class="block w-full text-xs text-gray-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-600/20 file:text-cyan-300 hover:file:bg-cyan-600/30 file:cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Descrição da Ementa -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                        Descrição da Trilha & Ementa <span class="text-cyan-400">*</span>
+                    </label>
+                    <textarea name="description" rows="4" required placeholder="Apresente os objetivos do mini-curso: o que o aluno vai codar, quais ferramentas serão utilizadas e qual problema do mundo real ele aprenderá a resolver..."
+                              class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition resize-none"></textarea>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="pt-4 flex flex-col sm:flex-row items-center gap-3">
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-sm shadow-xl shadow-cyan-500/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                        <span>🚀 Publicar Trilha no Catálogo</span>
+                    </button>
+                    <a href="{% url 'course_list' %}" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-semibold text-sm border border-gray-700 text-center transition">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Coluna Lateral de Diretrizes -->
+        <div class="space-y-6">
+            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5 mb-3">
+                    <span>💡</span> Filosofia do Microaprendizado
+                </h3>
+                <ul class="space-y-3 text-xs text-gray-300 leading-relaxed">
+                    <li class="flex items-start gap-2">
+                        <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                        <span><strong>Pílulas de Código:</strong> Aulas curtas de 1 a 3 minutos focadas em um único conceito específico.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                        <span><strong>Prática Imediata:</strong> Cada aula deve ser complementada por um desafio prático de código.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                        <span><strong>Certificação Automática:</strong> Alunos que concluem 100% da sua trilha emitem certificado digital autenticado com QR Code.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-gradient-to-br from-cyan-950/40 to-blue-950/30 border border-cyan-800/40 rounded-2xl p-6">
+                <span class="text-xl block mb-2">🎓</span>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-white mb-1">Impacto no Portfólio Vivo</h4>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    Trilhas que você cria aparecem em destaque no seu perfil de mentor, consolidando sua autoridade técnica na comunidade.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+

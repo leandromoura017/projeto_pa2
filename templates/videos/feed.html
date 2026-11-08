@@ -72,11 +72,18 @@
                                preload="metadata"
                                muted></video>
 
-                        <!-- Top Controls: Technology Badge & Mute Toggle -->
+                        <!-- Top Controls: Technology Badge, Trust Seal & Mute Toggle -->
                         <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
-                            <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 pointer-events-auto flex items-center gap-1">
-                                {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
-                            </span>
+                            <div class="flex items-center gap-1.5 pointer-events-auto">
+                                <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
+                                    {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
+                                </span>
+                                {% if video.is_trusted_content %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-emerald-950/85 backdrop-blur-md border border-emerald-500/60 text-emerald-300 flex items-center gap-1 shadow-md" title="Conteúdo Confiável Homologado">
+                                        <span>🛡️</span> Confiável
+                                    </span>
+                                {% endif %}
+                            </div>
 
                             <button type="button" class="btn-mute p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:scale-110 pointer-events-auto transition">
                                 <svg class="icon-mute w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,6 +149,22 @@
                                         <span>💬</span>
                                         <span class="text-[11px] font-bold">{{ video.comments.count }}</span>
                                     </a>
+
+                                    <!-- Botão Voto de Confiança (Onda 7 - #29) -->
+                                    <form method="POST" action="{% url 'video_trust_vote' video.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
+                                                {% if video.id in trusted_video_ids %}
+                                                    bg-emerald-600/90 border-emerald-400 text-white shadow-lg shadow-emerald-500/30
+                                                {% else %}
+                                                    bg-black/60 border-white/25 text-gray-200 hover:border-emerald-400 hover:text-emerald-300
+                                                {% endif %}"
+                                                title="Marcar como Conteúdo Confiável">
+                                            <span>🛡️</span>
+                                            <span class="text-[11px] font-bold">{{ video.trust_count }}</span>
+                                        </button>
+                                    </form>
 
                                     {% with lesson=video.lessons.first %}
                                         {% if lesson and lesson.challenge %}

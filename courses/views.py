@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.urls import reverse
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.pdfgen import canvas
@@ -216,6 +217,16 @@ def unenroll_course_view(request, slug):
     if enrollment:
         enrollment.is_active = False
         enrollment.save()
+
+        # Notificação de matrícula cancelada (Onda 7 - #31)
+        Notification.objects.create(
+            user=request.user,
+            title="⚠️ Matrícula Cancelada",
+            message=f"Você cancelou sua matrícula na trilha '{course.title}'. Seu progresso foi pausado.",
+            link=reverse('course_detail', kwargs={'slug': course.slug}),
+            icon='⚠️'
+        )
+
         messages.warning(request, f"Você cancelou sua matrícula no curso '{course.title}'.")
 
     return redirect('course_detail', slug=slug)
@@ -613,3 +624,69 @@ def download_certificate_pdf_view(request, validation_code):
     filename = f"certificado_codeview_{certificate.validation_code}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@login_required
+def course_create_view(request):
+    """
+    Aba / Interface de cadastro de novos mini-cursos (Onda 7 - #30).
+    Permite que instrutores e mentores publiquem novas trilhas de microaprendizado.
+    """
+    technologies = Technology.objects.filter(is_active=True).order_by('name')
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        technology_id = request.POST.get('technology')
+        level = request.POST.get('level', 'iniciante')
+        estimated_minutes = request.POST.get('estimated_minutes', '30')
+        thumbnail = request.FILES.get('thumbnail')
+
+        if not title:
+            messages.error(request, "O título da trilha é obrigatório.")
+        elif not description:
+            messages.error(request, "A descrição da trilha é obrigatória.")
+        else:
+            base_slug = slugify(title)
+            slug = base_slug
+            counter = 1
+            while Course.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            tech = Technology.objects.filter(id=technology_id).first() if technology_id else None
+
+            try:
+                est_min = max(5, int(estimated_minutes))
+            except ValueError:
+                est_min = 30
+
+            course = Course.objects.create(
+                title=title,
+                slug=slug,
+                description=description,
+                technology=tech,
+                instructor=request.user,
+                level=level if level in dict(Course.LEVEL_CHOICES) else 'iniciante',
+                estimated_minutes=est_min,
+                thumbnail=thumbnail,
+                is_published=True
+            )
+
+            # Notifica o usuário criador da trilha
+            Notification.objects.create(
+                user=request.user,
+                title="📚 Nova Trilha Criada com Sucesso!",
+                message=f"Sua trilha '{course.title}' foi publicada no catálogo do CodeView! Agora você pode enriquecê-la com novas pílulas de código.",
+                link=reverse('course_detail', kwargs={'slug': course.slug}),
+                icon='🚀'
+            )
+
+            messages.success(request, f"Parabéns! O curso '{course.title}' foi cadastrado e publicado com sucesso!")
+            return redirect('course_detail', slug=course.slug)
+
+    return render(request, 'courses/course_create.html', {
+        'technologies': technologies,
+        'levels': Course.LEVEL_CHOICES,
+    })
+

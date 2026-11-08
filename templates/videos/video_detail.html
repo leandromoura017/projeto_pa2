@@ -45,10 +45,19 @@
                         {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
                     </span>
                 </div>
+
+                <!-- Selo de Conteúdo Confiável em Destaque no Player (Onda 7 - #29) -->
+                {% if video.is_trusted_content %}
+                    <div class="absolute bottom-16 left-4 pointer-events-none">
+                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-950/90 backdrop-blur-md border border-emerald-500/60 text-emerald-300 shadow-lg flex items-center gap-1.5 animate-pulse">
+                            <span>🛡️</span> Conteúdo Confiável
+                        </span>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Right: Information & Sharing Tools & Comments (Onda 5 #22 + Onda 6 #24) -->
+        <!-- Right: Information, Trust Seal, Private Notes, Sharing & Comments -->
         <div class="lg:col-span-7 space-y-6">
 
             <!-- Title & Meta -->
@@ -105,6 +114,100 @@
                     {% endif %}
                 {% endwith %}
             </div>
+
+            <!-- Selo / Votação "Conteúdo Confiável" (Onda 7 - #29) -->
+            <div class="bg-[#111827] border {% if video.is_trusted_content %}border-emerald-500/50 bg-emerald-950/10{% else %}border-gray-800{% endif %} rounded-3xl p-5 sm:p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base">🛡️</span>
+                            <span class="text-xs font-bold uppercase tracking-wider {% if video.is_trusted_content %}text-emerald-400{% else %}text-gray-300{% endif %}">
+                                {% if video.is_trusted_content %}
+                                    Selo Oficial: Conteúdo Confiável
+                                {% else %}
+                                    Avaliação de Confiabilidade Técnica
+                                {% endif %}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-400">
+                            {% if video.has_mentor_trust %}
+                                Validado e homologado por <strong>Mentores Técnicos</strong> do CodeView.
+                            {% elif video.is_trusted_content %}
+                                Homologado pela comunidade com <strong class="text-emerald-300">{{ video.trust_count }} votos</strong> de confiança.
+                            {% else %}
+                                Ajude a comunidade técnica a avaliar se este código é confiável e segue boas práticas.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Botão de Votação (Interativo) -->
+                    {% if user.is_authenticated %}
+                        <form id="form-trust-vote" method="POST" action="{% url 'video_trust_vote' video.id %}" class="shrink-0">
+                            {% csrf_token %}
+                            <button id="btn-trust-vote" type="submit" 
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md {% if user_has_trusted %}bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400{% else %}bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700{% endif %}">
+                                <span id="trust-icon">{% if user_has_trusted %}✓{% else %}🛡️{% endif %}</span>
+                                <span id="trust-label">{% if user_has_trusted %}Você Validou{% else %}Marcar Confiável{% endif %}</span>
+                                <span id="trust-count-badge" class="px-2 py-0.5 rounded-lg bg-black/40 text-[11px] font-bold">
+                                    {{ video.trust_count }}
+                                </span>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="text-xs font-semibold text-cyan-400 hover:underline shrink-0">
+                            Entre para votar &rarr;
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Minhas Anotações Privadas (Onda 7 - #28) -->
+            {% if user.is_authenticated %}
+                <div class="bg-[#111827] border border-cyan-800/40 rounded-3xl p-6 sm:p-7 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">📝</span>
+                            <h2 class="text-sm font-bold text-white">Minhas Anotações Privadas</h2>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">
+                                Só você vê
+                            </span>
+                        </div>
+                        <span id="note-saved-time" class="text-[11px] text-gray-500">
+                            {% if user_note and user_note.content %}
+                                Atualizado em {{ user_note.updated_at|date:"d/m às H:i" }}
+                            {% else %}
+                                Bloco limpo
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <form id="form-private-note" method="POST" action="{% url 'video_note' video.id %}" class="space-y-3">
+                        {% csrf_token %}
+                        <div class="relative">
+                            <textarea id="private-note-content" 
+                                      name="content" 
+                                      rows="4" 
+                                      maxlength="2000" 
+                                      placeholder="Escreva seus apontamentos técnicos, comandos para lembrar, dúvidas ou macetes sobre este código..." 
+                                      class="w-full bg-gray-900 border border-gray-700 rounded-2xl p-3.5 text-xs sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none font-mono leading-relaxed">{{ user_note.content|default:'' }}</textarea>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span id="note-char-counter" class="text-[11px] text-gray-500">
+                                    {{ user_note.content|length|default:0 }} / 2000 caracteres
+                                </span>
+                                <span id="note-status-feedback" class="text-[11px] text-emerald-400 font-semibold hidden">
+                                    ✓ Anotação salva com sucesso!
+                                </span>
+                            </div>
+                            <button id="btn-save-note" type="submit" 
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
+                                <span>💾</span> Salvar Anotações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
 
             <!-- Compartilhar Vídeo Card (Onda 5 - #22) -->
             <div class="bg-[#111827] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
@@ -270,6 +373,7 @@
 {% block extra_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // 1. Compartilhamento & Cópia de Link
         const copyBtn = document.getElementById('btn-copy-link');
         const copyInput = document.getElementById('share-link-input');
         const copyText = document.getElementById('copy-text');
@@ -302,6 +406,87 @@
                     }).catch(console.error);
                 } else {
                     if (copyBtn) copyBtn.click();
+                }
+            });
+        }
+
+        // 2. Anotações Privadas AJAX (Onda 7 - #28)
+        const noteForm = document.getElementById('form-private-note');
+        const noteTextarea = document.getElementById('private-note-content');
+        const noteCharCounter = document.getElementById('note-char-counter');
+        const noteFeedback = document.getElementById('note-status-feedback');
+        const noteTime = document.getElementById('note-saved-time');
+
+        if (noteTextarea && noteCharCounter) {
+            noteTextarea.addEventListener('input', () => {
+                noteCharCounter.textContent = `${noteTextarea.value.length} / 2000 caracteres`;
+            });
+        }
+
+        if (noteForm) {
+            noteForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(noteForm);
+                try {
+                    const res = await fetch(noteForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        if (noteFeedback) {
+                            noteFeedback.classList.remove('hidden');
+                            setTimeout(() => noteFeedback.classList.add('hidden'), 3500);
+                        }
+                        if (noteTime && data.updated_at) {
+                            noteTime.textContent = `Atualizado em ${data.updated_at}`;
+                        }
+                    }
+                } catch (err) {
+                    noteForm.submit();
+                }
+            });
+        }
+
+        // 3. Voto de Confiança AJAX (Onda 7 - #29)
+        const trustForm = document.getElementById('form-trust-vote');
+        const trustBtn = document.getElementById('btn-trust-vote');
+        const trustIcon = document.getElementById('trust-icon');
+        const trustLabel = document.getElementById('trust-label');
+        const trustBadge = document.getElementById('trust-count-badge');
+
+        if (trustForm && trustBtn) {
+            trustForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(trustForm);
+                try {
+                    const res = await fetch(trustForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        if (data.is_trusted) {
+                            trustBtn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400";
+                            if (trustIcon) trustIcon.textContent = '✓';
+                            if (trustLabel) trustLabel.textContent = 'Você Validou';
+                        } else {
+                            trustBtn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700";
+                            if (trustIcon) trustIcon.textContent = '🛡️';
+                            if (trustLabel) trustLabel.textContent = 'Marcar Confiável';
+                        }
+                        if (trustBadge) {
+                            trustBadge.textContent = data.trust_count;
+                        }
+                    }
+                } catch (err) {
+                    trustForm.submit();
                 }
             });
         }

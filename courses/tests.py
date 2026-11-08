@@ -491,3 +491,84 @@ class Onda6CourseFeaturesTests(TestCase):
         self.assertIn('Docker e Containers', notif.message)
         self.assertEqual(notif.icon, '🚀')
 
+
+class Onda7CourseFeaturesTests(TestCase):
+    """
+    Testes da Onda 7:
+    Item #30: Aba de cadastrar cursos (course_create_view).
+    Item #31: Notificações de inscrição cancelada (unenroll_course_view).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.mentor = User.objects.create_user(
+            email='mentor_onda7@codeview.com',
+            password='Pass12345!',
+            first_name='Mentor Onda 7'
+        )
+        self.student = User.objects.create_user(
+            email='student_onda7@codeview.com',
+            password='Pass12345!',
+            first_name='Aluno Onda 7'
+        )
+        self.tech = Technology.objects.create(name='Rust', slug='rust', icon_name='🦀')
+        self.course = Course.objects.create(
+            title='Rust para Iniciantes',
+            slug='rust-para-iniciantes',
+            description='Ownership e Borrowing na prática.',
+            technology=self.tech,
+            instructor=self.mentor,
+            is_published=True
+        )
+
+    def test_course_create_view_get(self):
+        self.client.force_login(self.mentor)
+        response = self.client.get(reverse('course_create'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'courses/course_create.html')
+        self.assertContains(response, 'Cadastrar Novo')
+
+    def test_course_create_view_post_success(self):
+        from accounts.models import Notification
+        self.client.force_login(self.mentor)
+
+        payload = {
+            'title': 'Arquitetura de Microsserviços com Go',
+            'description': 'Construa serviços distribuídos e escaláveis em pílulas.',
+            'technology': self.tech.id,
+            'level': 'avancado',
+            'estimated_minutes': '50',
+        }
+        response = self.client.post(reverse('course_create'), data=payload)
+        self.assertEqual(response.status_code, 302)
+
+        created_course = Course.objects.filter(title='Arquitetura de Microsserviços com Go').first()
+        self.assertIsNotNone(created_course)
+        self.assertEqual(created_course.slug, 'arquitetura-de-microsservicos-com-go')
+        self.assertEqual(created_course.level, 'avancado')
+        self.assertEqual(created_course.estimated_minutes, 50)
+        self.assertEqual(created_course.instructor, self.mentor)
+
+        # Disparo de notificação para o criador da trilha
+        notif = Notification.objects.filter(user=self.mentor, title__icontains='Nova Trilha Criada').first()
+        self.assertIsNotNone(notif)
+        self.assertIn('Arquitetura de Microsserviços com Go', notif.message)
+        self.assertEqual(notif.icon, '🚀')
+
+    def test_unenroll_triggers_cancellation_notification(self):
+        from accounts.models import Notification
+        Enrollment.objects.create(user=self.student, course=self.course, is_active=True)
+
+        self.client.force_login(self.student)
+        url = reverse('course_unenroll', kwargs={'slug': self.course.slug})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+
+        enrollment = Enrollment.objects.get(user=self.student, course=self.course)
+        self.assertFalse(enrollment.is_active)
+
+        notif = Notification.objects.filter(user=self.student, title__icontains='Matrícula Cancelada').first()
+        self.assertIsNotNone(notif)
+        self.assertIn('Rust para Iniciantes', notif.message)
+        self.assertEqual(notif.icon, '⚠️')
+
+
