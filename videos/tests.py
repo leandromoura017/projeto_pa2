@@ -461,3 +461,58 @@ class Onda7VideoTests(TestCase):
         self.assertFalse(data2['is_trusted'])
         self.assertEqual(data2['trust_count'], 0)
 
+
+class Onda8CameraRecordingTests(TestCase):
+    """
+    Testes para a Aba de Câmera (Gravação Direta no Navegador - Onda 8 - #34).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.creator = User.objects.create_user(
+            email='camera.creator@codeview.com',
+            password='Password123!',
+            first_name='CamCreator'
+        )
+        self.tech = Technology.objects.create(name='TypeScript', slug='typescript', icon_name='🔷')
+
+    def test_publish_page_renders_camera_tab_and_webrtc_elements(self):
+        self.client.force_login(self.creator)
+        url = reverse('video_publish')
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Gravar da Câmera (9:16)')
+        self.assertContains(res, 'panel-camera')
+        self.assertContains(res, 'camera-stream')
+        self.assertContains(res, 'recorded-preview')
+        self.assertContains(res, 'btn-record')
+        self.assertContains(res, 'btn-stop')
+        self.assertContains(res, '9:16 vertical')
+
+    def test_publish_video_from_camera_webm_blob_upload(self):
+        self.client.force_login(self.creator)
+        url = reverse('video_publish')
+        camera_webm_file = SimpleUploadedFile(
+            'gravacao_pilula_12345.webm',
+            b'RIFF....WEBM....fake-vertical-webm-data',
+            content_type='video/webm'
+        )
+
+        payload = {
+            'title': 'TypeScript Generics em 40 segundos',
+            'technology': self.tech.id,
+            'description': 'Exemplo prático de generic constraints gravado direto da câmera.',
+            'video_file': camera_webm_file,
+            'duration_seconds': 40
+        }
+
+        res = self.client.post(url, data=payload)
+        self.assertEqual(res.status_code, 302)
+        self.assertRedirects(res, reverse('feed'))
+
+        video = Video.objects.filter(title='TypeScript Generics em 40 segundos').first()
+        self.assertIsNotNone(video)
+        self.assertEqual(video.author, self.creator)
+        self.assertEqual(video.technology, self.tech)
+        self.assertEqual(video.duration_seconds, 40)
+        self.assertTrue(video.video_file.name.endswith('.webm'))
+

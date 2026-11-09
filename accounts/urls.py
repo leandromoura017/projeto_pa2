@@ -17,6 +17,7 @@ urlpatterns = [
     path('notifications/read-all/', views.mark_all_notifications_read_view, name='notifications_read_all'),
     path('tam/', views.tam_evaluation_view, name='tam_evaluation'),
     path('avaliacao-tam/', views.tam_evaluation_view, name='tam_evaluation_alias'),
+    path('delete/', views.account_delete_view, name='account_delete'),
     
     # Password Reset
     path('password-reset/', 

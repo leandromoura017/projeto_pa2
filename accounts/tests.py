@@ -428,3 +428,146 @@ class TAMEvaluationTests(TestCase):
         eval_obj = TAMEvaluation.objects.get(user=self.user)
         self.assertEqual(eval_obj.overall_score, 4.0)
 
+
+class Onda8PortfolioAndLGPDTests(TestCase):
+    """
+    Testes de integração para a Onda 8:
+    - Compartilhar perfil & Open Graph (#32)
+    - Encerrar conta LGPD Art. 18 (#33)
+    - Medidor de conhecimento técnico (#35)
+    """
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            email='portfolio.dev@codeview.com',
+            password='Password123!',
+            first_name='Dev',
+            last_name='Portfolio'
+        )
+        from videos.models import Technology
+        self.tech = Technology.objects.create(name='Python', slug='python', icon_name='🐍')
+
+    def test_share_profile_metadata_and_open_graph(self):
+        self.client.force_login(self.user)
+        res = self.client.get(reverse('profile'))
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('absolute_profile_url', res.context)
+        self.assertIn('tech_stats', res.context)
+        self.assertIn('overall_rank', res.context)
+        self.assertContains(res, 'og:title')
+        self.assertContains(res, 'og:description')
+        self.assertContains(res, 'Portfólio Vivo')
+        self.assertContains(res, 'Compartilhe seu Portfólio Vivo')
+        self.assertContains(res, 'Copiar')
+
+    def test_public_profile_share_metadata(self):
+        self.client.force_login(self.user)
+        url = reverse('public_profile', kwargs={'user_id': self.user.id})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('absolute_profile_url', res.context)
+        self.assertContains(res, 'og:title')
+        self.assertContains(res, 'Compartilhe este Portfólio Vivo')
+
+    def test_knowledge_meter_calculation_and_rank_progression(self):
+        from courses.models import Course, Lesson, Challenge, ChallengeAttempt, Certificate
+
+        # Rank inicial: Estudante Praticante
+        self.client.force_login(self.user)
+        res1 = self.client.get(reverse('profile'))
+        self.assertEqual(res1.context['overall_rank'], 'Estudante Praticante • Iniciante')
+
+        # Criar curso, aula e desafio resolvido (+50 pontos)
+        course = Course.objects.create(
+            title='Python Prático',
+            slug='python-pratico',
+            description='Curso prático de Python',
+            technology=self.tech,
+            instructor=self.user,
+            is_published=True
+        )
+        lesson = Lesson.objects.create(
+            course=course,
+            title='List Comprehensions',
+            order=1,
+            duration_seconds=60
+        )
+        challenge = Challenge.objects.create(
+            lesson=lesson,
+            title='Filtro de Pares',
+            question_text='Como filtrar números pares em Python?',
+            option_a='[x for x in r if x % 2 == 0]',
+            option_b='filter(lambda x: x)',
+            option_c='pares()',
+            correct_option='A',
+            explanation='List comprehension com condicional if filtra corretamente.',
+            points=50
+        )
+        ChallengeAttempt.objects.create(
+            user=self.user,
+            challenge=challenge,
+            submitted_code='pares = [x for x in range(10) if x % 2 == 0]',
+            is_correct=True
+        )
+
+        res2 = self.client.get(reverse('profile'))
+        self.assertEqual(res2.context['challenges_solved_count'], 1)
+        self.assertEqual(res2.context['total_points'], 50)
+        self.assertEqual(res2.context['overall_rank'], 'Junior Developer • Em Ascensão')
+
+        # Emitir certificado -> Deve elevar para Pleno
+        Certificate.objects.create(
+            user=self.user,
+            course=course,
+            validation_code='CERT-TEST-ONDA8'
+        )
+
+        res3 = self.client.get(reverse('profile'))
+        self.assertEqual(res3.context['overall_rank'], 'Pleno Developer • Autônomo')
+
+        # Verificar se os dados de tech_stats foram computados
+        tech_stat = next((t for t in res3.context['tech_stats'] if t['tech'].slug == 'python'), None)
+        self.assertIsNotNone(tech_stat)
+        self.assertEqual(tech_stat['solved_count'], 1)
+        self.assertEqual(tech_stat['certs_count'], 1)
+        self.assertTrue(tech_stat['has_activity'])
+        self.assertGreater(tech_stat['percentage'], 0)
+
+    def test_account_delete_view_lgpd_requires_login(self):
+        delete_url = reverse('account_delete')
+        res = self.client.get(delete_url)
+        self.assertEqual(res.status_code, 302)
+        self.assertIn('/accounts/login/', res.url)
+
+    def test_account_delete_view_lgpd_rejection_on_invalid_credentials(self):
+        self.client.force_login(self.user)
+        delete_url = reverse('account_delete')
+        res = self.client.post(delete_url, {'password': 'WrongPassword123'})
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(User.objects.filter(id=self.user.id).exists())
+
+    def test_account_delete_view_lgpd_success_with_password(self):
+        user_id = self.user.id
+        self.client.force_login(self.user)
+        delete_url = reverse('account_delete')
+        res = self.client.post(delete_url, {'password': 'Password123!'})
+        self.assertEqual(res.status_code, 302)
+        self.assertRedirects(res, reverse('login'))
+        self.assertFalse(User.objects.filter(id=user_id).exists())
+        self.assertFalse(Profile.objects.filter(user_id=user_id).exists())
+
+    def test_account_delete_view_lgpd_success_with_keyword(self):
+        user2 = User.objects.create_user(
+            email='delete.me@codeview.com',
+            password='Password123!',
+            first_name='Para',
+            last_name='Deletar'
+        )
+        user2_id = user2.id
+        self.client.force_login(user2)
+        delete_url = reverse('account_delete')
+        res = self.client.post(delete_url, {'confirm_keyword': 'DELETAR'})
+        self.assertEqual(res.status_code, 302)
+        self.assertRedirects(res, reverse('login'))
+        self.assertFalse(User.objects.filter(id=user2_id).exists())
+

@@ -25,7 +25,7 @@
             </p>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6" id="video-publish-form">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
@@ -68,17 +68,115 @@
                 </div>
             </div>
 
-            <!-- Video File Upload -->
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
-                    Arquivo de Vídeo Vertical (MP4 / WebM) *
-                </label>
-                <div class="p-4 rounded-2xl border-2 border-dashed border-gray-700 bg-gray-900/50 hover:border-cyan-500/50 transition">
+            <!-- Fonte do Vídeo: Tabs Enviar Arquivo vs Gravar da Câmera (Onda 8 - #34) -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300">
+                        Vídeo Vertical (9:16) *
+                    </label>
+                    <!-- Tabs switcher -->
+                    <div class="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl text-xs">
+                        <button type="button" id="tab-btn-upload" 
+                                class="px-3 py-1.5 rounded-lg font-bold text-white bg-gray-800 shadow transition">
+                            📁 Enviar Arquivo
+                        </button>
+                        <button type="button" id="tab-btn-camera" 
+                                class="px-3 py-1.5 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            📹 Gravar da Câmera (9:16)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Painel 1: Upload de Arquivo Tradicional -->
+                <div id="panel-upload" class="p-5 rounded-2xl border-2 border-dashed border-gray-700 bg-gray-900/50 hover:border-cyan-500/50 transition">
                     {{ form.video_file }}
                     <p class="text-[11px] text-gray-400 mt-2">
-                        Formato recomendado: Vertical 9:16 (.mp4 ou .webm), até 3 minutos.
+                        Formato recomendado: Vertical 9:16 (.mp4 ou .webm), duração de 15 a 180 segundos.
                     </p>
+                    <div id="file-selected-status" class="hidden mt-2 p-2 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-[11px] text-emerald-300 font-medium">
+                        ✓ Arquivo pronto para envio
+                    </div>
                 </div>
+
+                <!-- Painel 2: Aba de Câmera (Gravação Direta no Navegador - Onda 8 - #34) -->
+                <div id="panel-camera" class="hidden p-5 rounded-2xl border border-cyan-800/40 bg-gray-950/80 space-y-4">
+                    <div class="text-center space-y-1">
+                        <p class="text-xs font-bold text-white flex items-center justify-center gap-1.5">
+                            <span>🎥</span> Gravação Direta com Enquadramento 9:16
+                        </p>
+                        <p class="text-[11px] text-gray-400">
+                            Grave sua pílula diretamente pelo navegador com câmera e microfone. O vídeo gravado é anexado automaticamente.
+                        </p>
+                    </div>
+
+                    <!-- Mensagem de erro / alerta de permissão -->
+                    <div id="camera-error" class="hidden p-3 rounded-xl bg-red-950/70 border border-red-800 text-xs text-red-200">
+                        Não foi possível acessar a câmera ou o microfone. Verifique as permissões do seu navegador ou utilize a aba "Enviar Arquivo".
+                    </div>
+
+                    <!-- Container 9:16 Vertical -->
+                    <div class="relative w-full max-w-[280px] sm:max-w-[300px] aspect-[9/16] mx-auto bg-black rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-2xl flex items-center justify-center">
+                        <!-- Placeholder antes de ligar a câmera -->
+                        <div id="camera-placeholder" class="text-center p-6 space-y-3">
+                            <div class="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl text-cyan-400 mx-auto">
+                                📹
+                            </div>
+                            <p class="text-xs text-gray-400">Clique em "Ligar Câmera" para iniciar o enquadramento vertical 9:16.</p>
+                            <button type="button" id="btn-start-stream" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 shadow-md transition">
+                                Ligar Câmera
+                            </button>
+                        </div>
+
+                        <!-- Live Video Stream -->
+                        <video id="camera-stream" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+
+                        <!-- Video Preview do Vídeo Gravado -->
+                        <video id="recorded-preview" controls playsinline class="w-full h-full object-cover hidden"></video>
+
+                        <!-- Overlay: Gravando Indicator + Timer -->
+                        <div id="recording-overlay" class="hidden absolute top-4 left-4 right-4 flex items-center justify-between z-20">
+                            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-bold animate-pulse shadow">
+                                <span class="w-2 h-2 rounded-full bg-white"></span>
+                                GRAVANDO
+                            </div>
+                            <span id="recording-timer" class="code-font text-xs font-bold text-white px-2.5 py-1 rounded-full bg-black/70 backdrop-blur border border-white/20">
+                                00:00
+                            </span>
+                        </div>
+
+                        <!-- Overlay de Guia 9:16 -->
+                        <div id="guide-overlay" class="pointer-events-none absolute inset-0 border border-cyan-500/20 rounded-2xl hidden">
+                            <div class="absolute top-2 left-2 text-[10px] font-mono text-cyan-400/60 uppercase">9:16 vertical</div>
+                        </div>
+                    </div>
+
+                    <!-- Controles de Gravação -->
+                    <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                        <button type="button" id="btn-record" disabled
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-red-600/30 transition">
+                            <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
+                            Iniciar Gravação
+                        </button>
+
+                        <button type="button" id="btn-stop"
+                                class="hidden inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gray-800 hover:bg-gray-700 border border-gray-600 transition">
+                            <span class="w-2.5 h-2.5 bg-red-500 rounded-sm"></span>
+                            Parar e Finalizar
+                        </button>
+
+                        <button type="button" id="btn-retake"
+                                class="hidden inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 transition">
+                            🔄 Gravar Novamente
+                        </button>
+                    </div>
+
+                    <!-- Status de gravação concluída -->
+                    <div id="record-success-status" class="hidden p-3 rounded-xl bg-emerald-950/70 border border-emerald-800 text-center text-xs text-emerald-300 font-semibold">
+                        🎉 Vídeo gravado com sucesso! Arquivo anexado automaticamente ao formulário.
+                    </div>
+                </div>
+
                 {% if form.video_file.errors %}
                     <p class="text-xs text-red-400 mt-1">{{ form.video_file.errors.0 }}</p>
                 {% endif %}
@@ -100,7 +198,7 @@
                 <a href="{% url 'feed' %}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition">
                     Cancelar
                 </a>
-                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
+                <button type="submit" id="btn-publish-submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
                     <span>🚀</span> Publicar no Feed
                 </button>
             </div>
@@ -110,3 +208,222 @@
 </div>
 {% endblock %}
 
+{% block extra_scripts %}
+<script>
+    // Tab Switching Logic
+    const tabBtnUpload = document.getElementById('tab-btn-upload');
+    const tabBtnCamera = document.getElementById('tab-btn-camera');
+    const panelUpload = document.getElementById('panel-upload');
+    const panelCamera = document.getElementById('panel-camera');
+
+    function switchTab(mode) {
+        if (mode === 'upload') {
+            panelUpload.classList.remove('hidden');
+            panelCamera.classList.add('hidden');
+            tabBtnUpload.className = 'px-3 py-1.5 rounded-lg font-bold text-white bg-gray-800 shadow transition';
+            tabBtnCamera.className = 'px-3 py-1.5 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5';
+        } else {
+            panelUpload.classList.add('hidden');
+            panelCamera.classList.remove('hidden');
+            tabBtnCamera.className = 'px-3 py-1.5 rounded-lg font-bold text-white bg-cyan-600 shadow transition flex items-center gap-1.5';
+            tabBtnUpload.className = 'px-3 py-1.5 rounded-lg font-bold text-gray-400 hover:text-white transition';
+            // Auto open stream if not open
+            if (!mediaStream) {
+                initCameraStream();
+            }
+        }
+    }
+
+    tabBtnUpload.addEventListener('click', () => switchTab('upload'));
+    tabBtnCamera.addEventListener('click', () => switchTab('camera'));
+
+    // File input change indicator
+    const fileInput = document.querySelector('input[type="file"][name="video_file"]');
+    const fileStatus = document.getElementById('file-selected-status');
+    if (fileInput && fileStatus) {
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileStatus.textContent = `✓ Arquivo selecionado: ${fileInput.files[0].name} (${(fileInput.files[0].size / 1024 / 1024).toFixed(2)} MB)`;
+                fileStatus.classList.remove('hidden');
+            } else {
+                fileStatus.classList.add('hidden');
+            }
+        });
+    }
+
+    // WebRTC Direct Camera Recording Logic (Onda 8 - #34)
+    let mediaStream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordStartTime = 0;
+    let timerInterval = null;
+
+    const cameraStreamVideo = document.getElementById('camera-stream');
+    const recordedPreviewVideo = document.getElementById('recorded-preview');
+    const cameraPlaceholder = document.getElementById('camera-placeholder');
+    const cameraError = document.getElementById('camera-error');
+    const btnStartStream = document.getElementById('btn-start-stream');
+    const btnRecord = document.getElementById('btn-record');
+    const btnStop = document.getElementById('btn-stop');
+    const btnRetake = document.getElementById('btn-retake');
+    const recordingOverlay = document.getElementById('recording-overlay');
+    const recordingTimer = document.getElementById('recording-timer');
+    const guideOverlay = document.getElementById('guide-overlay');
+    const recordSuccessStatus = document.getElementById('record-success-status');
+    const durationInput = document.querySelector('input[name="duration_seconds"]');
+
+    async function initCameraStream() {
+        cameraError.classList.add('hidden');
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Navegador sem suporte a getUserMedia');
+            }
+
+            const constraints = {
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 720 },
+                    height: { ideal: 1280 },
+                    aspectRatio: 9 / 16
+                },
+                audio: true
+            };
+
+            mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+            cameraStreamVideo.srcObject = mediaStream;
+            cameraStreamVideo.classList.remove('hidden');
+            cameraPlaceholder.classList.add('hidden');
+            guideOverlay.classList.remove('hidden');
+            btnRecord.disabled = false;
+        } catch (err) {
+            console.error('Erro ao acessar câmera:', err);
+            cameraError.classList.remove('hidden');
+            cameraError.textContent = 'Não foi possível acessar a câmera ou microfone: ' + (err.message || 'Permissão negada.');
+        }
+    }
+
+    if (btnStartStream) {
+        btnStartStream.addEventListener('click', initCameraStream);
+    }
+
+    // Start Recording
+    if (btnRecord) {
+        btnRecord.addEventListener('click', () => {
+            if (!mediaStream) return;
+
+            recordedChunks = [];
+            recordedPreviewVideo.classList.add('hidden');
+            cameraStreamVideo.classList.remove('hidden');
+            recordSuccessStatus.classList.add('hidden');
+
+            let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = { mimeType: 'video/webm' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options = { mimeType: 'video/mp4' };
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        options = {};
+                    }
+                }
+            }
+
+            try {
+                mediaRecorder = new MediaRecorder(mediaStream, options);
+            } catch (e) {
+                mediaRecorder = new MediaRecorder(mediaStream);
+            }
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const mimeType = mediaRecorder.mimeType || 'video/webm';
+                const blob = new Blob(recordedChunks, { type: mimeType });
+                const videoURL = URL.createObjectURL(blob);
+
+                // Setup Preview
+                recordedPreviewVideo.src = videoURL;
+                recordedPreviewVideo.classList.remove('hidden');
+                cameraStreamVideo.classList.add('hidden');
+                recordingOverlay.classList.add('hidden');
+                btnStop.classList.add('hidden');
+                btnRetake.classList.remove('hidden');
+                btnRecord.classList.remove('hidden');
+                btnRecord.disabled = false;
+
+                // Duration Calculation
+                const durationSeconds = Math.max(5, Math.min(180, Math.round((Date.now() - recordStartTime) / 1000)));
+                if (durationInput) {
+                    durationInput.value = durationSeconds;
+                }
+
+                // Inject Blob into file input using DataTransfer
+                const filename = `gravacao_pilula_${Date.now()}.webm`;
+                const recordedFile = new File([blob], filename, { type: mimeType });
+                if (fileInput) {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(recordedFile);
+                    fileInput.files = dataTransfer.files;
+                    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                recordSuccessStatus.classList.remove('hidden');
+            };
+
+            mediaRecorder.start(250); // collect chunks every 250ms
+            recordStartTime = Date.now();
+
+            // UI updates
+            btnRecord.classList.add('hidden');
+            btnStop.classList.remove('hidden');
+            btnRetake.classList.add('hidden');
+            recordingOverlay.classList.remove('hidden');
+
+            // Timer Counter
+            let elapsed = 0;
+            recordingTimer.textContent = '00:00';
+            timerInterval = setInterval(() => {
+                elapsed++;
+                const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const secs = String(elapsed % 60).padStart(2, '0');
+                recordingTimer.textContent = `${mins}:${secs}`;
+
+                // Auto stop after 3 minutes (180s)
+                if (elapsed >= 180) {
+                    stopRecording();
+                }
+            }, 1000);
+        });
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    if (btnStop) {
+        btnStop.addEventListener('click', stopRecording);
+    }
+
+    // Retake Recording
+    if (btnRetake) {
+        btnRetake.addEventListener('click', () => {
+            recordedPreviewVideo.pause();
+            recordedPreviewVideo.classList.add('hidden');
+            cameraStreamVideo.classList.remove('hidden');
+            btnRetake.classList.add('hidden');
+            recordSuccessStatus.classList.add('hidden');
+            btnRecord.classList.remove('hidden');
+            btnRecord.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

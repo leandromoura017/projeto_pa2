@@ -9,17 +9,19 @@ from .forms import SignUpForm, LoginForm, ProfileEditForm
 from .models import User, Profile, DirectMessage, Notification, TAMEvaluation
 
 
-def _build_portfolio_context(target_user):
+def _build_portfolio_context(target_user, request=None):
     """
-    Constrói os indicadores e registros verificáveis do Portfólio Vivo de um usuário.
+    Constrói os indicadores e registros verificáveis do Portfólio Vivo de um usuário
+    incluindo o Medidor de Conhecimento Técnico (Onda 8 - #35) e URLs de compartilhamento (Onda 8 - #32).
     """
     from courses.models import Enrollment, ChallengeAttempt, Certificate, LessonProgress
+    from videos.models import Technology
 
     profile, _ = Profile.objects.get_or_create(user=target_user)
     solved_attempts = ChallengeAttempt.objects.filter(
         user=target_user,
         is_correct=True
-    ).select_related('challenge', 'challenge__lesson', 'challenge__lesson__course').order_by('-attempted_at')
+    ).select_related('challenge', 'challenge__lesson', 'challenge__lesson__course', 'challenge__lesson__course__technology').order_by('-attempted_at')
 
     certificates = Certificate.objects.filter(
         user=target_user
@@ -48,6 +50,71 @@ def _build_portfolio_context(target_user):
 
     published_videos = target_user.videos.filter(is_published=True).select_related('technology').order_by('-created_at')
 
+    # Medidor de Conhecimento Técnico (Onda 8 - #35)
+    total_points = sum(a.challenge.points for a in solved_attempts if a.challenge and a.challenge.points)
+
+    tech_stats = []
+    all_technologies = Technology.objects.filter(is_active=True).order_by('name')
+    for tech in all_technologies:
+        tech_solved = solved_attempts.filter(challenge__lesson__course__technology=tech).count()
+        tech_certs = certificates.filter(course__technology=tech).count()
+        tech_videos = published_videos.filter(technology=tech).count()
+
+        # Cálculo ponderado de domínio prático (0 a 100%)
+        raw_score = (tech_solved * 30) + (tech_certs * 50) + (tech_videos * 20)
+        percentage = min(100, raw_score)
+
+        if percentage >= 80:
+            level_label = "Avançado / Especialista"
+            badge_color = "emerald"
+        elif percentage >= 40:
+            level_label = "Intermediário / Praticante"
+            badge_color = "cyan"
+        elif percentage > 0:
+            level_label = "Iniciante / Em Formação"
+            badge_color = "blue"
+        else:
+            level_label = "Não Iniciado"
+            badge_color = "gray"
+
+        tech_stats.append({
+            'tech': tech,
+            'solved_count': tech_solved,
+            'certs_count': tech_certs,
+            'videos_count': tech_videos,
+            'percentage': percentage,
+            'level_label': level_label,
+            'badge_color': badge_color,
+            'has_activity': percentage > 0,
+        })
+
+    # Maturidade global de conhecimento prático
+    active_techs_count = sum(1 for t in tech_stats if t['has_activity'])
+    overall_points = total_points + (certificates.count() * 50) + (lessons_completed_count * 10) + (published_videos.count() * 15)
+
+    if overall_points >= 200 or certificates.count() >= 2:
+        overall_rank = "Senior Tech Lead • Especialista"
+        overall_pct = min(100, 75 + min(25, (overall_points - 200) // 10))
+        rank_badge_color = "purple"
+    elif overall_points >= 100 or certificates.count() >= 1:
+        overall_rank = "Pleno Developer • Autônomo"
+        overall_pct = min(74, 50 + ((overall_points - 100) // 4))
+        rank_badge_color = "cyan"
+    elif overall_points >= 30 or solved_attempts.count() >= 1:
+        overall_rank = "Junior Developer • Em Ascensão"
+        overall_pct = min(49, 25 + ((overall_points - 30) // 3))
+        rank_badge_color = "blue"
+    else:
+        overall_rank = "Estudante Praticante • Iniciante"
+        overall_pct = 15
+        rank_badge_color = "emerald"
+
+    # Link de compartilhamento público (Onda 8 - #32)
+    if request:
+        absolute_profile_url = request.build_absolute_uri(reverse('public_profile', kwargs={'user_id': target_user.id}))
+    else:
+        absolute_profile_url = f"/accounts/profiles/{target_user.id}/"
+
     return {
         'profile': profile,
         'target_user': target_user,
@@ -59,6 +126,14 @@ def _build_portfolio_context(target_user):
         'lessons_completed_count': lessons_completed_count,
         'published_videos': published_videos,
         'videos_published_count': published_videos.count(),
+        'total_points': total_points,
+        'tech_stats': tech_stats,
+        'active_techs_count': active_techs_count,
+        'overall_points': overall_points,
+        'overall_pct': overall_pct,
+        'overall_rank': overall_rank,
+        'rank_badge_color': rank_badge_color,
+        'absolute_profile_url': absolute_profile_url,
     }
 
 
@@ -132,7 +207,7 @@ def feed_view(request):
 
 @login_required
 def profile_view(request):
-    context = _build_portfolio_context(request.user)
+    context = _build_portfolio_context(request.user, request=request)
     context['user'] = request.user
     return render(request, 'accounts/profile.html', context)
 
@@ -176,6 +251,38 @@ def profile_edit_view(request):
 
 
 @login_required
+def account_delete_view(request):
+    """
+    Encerramento definitivo de conta e exclusão de dados pessoais (Onda 8 - #33).
+    Conformidade com a LGPD (Lei Geral de Proteção de Dados - Artigo 18 - Direito à Eliminação).
+    """
+    if request.method == 'POST':
+        password = request.POST.get('password', '').strip()
+        confirm_keyword = request.POST.get('confirm_keyword', '').strip().upper()
+
+        valid = False
+        if password and request.user.check_password(password):
+            valid = True
+        elif confirm_keyword in ['DELETAR', 'EXCLUIR']:
+            valid = True
+        elif not request.user.has_usable_password() and confirm_keyword in ['DELETAR', 'EXCLUIR']:
+            valid = True
+
+        if not valid:
+            messages.error(request, "Para encerrar sua conta conforme a LGPD, confirme sua senha ou digite a palavra 'DELETAR'.")
+            return redirect('profile_edit')
+
+        user = request.user
+        user_email = user.email
+        logout(request)
+        user.delete()
+        messages.success(request, f"Sua conta ({user_email}) e todos os seus dados pessoais foram permanentemente eliminados em conformidade com a LGPD.")
+        return redirect('login')
+
+    return render(request, 'accounts/account_delete_confirm.html', {'user': request.user})
+
+
+@login_required
 def profile_search_view(request):
     """
     Busca de Perfis / Portfólios Vivos de alunos e mentores na plataforma (Onda 4 - #16).
@@ -215,7 +322,7 @@ def public_profile_view(request, user_id):
     Visualização pública do Portfólio Vivo de qualquer usuário/mentor da plataforma (Onda 4).
     """
     target_user = get_object_or_404(User, id=user_id, is_active=True)
-    context = _build_portfolio_context(target_user)
+    context = _build_portfolio_context(target_user, request=request)
     return render(request, 'accounts/profile_public.html', context)
 
 

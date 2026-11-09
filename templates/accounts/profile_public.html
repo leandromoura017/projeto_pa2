@@ -2,6 +2,17 @@
 
 {% block title %}Portfólio Vivo de {{ target_user.get_full_name|default:target_user.first_name|default:target_user.username }} | CodeView{% endblock %}
 
+{% block extra_head %}
+<!-- Open Graph & Social Sharing Meta Tags (Onda 8 - #32) -->
+<meta property="og:title" content="Portfólio Vivo • {{ target_user.get_full_name|default:target_user.username }} | CodeView">
+<meta property="og:description" content="Confira o portfólio técnico de {{ target_user.get_full_name|default:target_user.username }}: {{ overall_rank }} com {{ challenges_solved_count }} desafios práticos e {{ certificates_count }} certificações verificadas no CodeView.">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="{{ absolute_profile_url }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Portfólio Vivo • {{ target_user.get_full_name|default:target_user.username }}">
+<meta name="twitter:description" content="Maturidade técnica verificável: {{ overall_rank }} com {{ total_points }} pts práticos.">
+{% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 w-full">
 
@@ -39,7 +50,7 @@
                                 </span>
                             {% else %}
                                 <span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300">
-                                    💻 Dev
+                                    {{ overall_rank }}
                                 </span>
                             {% endif %}
                         </div>
@@ -79,6 +90,132 @@
                         </a>
                     {% endif %}
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compartilhar Perfil / Portfólio Vivo (Onda 8 - #32) -->
+    <div class="mt-8 bg-gradient-to-r from-gray-900 via-[#111827] to-gray-900 border border-cyan-800/40 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div class="space-y-1 text-center lg:text-left">
+                <div class="flex items-center justify-center lg:justify-start gap-2">
+                    <span class="text-lg">🔗</span>
+                    <h3 class="text-sm font-bold text-white tracking-wide uppercase">Compartilhe este Portfólio Vivo</h3>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-semibold">Verificado</span>
+                </div>
+                <p class="text-xs text-gray-400">
+                    Apresente as habilidades comprovadas de {{ target_user.first_name|default:target_user.username }} para recrutadores e comunidades.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-2 w-full lg:w-auto">
+                <div class="flex items-center gap-1.5 bg-gray-950 border border-gray-800 rounded-xl px-3 py-1.5 w-full sm:w-auto">
+                    <input type="text" id="profile-share-link" readonly value="{{ absolute_profile_url }}" 
+                           class="bg-transparent text-xs text-cyan-300 font-mono focus:outline-none w-52 sm:w-64 truncate">
+                    <button type="button" id="btn-copy-share" 
+                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition">
+                        Copiar
+                    </button>
+                </div>
+
+                <a href="https://api.whatsapp.com/send?text=Confira%20o%20Portf%C3%B3lio%20Vivo%20de%20{{ target_user.get_full_name|default:target_user.username|urlencode }}%20no%20CodeView%3A%20{{ absolute_profile_url|urlencode }}" 
+                   target="_blank" rel="noopener noreferrer" title="Compartilhar no WhatsApp"
+                   class="p-2.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/60 text-emerald-300 transition">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                    </svg>
+                </a>
+
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ absolute_profile_url|urlencode }}" 
+                   target="_blank" rel="noopener noreferrer" title="Compartilhar no LinkedIn"
+                   class="p-2.5 rounded-xl bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800/60 text-blue-300 transition">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+                </a>
+
+                <a href="https://twitter.com/intent/tweet?text=Confira%20o%20Portf%C3%B3lio%20Vivo%20de%20{{ target_user.get_full_name|default:target_user.username|urlencode }}%20no%20CodeView!&url={{ absolute_profile_url|urlencode }}" 
+                   target="_blank" rel="noopener noreferrer" title="Compartilhar no X (Twitter)"
+                   class="p-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white transition">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+
+                <button type="button" id="btn-native-share" title="Compartilhar..." 
+                        class="p-2.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/60 text-cyan-300 transition hidden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medidor de Conhecimento Técnico (Onda 8 - #35) -->
+    <div class="mt-8 bg-[#111827] border border-gray-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-6">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 uppercase tracking-wider mb-2">
+                    📊 Medidor de Conhecimento Técnico
+                </span>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-white">Maturidade & Domínio Prático</h2>
+                <p class="text-xs text-gray-400 mt-1">Calculado com base em testes automatizados aprovados e certificações emitidas.</p>
+            </div>
+
+            <!-- Global Maturity Rank Badge -->
+            <div class="text-right sm:text-right shrink-0">
+                <span class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-900/60 to-cyan-900/60 border border-cyan-600/50 text-cyan-200 shadow-md">
+                    {{ overall_rank }}
+                </span>
+                <p class="text-[11px] font-mono text-cyan-400 mt-1.5">{{ overall_points }} pts de autoridade técnica</p>
+            </div>
+        </div>
+
+        <!-- Global Progress Bar -->
+        <div class="mt-6">
+            <div class="flex items-center justify-between text-xs mb-2">
+                <span class="text-gray-300 font-semibold">Índice Geral de Competência Comprovada</span>
+                <span class="font-bold text-cyan-400 font-mono">{{ overall_pct }}%</span>
+            </div>
+            <div class="w-full h-3 bg-gray-950 rounded-full overflow-hidden border border-gray-800">
+                <div class="h-full bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400 rounded-full transition-all duration-500" style="width: {{ overall_pct }}%;"></div>
+            </div>
+        </div>
+
+        <!-- Breakdown by Technology Grid -->
+        <div class="mt-8">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
+                <span>⚡</span> Domínio Prático por Tecnologia
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for item in tech_stats %}
+                    <div class="bg-gray-900/70 border border-gray-800 hover:border-gray-700 rounded-2xl p-4 transition">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full {% if item.has_activity %}bg-cyan-400 animate-pulse{% else %}bg-gray-600{% endif %}"></span>
+                                <span class="text-sm font-bold text-white">{{ item.tech.name }}</span>
+                            </div>
+                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">
+                                {{ item.level_label }}
+                            </span>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full h-2 bg-gray-950 rounded-full overflow-hidden my-2 border border-gray-800">
+                            <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style="width: {{ item.percentage }}%;"></div>
+                        </div>
+
+                        <!-- Details -->
+                        <div class="flex items-center justify-between text-[11px] text-gray-400 mt-2 font-mono">
+                            <span>{{ item.solved_count }} desafios resolvidos</span>
+                            <span>{{ item.certs_count }} certs</span>
+                            <span class="font-bold text-cyan-300">{{ item.percentage }}%</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-xs text-gray-500 col-span-2">Nenhuma tecnologia cadastrada no sistema.</p>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -153,3 +290,45 @@
 </div>
 {% endblock %}
 
+{% block extra_scripts %}
+<script>
+    // Copy Share Link
+    const btnCopy = document.getElementById('btn-copy-share');
+    const inputLink = document.getElementById('profile-share-link');
+
+    if (btnCopy && inputLink) {
+        btnCopy.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(inputLink.value);
+                const originalText = btnCopy.textContent;
+                btnCopy.textContent = 'Copiado!';
+                btnCopy.classList.replace('text-cyan-300', 'text-emerald-300');
+                setTimeout(() => {
+                    btnCopy.textContent = originalText;
+                    btnCopy.classList.replace('text-emerald-300', 'text-cyan-300');
+                }, 2000);
+            } catch (err) {
+                inputLink.select();
+                document.execCommand('copy');
+            }
+        });
+    }
+
+    // Native Web Share API
+    const btnNative = document.getElementById('btn-native-share');
+    if (btnNative && navigator.share) {
+        btnNative.classList.remove('hidden');
+        btnNative.addEventListener('click', async () => {
+            try {
+                await navigator.share({
+                    title: 'Portfólio Vivo • {{ target_user.get_full_name|default:target_user.username }} | CodeView',
+                    text: 'Confira o Portfólio Vivo prático no CodeView!',
+                    url: inputLink.value,
+                });
+            } catch (err) {
+                // User cancelled or share failed
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -9,7 +9,7 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 * 🟢 **MVP 1 (O Início - Fundação & Feed Core):** Onda 1 — *100% Concluído e testado.*
 * 🟡 **MVP 2 (O Meio - Interatividade & Prática Ativa):** Ondas 2 e 3 — *100% Concluído e testado.*
 * 🔵 **MVP 3 (O Fim - Certificação & Validação Formal):** Ondas 4 e 5 — *100% Concluído e testado.*
-* 🟣 **Pós-MVP / Expansões Contínuas:** Ondas 6 e 7 — *100% Concluído e testado (77 testes automatizados passando).* Onda 8 — *Roadmap de produto estruturado para encerramento.*
+* 🟣 **Pós-MVP / Expansões Contínuas:** Ondas 6, 7 e 8 — *100% Concluído e testado (86 testes automatizados passando com 100% de sucesso).* Todas as 8 Ondas da Lean Inception (35 funcionalidades de ponta a ponta) foram completamente desenvolvidas e validadas!
 
 ---
 
@@ -55,11 +55,7 @@ Este documento consolida o alinhamento estratégico entre as **8 Ondas do Sequen
 | 30 | **Aba de cadastrar cursos** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
 | 31 | **Notificações de inscrição cancelada** | 7 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
 | | | | | | |
-| 32 | **Compartilhar perfil** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 33 | **Encerrar conta** | 8 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 34 | **Aba de câmera (gravação direta)** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 35 | **Medidor de conhecimento técnico** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 32 | **Compartilhar perfil** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 33 | **Encerrar conta** | 8 | 🟢 Verde | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 34 | **Aba de câmera (gravação direta)** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
-| 35 | **Medidor de conhecimento técnico** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | 🚀 Roadmap |
+| 32 | **Compartilhar perfil** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 33 | **Encerrar conta** | 8 | 🟢 Verde | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 34 | **Aba de câmera (gravação direta)** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | ✅ Concluído |
+| 35 | **Medidor de conhecimento técnico** | 8 | 🔴 Vermelho | **Pós-MVP (Release Futura)** | ✅ Concluído |
