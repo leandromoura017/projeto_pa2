@@ -100,12 +100,80 @@
     <!-- ========================================== -->
     <div id="tab-panel-analytics" class="space-y-6">
 
+        {% if total_tam > 0 %}
+        <!-- Barra de Filtro / Segmentação por Perfil Profissional -->
+        <div class="bg-[#111827] border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                        <span>🎯</span> Segmentação &amp; Filtro por Perfil Profissional
+                    </span>
+                    <h3 class="text-base sm:text-lg font-extrabold text-white mt-1">
+                        Distribuição &amp; Avaliação por Perfil Profissional
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                        Selecione um perfil profissional para analisar como esse público avaliou a plataforma e a quantidade exata de respondentes.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="role-filter-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 flex items-center gap-1.5 shadow-sm">
+                        <span>👥</span> <span id="role-filter-badge-text">Todos os Perfis: {{ total_tam }} respondentes</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Botões / Pills de Perfil para Filtro Rápido -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="role-filter-buttons">
+                <button type="button" data-role="all" class="role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20 shrink-0">
+                    <span>🌐</span> <span>Todos ({{ total_tam }})</span>
+                </button>
+                {% for r_key, r_data in roles_analytics.items %}
+                    {% if r_key != 'all' %}
+                        <button type="button" data-role="{{ r_key }}" class="role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800 transition flex items-center gap-1.5 shrink-0">
+                            <span>{% if r_key == 'estudante' %}🎓{% elif r_key == 'dev_junior' %}🌱{% elif r_key == 'dev_pleno_senior' %}🚀{% elif r_key == 'recruiter' %}💼{% elif r_key == 'professor' %}👨‍🏫{% else %}⚡{% endif %}</span>
+                            <span>{{ r_data.label }} ({{ r_data.count }})</span>
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Card Informativo com o Campo de Quantidade de Pessoas que Respondeu -->
+            <div id="role-info-card" class="bg-gray-900/90 border border-gray-800/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-lg text-cyan-400 font-bold shrink-0">
+                        👥
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block text-[11px]">Perfil Profissional Selecionado:</span>
+                        <span id="role-info-title" class="font-extrabold text-white text-sm sm:text-base">Todos os Perfis (Consolidado)</span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 sm:gap-6 shrink-0">
+                    <div class="bg-gray-950/70 px-3.5 py-2 rounded-xl border border-gray-800 text-center sm:text-left">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block font-semibold">Pessoas que responderam</span>
+                        <span id="role-info-count" class="text-base font-extrabold text-cyan-400 font-mono">{{ total_tam }} pessoas</span>
+                    </div>
+                    <div class="bg-gray-950/70 px-3.5 py-2 rounded-xl border border-gray-800 text-center sm:text-left">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block font-semibold">Representatividade</span>
+                        <span id="role-info-pct" class="text-base font-extrabold text-blue-400 font-mono">100% da base</span>
+                    </div>
+                    <div class="bg-gray-950/70 px-3.5 py-2 rounded-xl border border-amber-900/40 text-center sm:text-left">
+                        <span class="text-[10px] text-amber-300 uppercase tracking-wider block font-semibold">Média Geral do Perfil</span>
+                        <span id="role-info-avg" class="text-base font-extrabold text-amber-400 font-mono">⭐ {{ avg_overall }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Médias dos Construtos TAM (Cards 1 a 5) -->
         <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-5">
                 <div>
                     <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Modelo de Aceitação Tecnológica (Davis, 1989)</span>
-                    <h2 class="text-xl font-extrabold text-white mt-1">Médias Estatísticas Consolidadas (Escala Likert de 1 a 5)</h2>
+                    <h2 class="text-xl font-extrabold text-white mt-1">
+                        Médias Estatísticas: <span id="kpi-profile-name" class="text-cyan-400">Todos os Perfis (Consolidado)</span>
+                    </h2>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-950 border border-cyan-800 text-cyan-300">
@@ -119,9 +187,9 @@
                     <!-- PU -->
                     <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
                         <span class="text-xs font-bold text-gray-400 uppercase">Utilidade Percebida (PU)</span>
-                        <div class="text-3xl font-extrabold text-cyan-400 font-mono mt-2">{{ avg_pu }}</div>
+                        <div id="kpi-pu-value" class="text-3xl font-extrabold text-cyan-400 font-mono mt-2">{{ avg_pu }}</div>
                         <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
-                            <div class="h-full bg-cyan-400" style="width: {{ avg_pu|floatformat:0 }}0%;"></div>
+                            <div id="kpi-pu-bar" class="h-full bg-cyan-400 transition-all duration-300" style="width: {{ avg_pu|floatformat:0 }}0%;"></div>
                         </div>
                         <p class="text-[10px] text-gray-500 mt-2">Pílulas curtas agilizam aprendizado</p>
                     </div>
@@ -129,9 +197,9 @@
                     <!-- PEOU -->
                     <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
                         <span class="text-xs font-bold text-gray-400 uppercase">Facilidade de Uso (PEOU)</span>
-                        <div class="text-3xl font-extrabold text-blue-400 font-mono mt-2">{{ avg_peou }}</div>
+                        <div id="kpi-peou-value" class="text-3xl font-extrabold text-blue-400 font-mono mt-2">{{ avg_peou }}</div>
                         <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
-                            <div class="h-full bg-blue-400" style="width: {{ avg_peou|floatformat:0 }}0%;"></div>
+                            <div id="kpi-peou-bar" class="h-full bg-blue-400 transition-all duration-300" style="width: {{ avg_peou|floatformat:0 }}0%;"></div>
                         </div>
                         <p class="text-[10px] text-gray-500 mt-2">Navegação simples e sem atrito</p>
                     </div>
@@ -139,9 +207,9 @@
                     <!-- ATU -->
                     <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
                         <span class="text-xs font-bold text-gray-400 uppercase">Atitude com o Uso (ATU)</span>
-                        <div class="text-3xl font-extrabold text-purple-400 font-mono mt-2">{{ avg_atu }}</div>
+                        <div id="kpi-atu-value" class="text-3xl font-extrabold text-purple-400 font-mono mt-2">{{ avg_atu }}</div>
                         <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
-                            <div class="h-full bg-purple-400" style="width: {{ avg_atu|floatformat:0 }}0%;"></div>
+                            <div id="kpi-atu-bar" class="h-full bg-purple-400 transition-all duration-300" style="width: {{ avg_atu|floatformat:0 }}0%;"></div>
                         </div>
                         <p class="text-[10px] text-gray-500 mt-2">Sentimento positivo e engajador</p>
                     </div>
@@ -149,9 +217,9 @@
                     <!-- BIU -->
                     <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
                         <span class="text-xs font-bold text-gray-400 uppercase">Intenção de Uso (BIU)</span>
-                        <div class="text-3xl font-extrabold text-emerald-400 font-mono mt-2">{{ avg_biu }}</div>
+                        <div id="kpi-biu-value" class="text-3xl font-extrabold text-emerald-400 font-mono mt-2">{{ avg_biu }}</div>
                         <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
-                            <div class="h-full bg-emerald-400" style="width: {{ avg_biu|floatformat:0 }}0%;"></div>
+                            <div id="kpi-biu-bar" class="h-full bg-emerald-400 transition-all duration-300" style="width: {{ avg_biu|floatformat:0 }}0%;"></div>
                         </div>
                         <p class="text-[10px] text-gray-500 mt-2">Disposição a adotar e indicar</p>
                     </div>
@@ -159,11 +227,11 @@
                     <!-- Geral -->
                     <div class="bg-gradient-to-b from-cyan-950/40 to-blue-950/40 border border-cyan-700/60 rounded-2xl p-4 text-center shadow-md">
                         <span class="text-xs font-bold text-amber-300 uppercase">Índice TAM Geral</span>
-                        <div class="text-3xl font-extrabold text-amber-400 font-mono mt-2">⭐ {{ avg_overall }}</div>
+                        <div id="kpi-overall-value" class="text-3xl font-extrabold text-amber-400 font-mono mt-2">⭐ {{ avg_overall }}</div>
                         <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
-                            <div class="h-full bg-gradient-to-r from-amber-400 to-cyan-400" style="width: {{ avg_overall|floatformat:0 }}0%;"></div>
+                            <div id="kpi-overall-bar" class="h-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-300" style="width: {{ avg_overall|floatformat:0 }}0%;"></div>
                         </div>
-                        <p class="text-[10px] text-gray-300 mt-2 font-semibold">Aceitação Geral Comprovada</p>
+                        <p class="text-[10px] text-gray-300 mt-2 font-semibold">Aceitação Geral do Perfil</p>
                     </div>
                 </div>
             {% else %}
@@ -177,13 +245,13 @@
         <!-- Seção de Gráficos (Chart.js) -->
         {% if total_tam > 0 %}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Gráfico 1: Médias dos Pilares (Barra) -->
+                <!-- Gráfico 1: Médias dos Pilares (Barra - Interativo com a segmentação) -->
                 <div class="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
                             <span>📊</span> Desempenho dos Construtos TAM (0.0 a 5.0)
                         </h3>
-                        <span class="text-[11px] text-gray-400">Escala Likert</span>
+                        <span id="chart-constructs-subtitle" class="text-[11px] text-cyan-400 font-semibold">Segmentação: Todos os Perfis</span>
                     </div>
                     <div class="chart-container">
                         <canvas id="chartTAMConstructs"></canvas>
@@ -203,16 +271,29 @@
                     </div>
                 </div>
 
-                <!-- Gráfico 3: Perfil dos Respondentes (Barra Horizontal) -->
-                <div class="lg:col-span-3 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+                <!-- Gráfico 3: Distribuição por Perfil Profissional (Quantidade de Respondentes) -->
+                <div class="lg:col-span-1 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>👥</span> Distribuição por Perfil Profissional
+                            <span>👥</span> Pessoas que Responderam por Perfil
                         </h3>
-                        <span class="text-[11px] text-gray-400">Avaliadores</span>
+                        <span class="text-[11px] text-cyan-400 font-semibold">Total de Avaliadores</span>
                     </div>
-                    <div class="chart-container" style="height: 240px;">
+                    <div class="chart-container">
                         <canvas id="chartRoles"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 4: Média de Avaliação Geral por Perfil Profissional (Como cada perfil avaliou) -->
+                <div class="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>⭐</span> Média de Avaliação por Perfil Profissional (0.0 a 5.0)
+                        </h3>
+                        <span class="text-[11px] text-amber-400 font-semibold">Comparativo das Notas Gerais</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartRolesScores"></canvas>
                     </div>
                 </div>
             </div>
@@ -370,17 +451,25 @@
                     </p>
                 </div>
 
-                <!-- Input de Busca Rápida -->
-                <div class="w-full sm:w-72">
-                    <input type="text" id="filter-responses-input" placeholder="Filtrar por nome, perfil ou palavra..."
-                           class="w-full px-3.5 py-2 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
+                <!-- Filtros Combinados (Perfil e Texto) -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                    <select id="filter-responses-role" class="px-3.5 py-2 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
+                        <option value="all">Todos os Perfis ({{ total_tam }})</option>
+                        {% for r_key, r_data in roles_analytics.items %}
+                            {% if r_key != 'all' %}
+                                <option value="{{ r_key }}">{{ r_data.label }} ({{ r_data.count }})</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <input type="text" id="filter-responses-input" placeholder="Filtrar por nome, texto..."
+                           class="w-full sm:w-64 px-3.5 py-2 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
                 </div>
             </div>
 
             {% if tam_evaluations %}
                 <div class="space-y-4" id="evaluations-container">
                     {% for eval in tam_evaluations %}
-                        <div class="eval-card bg-gray-900/80 border border-gray-800 hover:border-gray-700 rounded-2xl p-5 space-y-4 transition shadow-md">
+                        <div class="eval-card bg-gray-900/80 border border-gray-800 hover:border-gray-700 rounded-2xl p-5 space-y-4 transition shadow-md" data-role="{{ eval.role }}">
                             
                             <!-- Header do Avaliador -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800/80 pb-3">
@@ -509,6 +598,10 @@
         tabBtnTechnologies.addEventListener('click', () => switchTab('technologies'));
         tabBtnResponses.addEventListener('click', () => switchTab('responses'));
 
+        // Dados Estruturados por Perfil Profissional
+        const rolesAnalytics = {{ roles_analytics_json|safe }};
+        let chartConstructsInstance = null;
+
         // Chart.js Gráficos Interativos (quando houver avaliações)
         {% if total_tam > 0 %}
             Chart.defaults.color = '#94a3b8';
@@ -517,7 +610,7 @@
             // Gráfico 1: Médias dos Construtos TAM (Bar Chart)
             const ctxConstructs = document.getElementById('chartTAMConstructs');
             if (ctxConstructs) {
-                new Chart(ctxConstructs, {
+                chartConstructsInstance = new Chart(ctxConstructs, {
                     type: 'bar',
                     data: {
                         labels: {{ chart_tam_labels_json|safe }},
@@ -599,7 +692,7 @@
                 });
             }
 
-            // Gráfico 3: Perfis Profissionais (Horizontal Bar)
+            // Gráfico 3: Distribuição por Perfil Profissional - Quantidade de Respondentes
             const ctxRoles = document.getElementById('chartRoles');
             if (ctxRoles) {
                 new Chart(ctxRoles, {
@@ -607,7 +700,7 @@
                     data: {
                         labels: {{ chart_roles_labels_json|safe }},
                         datasets: [{
-                            label: 'Total de Avaliadores',
+                            label: 'Total de Pessoas',
                             data: {{ chart_roles_data_json|safe }},
                             backgroundColor: 'rgba(6, 182, 212, 0.65)',
                             borderColor: '#06b6d4',
@@ -630,25 +723,174 @@
                             }
                         },
                         plugins: {
-                            legend: { display: false }
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ` Respondentes: ${ctx.parsed.x} ${ctx.parsed.x === 1 ? 'pessoa' : 'pessoas'}`
+                                }
+                            }
                         }
                     }
                 });
             }
-        {% endif %}
 
-        // Filtro em Tempo Real das Respostas
-        const filterInput = document.getElementById('filter-responses-input');
-        if (filterInput) {
-            filterInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase().trim();
-                const cards = document.querySelectorAll('.eval-card');
-                cards.forEach(card => {
-                    const text = card.textContent.toLowerCase();
-                    card.style.display = text.includes(term) ? '' : 'none';
+            // Gráfico 4: Média de Avaliação Geral por Perfil Profissional (Como cada perfil avaliou)
+            const ctxRolesScores = document.getElementById('chartRolesScores');
+            if (ctxRolesScores) {
+                new Chart(ctxRolesScores, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ chart_roles_labels_json|safe }},
+                        datasets: [{
+                            label: 'Média Geral do Perfil',
+                            data: {{ chart_roles_scores_data_json|safe }},
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.75)',  // blue
+                                'rgba(6, 182, 212, 0.75)',  // cyan
+                                'rgba(16, 185, 129, 0.75)', // emerald
+                                'rgba(245, 158, 11, 0.75)', // amber
+                                'rgba(168, 85, 247, 0.75)', // purple
+                                'rgba(236, 72, 153, 0.75)'  // pink
+                            ],
+                            borderColor: [
+                                '#3b82f6',
+                                '#06b6d4',
+                                '#10b981',
+                                '#f59e0b',
+                                '#a855f7',
+                                '#ec4899'
+                            ],
+                            borderWidth: 1.5,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 5,
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { stepSize: 1 }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ` Média Geral: ${ctx.parsed.y.toFixed(2)} / 5.00`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Lógica de Segmentação / Filtro por Perfil Profissional
+            const roleButtons = document.querySelectorAll('.role-filter-btn');
+
+            function applyRoleSegmentation(roleKey) {
+                const data = rolesAnalytics[roleKey] || rolesAnalytics['all'];
+
+                // Atualizar botões visuais
+                roleButtons.forEach(btn => {
+                    if (btn.dataset.role === roleKey) {
+                        btn.className = 'role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20 shrink-0';
+                    } else {
+                        btn.className = 'role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800 transition flex items-center gap-1.5 shrink-0';
+                    }
+                });
+
+                // Atualizar card de informações de amostragem
+                const roleInfoTitle = document.getElementById('role-info-title');
+                const roleInfoCount = document.getElementById('role-info-count');
+                const roleInfoPct = document.getElementById('role-info-pct');
+                const roleInfoAvg = document.getElementById('role-info-avg');
+                const roleBadgeText = document.getElementById('role-filter-badge-text');
+                const kpiProfileName = document.getElementById('kpi-profile-name');
+                const chartSubtitle = document.getElementById('chart-constructs-subtitle');
+
+                if (roleInfoTitle) roleInfoTitle.textContent = data.label;
+                if (roleInfoCount) roleInfoCount.textContent = `${data.count} ${data.count === 1 ? 'pessoa' : 'pessoas'}`;
+                if (roleInfoPct) roleInfoPct.textContent = `${data.percentage}% da base`;
+                if (roleInfoAvg) roleInfoAvg.textContent = data.count > 0 ? `⭐ ${data.avg_overall}` : '— Sem dados';
+                if (roleBadgeText) roleBadgeText.textContent = `${data.short_label}: ${data.count} respondente${data.count === 1 ? '' : 's'}`;
+                if (kpiProfileName) kpiProfileName.textContent = data.label;
+                if (chartSubtitle) chartSubtitle.textContent = `Segmentação: ${data.label}`;
+
+                // Atualizar os 5 cards de notas dos pilares
+                const kpiPuVal = document.getElementById('kpi-pu-value');
+                const kpiPuBar = document.getElementById('kpi-pu-bar');
+                const kpiPeouVal = document.getElementById('kpi-peou-value');
+                const kpiPeouBar = document.getElementById('kpi-peou-bar');
+                const kpiAtuVal = document.getElementById('kpi-atu-value');
+                const kpiAtuBar = document.getElementById('kpi-atu-bar');
+                const kpiBiuVal = document.getElementById('kpi-biu-value');
+                const kpiBiuBar = document.getElementById('kpi-biu-bar');
+                const kpiOverallVal = document.getElementById('kpi-overall-value');
+                const kpiOverallBar = document.getElementById('kpi-overall-bar');
+
+                if (kpiPuVal) kpiPuVal.textContent = data.count > 0 ? data.avg_pu : '0.0';
+                if (kpiPuBar) kpiPuBar.style.width = data.count > 0 ? `${(data.avg_pu / 5.0) * 100}%` : '0%';
+
+                if (kpiPeouVal) kpiPeouVal.textContent = data.count > 0 ? data.avg_peou : '0.0';
+                if (kpiPeouBar) kpiPeouBar.style.width = data.count > 0 ? `${(data.avg_peou / 5.0) * 100}%` : '0%';
+
+                if (kpiAtuVal) kpiAtuVal.textContent = data.count > 0 ? data.avg_atu : '0.0';
+                if (kpiAtuBar) kpiAtuBar.style.width = data.count > 0 ? `${(data.avg_atu / 5.0) * 100}%` : '0%';
+
+                if (kpiBiuVal) kpiBiuVal.textContent = data.count > 0 ? data.avg_biu : '0.0';
+                if (kpiBiuBar) kpiBiuBar.style.width = data.count > 0 ? `${(data.avg_biu / 5.0) * 100}%` : '0%';
+
+                if (kpiOverallVal) kpiOverallVal.textContent = data.count > 0 ? `⭐ ${data.avg_overall}` : '—';
+                if (kpiOverallBar) kpiOverallBar.style.width = data.count > 0 ? `${(data.avg_overall / 5.0) * 100}%` : '0%';
+
+                // Atualizar Gráfico 1 (Médias dos Construtos)
+                if (chartConstructsInstance) {
+                    chartConstructsInstance.data.datasets[0].data = [
+                        data.avg_pu,
+                        data.avg_peou,
+                        data.avg_atu,
+                        data.avg_biu,
+                        data.avg_overall
+                    ];
+                    chartConstructsInstance.update();
+                }
+            }
+
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    applyRoleSegmentation(btn.dataset.role);
                 });
             });
+        {% endif %}
+
+        // Filtro Combinado das Respostas (Texto + Perfil Profissional)
+        const filterInput = document.getElementById('filter-responses-input');
+        const filterRoleSelect = document.getElementById('filter-responses-role');
+
+        function filterEvaluationCards() {
+            const term = (filterInput ? filterInput.value.toLowerCase().trim() : '');
+            const selectedRole = (filterRoleSelect ? filterRoleSelect.value : 'all');
+            const cards = document.querySelectorAll('.eval-card');
+
+            cards.forEach(card => {
+                const cardRole = card.getAttribute('data-role');
+                const cardText = card.textContent.toLowerCase();
+
+                const matchText = !term || cardText.includes(term);
+                const matchRole = selectedRole === 'all' || cardRole === selectedRole;
+
+                card.style.display = (matchText && matchRole) ? '' : 'none';
+            });
         }
+
+        if (filterInput) filterInput.addEventListener('input', filterEvaluationCards);
+        if (filterRoleSelect) filterRoleSelect.addEventListener('change', filterEvaluationCards);
     });
 </script>
 {% endblock %}

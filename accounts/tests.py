@@ -624,6 +624,14 @@ class AdminDashboardViewTests(TestCase):
         self.assertContains(res, 'Agilidade nas aulas')
         self.assertEqual(res.context['total_tam'], 1)
         self.assertIn('chart_tam_labels_json', res.context)
+        self.assertIn('roles_analytics', res.context)
+        self.assertIn('roles_analytics_json', res.context)
+        self.assertIn('chart_roles_scores_data_json', res.context)
+        self.assertEqual(res.context['roles_analytics']['dev_junior']['count'], 1)
+        self.assertEqual(res.context['roles_analytics']['estudante']['count'], 0)
+        self.assertContains(res, 'Distribuição &amp; Avaliação por Perfil Profissional')
+        self.assertContains(res, 'role-filter-buttons')
+        self.assertContains(res, 'chartRolesScores')
 
     def test_admin_dashboard_create_technology(self):
         from videos.models import Technology

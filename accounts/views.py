@@ -642,6 +642,18 @@ def admin_dashboard_view(request):
     tam_evaluations = TAMEvaluation.objects.select_related('user').order_by('-created_at')
     total_tam = tam_evaluations.count()
 
+    # Opções e Nomes Amigáveis para Perfis Profissionais (TAM)
+    ROLE_CHOICES_ORDER = [
+        ('estudante', 'Estudante'),
+        ('dev_junior', 'Dev Júnior'),
+        ('dev_pleno_senior', 'Dev Pleno / Sênior'),
+        ('recruiter', 'Recrutador / RH'),
+        ('professor', 'Professor / Mentor'),
+        ('outro', 'Outros'),
+    ]
+
+    roles_analytics = {}
+
     if total_tam > 0:
         avg_pu = round(sum(e.pu_score for e in tam_evaluations) / total_tam, 2)
         avg_peou = round(sum(e.peou_score for e in tam_evaluations) / total_tam, 2)
@@ -658,22 +670,52 @@ def admin_dashboard_view(request):
         chart_devices_labels = ['Computador / Desktop', 'Smartphone / Celular', 'Tablet']
         chart_devices_data = [devices_map.get('desktop', 0), devices_map.get('mobile', 0), devices_map.get('tablet', 0)]
 
-        roles_dict = {
-            'estudante': 'Estudante',
-            'dev_junior': 'Dev Júnior',
-            'dev_pleno_senior': 'Dev Pleno/Sênior',
-            'recruiter': 'Recrutador/RH',
-            'professor': 'Professor/Mentor',
-            'outro': 'Outros'
+        # Estatísticas por perfil profissional
+        roles_analytics['all'] = {
+            'label': 'Todos os Perfis (Consolidado)',
+            'short_label': 'Todos',
+            'count': total_tam,
+            'percentage': 100.0,
+            'avg_pu': avg_pu,
+            'avg_peou': avg_peou,
+            'avg_atu': avg_atu,
+            'avg_biu': avg_biu,
+            'avg_overall': avg_overall,
         }
-        roles_counts = {k: 0 for k in roles_dict.keys()}
-        for e in tam_evaluations:
-            if e.role in roles_counts:
-                roles_counts[e.role] += 1
+
+        chart_roles_labels = []
+        chart_roles_counts = []
+        chart_roles_scores = []
+
+        for r_key, r_label in ROLE_CHOICES_ORDER:
+            role_evals = [e for e in tam_evaluations if e.role == r_key]
+            r_count = len(role_evals)
+            if r_count > 0:
+                r_avg_pu = round(sum(e.pu_score for e in role_evals) / r_count, 2)
+                r_avg_peou = round(sum(e.peou_score for e in role_evals) / r_count, 2)
+                r_avg_atu = round(sum(e.atu_score for e in role_evals) / r_count, 2)
+                r_avg_biu = round(sum(e.biu_score for e in role_evals) / r_count, 2)
+                r_avg_overall = round(sum(e.overall_score for e in role_evals) / r_count, 2)
+                r_pct = round((r_count / total_tam) * 100, 1)
             else:
-                roles_counts['outro'] += 1
-        chart_roles_labels = list(roles_dict.values())
-        chart_roles_data = [roles_counts[k] for k in roles_dict.keys()]
+                r_avg_pu = r_avg_peou = r_avg_atu = r_avg_biu = r_avg_overall = 0.0
+                r_pct = 0.0
+
+            roles_analytics[r_key] = {
+                'label': r_label,
+                'short_label': r_label,
+                'count': r_count,
+                'percentage': r_pct,
+                'avg_pu': r_avg_pu,
+                'avg_peou': r_avg_peou,
+                'avg_atu': r_avg_atu,
+                'avg_biu': r_avg_biu,
+                'avg_overall': r_avg_overall,
+            }
+
+            chart_roles_labels.append(r_label)
+            chart_roles_counts.append(r_count)
+            chart_roles_scores.append(r_avg_overall)
 
     else:
         avg_pu = avg_peou = avg_atu = avg_biu = avg_overall = 0.0
@@ -681,8 +723,33 @@ def admin_dashboard_view(request):
         chart_tam_data = [0, 0, 0, 0, 0]
         chart_devices_labels = ['Computador / Desktop', 'Smartphone / Celular', 'Tablet']
         chart_devices_data = [0, 0, 0]
-        chart_roles_labels = ['Estudante', 'Dev Júnior', 'Dev Pleno/Sênior', 'Recrutador/RH', 'Professor/Mentor', 'Outros']
-        chart_roles_data = [0, 0, 0, 0, 0, 0]
+        chart_roles_labels = [r_label for _, r_label in ROLE_CHOICES_ORDER]
+        chart_roles_counts = [0] * len(ROLE_CHOICES_ORDER)
+        chart_roles_scores = [0.0] * len(ROLE_CHOICES_ORDER)
+
+        roles_analytics['all'] = {
+            'label': 'Todos os Perfis (Consolidado)',
+            'short_label': 'Todos',
+            'count': 0,
+            'percentage': 0.0,
+            'avg_pu': 0.0,
+            'avg_peou': 0.0,
+            'avg_atu': 0.0,
+            'avg_biu': 0.0,
+            'avg_overall': 0.0,
+        }
+        for r_key, r_label in ROLE_CHOICES_ORDER:
+            roles_analytics[r_key] = {
+                'label': r_label,
+                'short_label': r_label,
+                'count': 0,
+                'percentage': 0.0,
+                'avg_pu': 0.0,
+                'avg_peou': 0.0,
+                'avg_atu': 0.0,
+                'avg_biu': 0.0,
+                'avg_overall': 0.0,
+            }
 
     context = {
         'total_users': total_users,
@@ -697,12 +764,15 @@ def admin_dashboard_view(request):
         'avg_atu': avg_atu,
         'avg_biu': avg_biu,
         'avg_overall': avg_overall,
+        'roles_analytics': roles_analytics,
+        'roles_analytics_json': json.dumps(roles_analytics),
         'chart_tam_labels_json': json.dumps(chart_tam_labels),
         'chart_tam_data_json': json.dumps(chart_tam_data),
         'chart_devices_labels_json': json.dumps(chart_devices_labels),
         'chart_devices_data_json': json.dumps(chart_devices_data),
         'chart_roles_labels_json': json.dumps(chart_roles_labels),
-        'chart_roles_data_json': json.dumps(chart_roles_data),
+        'chart_roles_data_json': json.dumps(chart_roles_counts),
+        'chart_roles_scores_data_json': json.dumps(chart_roles_scores),
     }
 
     return render(request, 'admin/custom_dashboard.html', context)
