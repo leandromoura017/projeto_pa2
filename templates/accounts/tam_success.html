@@ -7,8 +7,8 @@
 
     <!-- Card de Confirmação & Gratidão Acadêmica -->
     <div class="bg-[#111827] border border-gray-800 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-        <div class="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-cyan-400 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-xl shadow-cyan-500/20 mb-6 animate-bounce">
-            ✅
+        <div class="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-cyan-400 rounded-3xl mx-auto flex items-center justify-center text-white shadow-xl shadow-cyan-500/20 mb-6">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
         </div>
 
         <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
@@ -33,7 +33,7 @@
                 </div>
                 <div class="text-right">
                     <span class="text-xs text-gray-400">Índice Geral TAM</span>
-                    <p class="text-xl font-extrabold text-cyan-300">⭐ {{ evaluation.overall_score|floatformat:2 }} <span class="text-xs text-gray-500">/ 5.0</span></p>
+                    <p class="text-xl font-extrabold text-cyan-300">{{ evaluation.overall_score|floatformat:2 }} <span class="text-xs text-gray-500">/ 5.0</span></p>
                 </div>
             </div>
 

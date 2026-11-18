@@ -8,7 +8,7 @@
     <!-- Page Header -->
     <div class="mb-8">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
-            🔎 Comunidade Técnica & Validação Real
+            Comunidade Técnica & Validação Real
         </span>
         <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
             Busca de Perfis & Portfólios Vivos
@@ -30,7 +30,9 @@
                        value="{{ query }}"
                        placeholder="Buscar por nome, tecnologia, bio ou especialidade (ex: Python, Django, Mentor)..."
                        class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-900 border border-gray-700 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500">
-                <span class="absolute left-3.5 top-3.5 text-gray-500 text-sm">🔍</span>
+                <span class="absolute left-3.5 top-3.5 text-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </span>
             </div>
             <button type="submit" class="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition">
                 Buscar Perfis
@@ -46,11 +48,11 @@
         <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-800/80">
             <a href="{% url 'profile_search' %}{% if query %}?q={{ query }}{% endif %}"
                class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition {% if not current_role %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/40{% else %}bg-gray-800/70 text-gray-400 hover:text-white{% endif %}">
-                👥 Todos os Perfis
+                Todos os Perfis
             </a>
             <a href="{% url 'profile_search' %}?role=mentor{% if query %}&q={{ query }}{% endif %}"
                class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition {% if current_role == 'mentor' %}bg-amber-500/20 text-amber-300 border border-amber-500/40{% else %}bg-gray-800/70 text-gray-400 hover:text-white{% endif %}">
-                🎓 Apenas Mentores / Instrutores
+                Apenas Mentores / Instrutores
             </a>
         </div>
     </div>
@@ -77,11 +79,11 @@
                                     <div class="flex items-center gap-1.5 mt-0.5">
                                         {% if p_user.profile and p_user.profile.is_mentor %}
                                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 border border-amber-700 text-amber-300">
-                                                🎓 Mentor
+                                                Mentor
                                             </span>
                                         {% else %}
                                             <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300">
-                                                💻 Dev
+                                                Dev
                                             </span>
                                         {% endif %}
                                     </div>
@@ -91,7 +93,7 @@
 
                         {% if p_user.profile and p_user.profile.specialties %}
                             <p class="text-[11px] font-semibold text-cyan-400 mt-3">
-                                ⚡ {{ p_user.profile.specialties }}
+                                {{ p_user.profile.specialties }}
                             </p>
                         {% endif %}
 
@@ -119,11 +121,12 @@
                     <!-- Actions -->
                     <div class="mt-5 pt-4 border-t border-gray-800 flex items-center gap-2">
                         <a href="{% url 'public_profile' p_user.id %}" class="flex-1 text-center px-3 py-2 rounded-xl text-xs font-bold bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 transition">
-                            👤 Portfólio Vivo
+                            Portfólio Vivo
                         </a>
                         {% if p_user.id != user.id %}
-                            <a href="{% url 'dm_thread' p_user.id %}" class="px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition" title="Conversar por DM">
-                                💬 DM
+                            <a href="{% url 'dm_thread' p_user.id %}" class="px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition flex items-center justify-center gap-1" title="Conversar por DM">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>DM</span>
                             </a>
                         {% endif %}
                     </div>
@@ -132,7 +135,9 @@
         </div>
     {% else %}
         <div class="bg-[#111827] border border-gray-800 rounded-3xl p-10 text-center max-w-md mx-auto my-8">
-            <div class="text-3xl mb-3">🔍</div>
+            <div class="w-12 h-12 rounded-2xl bg-cyan-600/10 border border-cyan-500/30 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
             <h3 class="text-lg font-bold text-white">Nenhum perfil encontrado</h3>
             <p class="text-xs text-gray-400 mt-1">
                 Não encontramos perfis para "{{ query }}". Tente buscar por outra tecnologia ou limpe os filtros.

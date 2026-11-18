@@ -16,7 +16,7 @@
     <!-- Top Navigation -->
     <div class="flex items-center justify-between gap-4 mb-6">
         <nav class="flex items-center gap-2 text-xs text-gray-400">
-            <a href="{% url 'feed' %}" class="hover:text-cyan-400 transition">🎬 Feed de Vídeos</a>
+            <a href="{% url 'feed' %}" class="hover:text-cyan-400 transition">Feed de Vídeos</a>
             <span>/</span>
             <span class="text-gray-200 font-semibold truncate">{{ video.title }}</span>
         </nav>
@@ -42,7 +42,7 @@
                 <!-- Technology Badge -->
                 <div class="absolute top-4 left-4 pointer-events-none">
                     <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
-                        {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
+                        {{ video.technology.name }}
                     </span>
                 </div>
 
@@ -50,7 +50,8 @@
                 {% if video.is_trusted_content %}
                     <div class="absolute bottom-16 left-4 pointer-events-none">
                         <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-950/90 backdrop-blur-md border border-emerald-500/60 text-emerald-300 shadow-lg flex items-center gap-1.5 animate-pulse">
-                            <span>🛡️</span> Conteúdo Confiável
+                            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <span>Conteúdo Confiável</span>
                         </span>
                     </div>
                 {% endif %}
@@ -80,11 +81,13 @@
                     </a>
 
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl">
-                            👁️ {{ video.views_count }} views
+                        <span class="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            {{ video.views_count }} views
                         </span>
-                        <span class="text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/60 px-3 py-1.5 rounded-xl">
-                            ❤️ {{ video.likes_count }} likes
+                        <span class="text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            {{ video.likes_count }} likes
                         </span>
                     </div>
                 </div>
@@ -104,7 +107,7 @@
                     {% if lesson and lesson.challenge %}
                         <div class="pt-4 border-t border-gray-800 flex items-center justify-between gap-4">
                             <div>
-                                <span class="text-xs font-bold text-amber-300 block">⚡ Desafio Prático Disponível</span>
+                                <span class="text-xs font-bold text-amber-300 block">Desafio Prático Disponível</span>
                                 <span class="text-[11px] text-gray-400">Esta pílula faz parte de uma trilha com exercício interativo.</span>
                             </div>
                             <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg transition">
@@ -120,7 +123,7 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-base">🛡️</span>
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             <span class="text-xs font-bold uppercase tracking-wider {% if video.is_trusted_content %}text-emerald-400{% else %}text-gray-300{% endif %}">
                                 {% if video.is_trusted_content %}
                                     Selo Oficial: Conteúdo Confiável
@@ -146,7 +149,9 @@
                             {% csrf_token %}
                             <button id="btn-trust-vote" type="submit" 
                                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md {% if user_has_trusted %}bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400{% else %}bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700{% endif %}">
-                                <span id="trust-icon">{% if user_has_trusted %}✓{% else %}🛡️{% endif %}</span>
+                                <span id="trust-icon" class="flex items-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                </span>
                                 <span id="trust-label">{% if user_has_trusted %}Você Validou{% else %}Marcar Confiável{% endif %}</span>
                                 <span id="trust-count-badge" class="px-2 py-0.5 rounded-lg bg-black/40 text-[11px] font-bold">
                                     {{ video.trust_count }}
@@ -166,7 +171,7 @@
                 <div class="bg-[#111827] border border-cyan-800/40 rounded-3xl p-6 sm:p-7 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <div class="flex items-center gap-2">
-                            <span class="text-base">📝</span>
+                            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             <h2 class="text-sm font-bold text-white">Minhas Anotações Privadas</h2>
                             <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">
                                 Só você vê
@@ -197,12 +202,12 @@
                                     {{ user_note.content|length|default:0 }} / 2000 caracteres
                                 </span>
                                 <span id="note-status-feedback" class="text-[11px] text-emerald-400 font-semibold hidden">
-                                    ✓ Anotação salva com sucesso!
+                                    Anotação salva com sucesso!
                                 </span>
                             </div>
                             <button id="btn-save-note" type="submit" 
                                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
-                                <span>💾</span> Salvar Anotações
+                                Salvar Anotações
                             </button>
                         </div>
                     </form>
@@ -213,7 +218,8 @@
             <div class="bg-[#111827] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                        <span>🔗</span> Compartilhar Pílula de Código
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        Compartilhar Pílula de Código
                     </span>
                     <span class="text-[11px] text-gray-400">Link direto e redes</span>
                 </div>
@@ -239,7 +245,7 @@
                        target="_blank" 
                        rel="noopener noreferrer" 
                        class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 transition">
-                        <span>💬</span> WhatsApp
+                        WhatsApp
                     </a>
 
                     <!-- LinkedIn -->
@@ -247,7 +253,7 @@
                        target="_blank" 
                        rel="noopener noreferrer" 
                        class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-blue-950/80 hover:bg-blue-900 border border-blue-700/80 text-blue-300 transition">
-                        <span>💼</span> LinkedIn
+                        LinkedIn
                     </a>
 
                     <!-- Twitter / X -->
@@ -255,14 +261,14 @@
                        target="_blank" 
                        rel="noopener noreferrer" 
                        class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 transition">
-                        <span>🐦</span> X/Twitter
+                        X / Twitter
                     </a>
 
                     <!-- Web Share API (Dispositivos Móveis e Navegadores Modernos) -->
                     <button id="btn-native-share" 
                             type="button" 
                             class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-300 transition">
-                        <span>📱</span> Mais Opções
+                        Mais Opções
                     </button>
                 </div>
             </div>
@@ -271,7 +277,7 @@
             <div id="comments" class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <div class="flex items-center justify-between border-b border-gray-800 pb-4">
                     <div class="flex items-center gap-2">
-                        <span class="text-base">💬</span>
+                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         <h2 class="text-sm sm:text-base font-bold text-white">
                             Discussão Técnica
                         </h2>
@@ -298,7 +304,7 @@
                             <span class="text-[11px] text-gray-500">Máximo 500 caracteres</span>
                             <button type="submit" 
                                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
-                                <span>💬</span> Enviar Comentário
+                                Enviar Comentário
                             </button>
                         </div>
                     </form>
@@ -354,7 +360,7 @@
                         {% endfor %}
                     {% else %}
                         <div class="text-center py-6">
-                            <span class="text-2xl block mb-1">💡</span>
+                            <svg class="w-8 h-8 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                             <p class="text-xs text-gray-400">
                                 Nenhum comentário ainda. Seja o primeiro a compartilhar uma dúvida ou dica técnica!
                             </p>
@@ -383,7 +389,7 @@
             copyBtn.addEventListener('click', () => {
                 copyInput.select();
                 navigator.clipboard.writeText(copyInput.value).then(() => {
-                    copyText.textContent = '✓ Copiado!';
+                    copyText.textContent = 'Copiado!';
                     copyBtn.classList.add('bg-emerald-600');
                     setTimeout(() => {
                         copyText.textContent = 'Copiar Link';
@@ -391,7 +397,7 @@
                     }, 2500);
                 }).catch(() => {
                     document.execCommand('copy');
-                    copyText.textContent = '✓ Copiado!';
+                    copyText.textContent = 'Copiado!';
                 });
             });
         }
@@ -474,11 +480,9 @@
                     if (data.status === 'success') {
                         if (data.is_trusted) {
                             trustBtn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400";
-                            if (trustIcon) trustIcon.textContent = '✓';
                             if (trustLabel) trustLabel.textContent = 'Você Validou';
                         } else {
                             trustBtn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700";
-                            if (trustIcon) trustIcon.textContent = '🛡️';
                             if (trustLabel) trustLabel.textContent = 'Marcar Confiável';
                         }
                         if (trustBadge) {

@@ -42,7 +42,7 @@
                {% else %}
                    bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
                {% endif %}">
-                <span>✨</span> Todos os Vídeos
+                Todos os Vídeos
             </a>
 
             {% for tech in technologies %}
@@ -53,7 +53,7 @@
                    {% else %}
                        bg-gray-800/80 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700
                    {% endif %}">
-                    <span>{{ tech.icon_name|default:'⚡' }}</span> {{ tech.name }}
+                    {{ tech.name }}
                 </a>
             {% endfor %}
         </div>
@@ -88,11 +88,14 @@
                         <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
                             <div class="flex items-center gap-1.5 pointer-events-auto">
                                 <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
-                                    {{ video.technology.icon_name|default:'💻' }} {{ video.technology.name }}
+                                    {{ video.technology.name }}
                                 </span>
                                 {% if video.is_trusted_content %}
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-emerald-950/85 backdrop-blur-md border border-emerald-500/60 text-emerald-300 flex items-center gap-1 shadow-md" title="Conteúdo Confiável Homologado">
-                                        <span>🛡️</span> Confiável
+                                        <svg class="w-3 h-3 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                        Confiável
                                     </span>
                                 {% endif %}
                             </div>
@@ -142,7 +145,7 @@
                                                 {% else %}
                                                     bg-black/60 border-white/25 text-gray-200 hover:border-rose-400 hover:text-rose-300
                                                 {% endif %}">
-                                            <span class="like-heart">{% if video.id in liked_video_ids %}❤️{% else %}🤍{% endif %}</span>
+                                            <span class="like-heart font-bold">{% if video.id in liked_video_ids %}♥{% else %}♡{% endif %}</span>
                                             <span class="like-count">{{ video.likes.count }}</span>
                                         </button>
                                     </form>
@@ -151,14 +154,18 @@
                                     <a href="{% url 'video_detail' video.id %}" 
                                        class="btn-share-direct inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
                                        title="Compartilhar Vídeo">
-                                        <span>🔗</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                        </svg>
                                     </a>
 
                                     <!-- Botão Comentários (Onda 6 - #24) -->
                                     <a href="{% url 'video_detail' video.id %}#comments" 
                                        class="btn-comments-direct inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
                                        title="Ver Comentários">
-                                        <span>💬</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
                                         <span class="text-[11px] font-bold">{{ video.comments.count }}</span>
                                     </a>
 
@@ -173,7 +180,9 @@
                                                     bg-black/60 border-white/25 text-gray-200 hover:border-emerald-400 hover:text-emerald-300
                                                 {% endif %}"
                                                 title="Marcar como Conteúdo Confiável">
-                                            <span>🛡️</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                            </svg>
                                             <span class="text-[11px] font-bold">{{ video.trust_count }}</span>
                                         </button>
                                     </form>
@@ -181,7 +190,7 @@
                                     {% with lesson=video.lessons.first %}
                                         {% if lesson and lesson.challenge %}
                                             <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/90 hover:bg-amber-400 text-black shadow-lg transition">
-                                                <span>⚡</span> Desafio
+                                                <span>Desafio</span>
                                             </a>
                                         {% endif %}
                                     {% endwith %}
@@ -235,8 +244,10 @@
     {% else %}
         <!-- Empty State (FR-15 / Story 3.5) -->
         <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-3xl p-10 text-center shadow-2xl my-12">
-            <div class="w-16 h-16 rounded-2xl bg-cyan-600/10 border border-cyan-500/30 flex items-center justify-center text-3xl mx-auto mb-4">
-                🔍
+            <div class="w-16 h-16 rounded-2xl bg-cyan-600/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto mb-4">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
             </div>
             <h3 class="text-xl font-bold text-white">Nenhum vídeo encontrado</h3>
             <p class="text-sm text-gray-400 mt-2 leading-relaxed">
@@ -417,10 +428,10 @@
                     if (data.status === 'success') {
                         countEl.textContent = data.likes_count;
                         if (data.liked) {
-                            heart.textContent = '❤️';
+                            heart.textContent = '♥';
                             btn.className = 'btn-like inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30';
                         } else {
-                            heart.textContent = '🤍';
+                            heart.textContent = '♡';
                             btn.className = 'btn-like inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition bg-black/60 border-white/25 text-gray-200 hover:border-rose-400 hover:text-rose-300';
                         }
                     }

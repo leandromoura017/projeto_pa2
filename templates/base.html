@@ -99,19 +99,19 @@
             {% if user.is_authenticated %}
             <nav class="hidden md:flex items-center gap-1 sm:gap-2">
                 <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' or request.resolver_match.url_name == 'video_detail' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                    <span>🎬</span> <span>Feed</span>
+                    <span>Feed</span>
                 </a>
                 <a href="{% url 'course_list' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'course' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name or 'certificate' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                    <span>📚</span> <span>Mini Cursos</span>
+                    <span>Mini Cursos</span>
                 </a>
                 <a href="{% url 'profile_search' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'profile_search' or request.resolver_match.url_name == 'public_profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                    <span>🔎</span> <span>Perfis</span>
+                    <span>Perfis</span>
                 </a>
                 <a href="{% url 'dm_inbox' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if 'dm_' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                    <span>💬</span> <span>DMs</span>
+                    <span>DMs</span>
                 </a>
                 <a href="{% url 'profile' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'profile_edit' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                    <span>👤</span> <span>Meu Perfil</span>
+                    <span>Meu Perfil</span>
                 </a>
             </nav>
             {% endif %}
@@ -122,7 +122,9 @@
                     <!-- Notification Bell (Onda 5 - #23) -->
                     <div class="relative" id="notifications-container">
                         <button id="btn-notifications" type="button" class="relative p-2 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/80 transition" title="Notificações & Alertas">
-                            <span class="text-base sm:text-lg">🔔</span>
+                            <svg class="w-5 h-5 text-gray-300 hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
                             {% if unread_notifications_count > 0 %}
                                 <span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center shadow-lg shadow-rose-500/40 animate-pulse">
                                     {{ unread_notifications_count }}
@@ -133,8 +135,8 @@
                         <!-- Dropdown Panel -->
                         <div id="dropdown-notifications" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
                             <div class="p-4 border-b border-gray-800 flex items-center justify-between">
-                                <span class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-                                    <span>🔔</span> Alertas & Novidades
+                                <span class="text-xs font-bold uppercase tracking-wider text-white">
+                                    Alertas & Novidades
                                 </span>
                                 <a href="{% url 'notifications' %}" class="text-[11px] font-semibold text-cyan-400 hover:underline">
                                     Ver Todas
@@ -145,7 +147,7 @@
                                     {% for notif in recent_notifications %}
                                         <a href="{% if notif.link %}{% url 'notification_read' notif.id %}{% else %}{% url 'notifications' %}{% endif %}" class="block p-3.5 hover:bg-gray-800/60 transition {% if not notif.is_read %}bg-cyan-950/20{% endif %}">
                                              <div class="flex items-start gap-2.5">
-                                                <span class="text-base shrink-0 mt-0.5">{{ notif.icon|default:'🔔' }}</span>
+                                                <span class="w-2 h-2 rounded-full bg-cyan-400 shrink-0 mt-1.5"></span>
                                                 <div class="flex-1 min-w-0">
                                                     <p class="text-xs font-bold text-white truncate">{{ notif.title }}</p>
                                                     <p class="text-[11px] text-gray-400 line-clamp-2 mt-0.5 leading-snug">{{ notif.message }}</p>
@@ -187,8 +189,8 @@
 
                     {% if user.is_staff or user.is_superuser %}
                         <!-- Botão Exclusivo do Super Admin (Desktop) -->
-                        <a href="{% url 'admin_dashboard' %}" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-950/70 hover:bg-amber-900/80 border border-amber-600/50 hover:border-amber-400 transition shadow-sm" title="Painel do Super Administrador">
-                            <span>🛡️</span> <span class="hidden lg:inline">Painel Admin</span>
+                        <a href="{% url 'admin_dashboard' %}" class="hidden md:inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-950/70 hover:bg-amber-900/80 border border-amber-600/50 hover:border-amber-400 transition shadow-sm" title="Painel do Super Administrador">
+                            <span class="hidden lg:inline">Painel Admin</span>
                         </a>
                     {% endif %}
                     
@@ -253,25 +255,23 @@
 
                 <!-- Links de Navegação Mobile -->
                 <nav class="flex flex-col gap-1 pt-1">
-                    <a href="{% url 'feed' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' or request.resolver_match.url_name == 'video_detail' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                        <span class="text-base">🎬</span> <span>Feed de Pílulas</span>
+                    <a href="{% url 'feed' %}" class="flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' or request.resolver_match.url_name == 'video_detail' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span>Feed de Pílulas</span>
                     </a>
-                    <a href="{% url 'course_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if 'course' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name or 'certificate' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                        <span class="text-base">📚</span> <span>Mini Cursos</span>
+                    <a href="{% url 'course_list' %}" class="flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if 'course' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name or 'certificate' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span>Mini Cursos</span>
                     </a>
-                    <a href="{% url 'profile_search' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'profile_search' or request.resolver_match.url_name == 'public_profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                        <span class="text-base">🔎</span> <span>Busca de Perfis</span>
+                    <a href="{% url 'profile_search' %}" class="flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'profile_search' or request.resolver_match.url_name == 'public_profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span>Busca de Perfis</span>
                     </a>
-                    <a href="{% url 'dm_inbox' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if 'dm_' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                        <span class="text-base">💬</span> <span>Mensagens Diretas (DMs)</span>
+                    <a href="{% url 'dm_inbox' %}" class="flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if 'dm_' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span>Mensagens Diretas (DMs)</span>
                     </a>
-                    <a href="{% url 'profile' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
-                        <span class="text-base">👤</span> <span>Meu Portfólio Vivo</span>
+                    <a href="{% url 'profile' %}" class="flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span>Meu Portfólio Vivo</span>
                     </a>
                     <a href="{% url 'notifications' %}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white hover:bg-gray-800/60 transition">
-                        <div class="flex items-center gap-3">
-                            <span class="text-base">🔔</span> <span>Central de Notificações</span>
-                        </div>
+                        <span>Central de Notificações</span>
                         {% if unread_notifications_count > 0 %}
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
                                 {{ unread_notifications_count }}
@@ -279,8 +279,8 @@
                         {% endif %}
                     </a>
                     {% if user.is_staff or user.is_superuser %}
-                        <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-amber-300 bg-amber-950/40 border border-amber-600/40 hover:bg-amber-900/50 transition">
-                            <span class="text-base">🛡️</span> <span>Painel do Super Admin</span>
+                        <a href="{% url 'admin_dashboard' %}" class="flex items-center px-3.5 py-2.5 rounded-xl text-sm font-bold text-amber-300 bg-amber-950/40 border border-amber-600/40 hover:bg-amber-900/50 transition">
+                            <span>Painel do Super Admin</span>
                         </a>
                     {% endif %}
                 </nav>
@@ -288,10 +288,10 @@
                 <!-- Ações do Rodapé do Menu Mobile -->
                 <div class="pt-3 border-t border-gray-800 flex items-center justify-between gap-2">
                     <a href="{% url 'profile_edit' %}" class="flex-1 text-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-300 bg-gray-800/80 hover:bg-gray-700 hover:text-white border border-gray-700 transition">
-                        ⚙️ Editar Perfil
+                        Editar Perfil
                     </a>
                     <a href="{% url 'logout' %}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-red-300 bg-red-950/60 hover:bg-red-900/60 border border-red-800/60 transition">
-                        🚪 Sair
+                        Sair
                     </a>
                 </div>
             {% else %}
@@ -343,7 +343,7 @@
             </p>
             <div class="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-6 gap-y-1.5 text-gray-400 footer-fluid-links">
                 <a href="{% url 'tam_evaluation' %}" class="hover:text-cyan-300 text-cyan-400 font-medium transition flex items-center gap-1 whitespace-nowrap">
-                    <span>📝</span> <span>Avaliação TAM (PA2)</span>
+                    <span>Avaliação TAM (PA2)</span>
                 </a>
                 <a href="{% url 'terms' %}" class="hover:text-cyan-400 transition whitespace-nowrap">Termos de Uso</a>
                 <a href="{% url 'privacy' %}" class="hover:text-cyan-400 transition whitespace-nowrap">Privacidade (LGPD)</a>

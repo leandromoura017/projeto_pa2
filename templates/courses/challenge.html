@@ -23,7 +23,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-6 border-b border-gray-800">
             <div>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
-                    ⚡ Desafio de Fixação da Aula {{ lesson.order }}
+                    Desafio de Fixação da Aula {{ lesson.order }}
                 </span>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                     {{ challenge.title }}
@@ -32,7 +32,7 @@
 
             <div class="flex items-center gap-3">
                 <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-950/80 border border-amber-700/80 text-amber-300 flex items-center gap-1 shadow">
-                    <span>⭐</span> +{{ challenge.points }} pontos
+                    +{{ challenge.points }} pontos
                 </span>
             </div>
         </div>
@@ -106,7 +106,7 @@
                 <div class="rounded-2xl bg-[#090d16] border border-gray-800 p-4">
                     <div class="flex items-center justify-between mb-2">
                         <label for="submitted-code" class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                            <span>💻</span> Submissão de Código Prático (Portfólio Vivo)
+                            Submissão de Código Prático (Portfólio Vivo)
                         </label>
                         <span class="text-[11px] text-gray-500 font-mono">Opcional ou Resposta Direta em Código</span>
                     </div>
@@ -125,7 +125,7 @@
                 </a>
 
                 <button id="btn-submit" type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
-                    <span>🚀</span> Enviar Desafio / Verificar
+                    Enviar Desafio / Verificar
                 </button>
             </div>
         </form>
@@ -140,7 +140,7 @@
                 
                 <div class="flex-1">
                     <h3 id="feedback-title" class="text-base font-bold text-white">
-                        {% if attempt and attempt.is_correct %}Parabéns! Resposta Correta! 🎉{% else %}Resposta Incorreta. Não desanime! 💪{% endif %}
+                        {% if attempt and attempt.is_correct %}Parabéns! Resposta Correta!{% else %}Resposta Incorreta. Tente novamente!{% endif %}
                     </h3>
                     
                     <p id="feedback-explanation" class="text-xs sm:text-sm mt-2 text-gray-300 leading-relaxed">
@@ -229,12 +229,12 @@
                             feedbackBox.className = 'mt-8 rounded-2xl p-6 border transition-all duration-300 bg-emerald-950/60 border-emerald-700/80 text-emerald-200';
                             feedbackIcon.className = 'w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-emerald-500/20 text-emerald-400';
                             feedbackIcon.textContent = '✓';
-                            feedbackTitle.textContent = 'Parabéns! Resposta Correta! 🎉 (+' + data.points + ' pontos | Aula Concluída)';
+                            feedbackTitle.textContent = 'Parabéns! Resposta Correta! (+' + data.points + ' pontos | Aula Concluída)';
                         } else {
                             feedbackBox.className = 'mt-8 rounded-2xl p-6 border transition-all duration-300 bg-rose-950/60 border-rose-700/80 text-rose-200';
                             feedbackIcon.className = 'w-8 h-8 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-rose-500/20 text-rose-400';
                             feedbackIcon.textContent = '✗';
-                            feedbackTitle.textContent = 'Resposta Incorreta. Não desanime! 💪';
+                            feedbackTitle.textContent = 'Resposta Incorreta. Tente novamente!';
                         }
 
                         feedbackExp.textContent = data.explanation;

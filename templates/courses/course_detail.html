@@ -19,7 +19,7 @@
             <!-- Badges -->
             <div class="flex flex-wrap items-center gap-2.5 mb-4">
                 <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-cyan-300">
-                    {{ course.technology.icon_name|default:'💻' }} {{ course.technology.name|default:'Geral' }}
+                    {{ course.technology.name|default:'Geral' }}
                 </span>
                 <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full
                     {% if course.level == 'iniciante' %}bg-emerald-950/70 border border-emerald-700/60 text-emerald-400
@@ -27,8 +27,9 @@
                     {% else %}bg-purple-950/70 border border-purple-700/60 text-purple-400{% endif %}">
                     {{ course.get_level_display }}
                 </span>
-                <span class="text-xs text-gray-400 flex items-center gap-1 ml-auto">
-                    <span>⏱️</span> {{ course.estimated_minutes }} minutos totais
+                <span class="text-xs text-gray-400 flex items-center gap-1.5 ml-auto">
+                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {{ course.estimated_minutes }} minutos totais
                 </span>
             </div>
 
@@ -55,8 +56,9 @@
                                 {{ course.instructor.first_name|default:course.instructor.username }}
                             </a>
                             {% if user.is_authenticated and user.id != course.instructor.id %}
-                                <a href="{% url 'dm_thread' course.instructor.id %}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition">
-                                    <span>💬</span> Enviar DM ao Mentor
+                                <a href="{% url 'dm_thread' course.instructor.id %}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    Enviar DM ao Mentor
                                 </a>
                             {% endif %}
                         </div>
@@ -84,7 +86,7 @@
                             <form method="POST" action="{% url 'course_enroll' course.slug %}">
                                 {% csrf_token %}
                                 <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
-                                    <span>🚀</span> Iniciar Curso Gratuito
+                                    Iniciar Curso Gratuito
                                 </button>
                             </form>
                         {% endif %}
@@ -102,7 +104,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                                📊 Progresso na Trilha
+                                Progresso na Trilha
                             </span>
                             <p class="text-xs text-gray-400 mt-0.5">
                                 {{ completed_count }} de {{ total_count }} pílula{{ total_count|pluralize:"s" }} concluída{{ completed_count|pluralize:"s" }} ({{ progress_pct }}%)
@@ -112,18 +114,18 @@
                         <div>
                             {% if certificate %}
                                 <a href="{% url 'certificate_detail' certificate.validation_code %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-emerald-950 bg-emerald-400 hover:bg-emerald-300 shadow-lg shadow-emerald-500/20 transition">
-                                    <span>🎓</span> Ver Certificado Digital ({{ certificate.validation_code }})
+                                    Ver Certificado Digital ({{ certificate.validation_code }})
                                 </a>
                             {% elif progress_pct >= 100 and total_count > 0 %}
                                 <form method="POST" action="{% url 'issue_certificate' course.slug %}">
                                     {% csrf_token %}
                                     <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 shadow-xl shadow-amber-500/25 hover:scale-105 transition">
-                                        <span>🎓</span> Emitir Certificado Digital
+                                        Emitir Certificado Digital
                                     </button>
                                 </form>
                             {% else %}
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium bg-gray-800/80 border border-gray-700 text-gray-400">
-                                    <span>🔒</span> Certificado liberado ao atingir 100%
+                                    Certificado liberado ao atingir 100%
                                 </span>
                             {% endif %}
                         </div>
@@ -144,12 +146,12 @@
         <button id="tab-syllabus-btn" 
                 onclick="switchCourseTab('syllabus')"
                 class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20">
-            <span>📑</span> Ementa de Pílulas ({{ lessons.count }})
+            Ementa de Pílulas ({{ lessons.count }})
         </button>
         <button id="tab-schedule-btn" 
                 onclick="switchCourseTab('schedule')"
                 class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700">
-            <span>📅</span> Cronograma de Estudos Sugerido
+            Cronograma de Estudos Sugerido
         </button>
     </div>
 
@@ -162,8 +164,8 @@
                         <div class="flex items-center gap-4">
                             <!-- Order / Completed Badge -->
                             {% if lesson.id in completed_lesson_ids %}
-                                <div class="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-600 flex items-center justify-center text-sm font-bold text-emerald-400" title="Aula Concluída">
-                                    ✓
+                                <div class="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-600 flex items-center justify-center text-emerald-400" title="Aula Concluída">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                             {% else %}
                                 <div class="w-9 h-9 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center text-sm font-bold text-cyan-400">
@@ -198,19 +200,19 @@
                             </span>
                             {% if lesson.challenge %}
                                 <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition shadow">
-                                    <span>⚡</span> Resolver Desafio
+                                    Resolver Desafio
                                 </a>
                             {% endif %}
                             {% if lesson.video %}
                                 <a href="{% url 'feed' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/80 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition">
-                                    <span>▶</span> Ver Vídeo
+                                    Ver Vídeo
                                 </a>
                             {% endif %}
                             {% if user.is_authenticated and lesson.id not in completed_lesson_ids %}
                                 <form method="POST" action="{% url 'lesson_complete' lesson.id %}" class="inline">
                                     {% csrf_token %}
                                     <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-800 hover:bg-emerald-950/80 text-gray-300 hover:text-emerald-300 border border-gray-700 hover:border-emerald-700 transition">
-                                        <span>✓</span> Concluir Aula
+                                        Concluir Aula
                                     </button>
                                 </form>
                             {% endif %}
@@ -230,7 +232,7 @@
         <div class="bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-purple-950/30 border border-cyan-800/50 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                    <span>📅</span> Plano de Estudos Sugerido para Conclusão
+                    Plano de Estudos Sugerido para Conclusão
                 </h3>
                 <p class="text-xs text-gray-300 mt-1">
                     Dedique cerca de <strong>15 a 20 minutos por dia</strong> para assistir às pílulas em vídeo e resolver os desafios práticos.
@@ -252,7 +254,7 @@
                         {% if stage.status == 'completed' %}bg-emerald-950 border-2 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/20
                         {% elif stage.status == 'in_progress' %}bg-amber-950 border-2 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/20
                         {% else %}bg-gray-900 border-2 border-gray-700 text-gray-400{% endif %}">
-                        {% if stage.status == 'completed' %}✓{% else %}{{ forloop.counter }}{% endif %}
+                        {% if stage.status == 'completed' %}<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>{% else %}{{ forloop.counter }}{% endif %}
                     </div>
 
                     <!-- Stage Card -->
@@ -266,9 +268,9 @@
                                 {% if stage.status == 'completed' %}bg-emerald-950 text-emerald-300 border border-emerald-700
                                 {% elif stage.status == 'in_progress' %}bg-amber-950 text-amber-300 border border-amber-700
                                 {% else %}bg-gray-800 text-gray-400 border border-gray-700{% endif %}">
-                                {% if stage.status == 'completed' %}✓ Etapa Concluída
-                                {% elif stage.status == 'in_progress' %}⏳ Em Andamento ({{ stage.completed_lessons }}/{{ stage.total_lessons }})
-                                {% else %}⚪ Pendente{% endif %}
+                                {% if stage.status == 'completed' %}Etapa Concluída
+                                {% elif stage.status == 'in_progress' %}Em Andamento ({{ stage.completed_lessons }}/{{ stage.total_lessons }})
+                                {% else %}Pendente{% endif %}
                             </span>
                         </div>
 
@@ -278,14 +280,14 @@
                                 <div class="flex items-center justify-between gap-3 text-xs p-2.5 rounded-xl bg-gray-900/60 border border-gray-800/60">
                                     <div class="flex items-center gap-2 truncate">
                                         <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold {% if l.id in completed_lesson_ids %}bg-emerald-950 text-emerald-400 border border-emerald-700{% else %}bg-gray-800 text-gray-400{% endif %}">
-                                            {% if l.id in completed_lesson_ids %}✓{% else %}{{ l.order }}{% endif %}
+                                            {% if l.id in completed_lesson_ids %}<svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>{% else %}{{ l.order }}{% endif %}
                                         </span>
                                         <span class="text-gray-200 truncate font-medium">{{ l.title }}</span>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         {% if l.challenge %}
                                             <a href="{% url 'lesson_challenge' l.id %}" class="text-[11px] font-semibold text-amber-400 hover:underline">
-                                                ⚡ Desafio
+                                                Desafio
                                             </a>
                                         {% endif %}
                                     </div>
@@ -299,8 +301,19 @@
             <!-- Final Milestone Card -->
             <div class="relative flex items-start gap-4">
                 <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-base font-bold text-black shrink-0 z-10 shadow-lg shadow-amber-500/30">
-                    🏆
+                    <svg class="w-5 h-5 text-gray-950" fill="currentColor" viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
                 </div>
+                <div class="flex-1 bg-gradient-to-r from-amber-950/30 to-gray-900 border border-amber-700/50 rounded-2xl p-5 shadow-md">
+                    <h4 class="text-sm sm:text-base font-bold text-amber-300">
+                        Marco Final: Certificado Digital & Validação Técnica
+                    </h4>
+                    <p class="text-xs text-gray-300 mt-1">
+                        Ao concluir todas as pílulas e desafios práticos do cronograma, seu certificado oficial é emitido automaticamente com validação via QR Code público e integrado ao seu Portfólio Vivo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
                 <div class="flex-1 bg-gradient-to-r from-amber-950/30 to-gray-900 border border-amber-700/50 rounded-2xl p-5 shadow-md">
                     <h4 class="text-sm sm:text-base font-bold text-amber-300">
                         Marco Final: Certificado Digital & Validação Técnica

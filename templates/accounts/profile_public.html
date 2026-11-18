@@ -46,7 +46,7 @@
                             </h1>
                             {% if profile.is_mentor %}
                                 <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-950 border border-amber-700 text-amber-300">
-                                    🎓 Mentor / Instrutor
+                                    Mentor / Instrutor
                                 </span>
                             {% else %}
                                 <span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300">
@@ -68,7 +68,8 @@
                             </a>
                         {% else %}
                             <a href="{% url 'dm_thread' target_user.id %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition">
-                                <span>💬</span> Enviar Mensagem Direta (DM)
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>Enviar Mensagem Direta (DM)</span>
                             </a>
                         {% endif %}
                     </div>
@@ -81,12 +82,12 @@
                 <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
                     {% if profile.github_url %}
                         <a href="{{ profile.github_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-medium text-gray-200 border border-gray-700 transition">
-                            GitHub ↗
+                            GitHub
                         </a>
                     {% endif %}
                     {% if profile.linkedin_url %}
                         <a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-blue-950/50 hover:bg-blue-900/50 text-xs font-medium text-blue-300 border border-blue-800/60 transition">
-                            LinkedIn ↗
+                            LinkedIn
                         </a>
                     {% endif %}
                 </div>
@@ -99,7 +100,7 @@
         <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div class="space-y-1 text-center lg:text-left">
                 <div class="flex items-center justify-center lg:justify-start gap-2">
-                    <span class="text-lg">🔗</span>
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     <h3 class="text-sm font-bold text-white tracking-wide uppercase">Compartilhe este Portfólio Vivo</h3>
                     <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-semibold">Verificado</span>
                 </div>
@@ -157,7 +158,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-6">
             <div>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 uppercase tracking-wider mb-2">
-                    📊 Medidor de Conhecimento Técnico
+                    Medidor de Conhecimento Técnico
                 </span>
                 <h2 class="text-xl sm:text-2xl font-extrabold text-white">Maturidade & Domínio Prático</h2>
                 <p class="text-xs text-gray-400 mt-1">Calculado com base em testes automatizados aprovados e certificações emitidas.</p>
@@ -186,7 +187,7 @@
         <!-- Breakdown by Technology Grid -->
         <div class="mt-8">
             <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
-                <span>⚡</span> Domínio Prático por Tecnologia
+                Domínio Prático por Tecnologia
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {% for item in tech_stats %}
@@ -239,7 +240,7 @@
     <!-- Certificates -->
     <div class="mt-10">
         <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
-            <span>🎓</span> Certificados Digitais Verificados
+            Certificados Digitais Verificados
         </h2>
         {% if certificates %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -269,13 +270,16 @@
     {% if solved_attempts %}
         <div class="mt-10">
             <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
-                <span>⚡</span> Histórico de Desafios Práticos Resolvidos
+                Histórico de Desafios Práticos Resolvidos
             </h2>
             <div class="space-y-3">
                 {% for att in solved_attempts %}
                     <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-emerald-400">✓ {{ att.challenge.title }}</span>
+                            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                {{ att.challenge.title }}
+                            </span>
                             <span class="text-xs font-bold text-amber-400">+{{ att.challenge.points }} pts</span>
                         </div>
                         {% if att.submitted_code %}

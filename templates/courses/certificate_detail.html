@@ -17,13 +17,13 @@
 
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             <a href="{% url 'public_profile' student.id %}" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
-                👤 Portfólio Vivo
+                Portfólio Vivo
             </a>
             <a href="{% url 'certificate_pdf' certificate.validation_code %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 shadow-lg shadow-emerald-500/20 transition">
-                <span>⬇️</span> Baixar PDF Oficial
+                Baixar PDF Oficial
             </a>
             <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-700 transition">
-                <span>🖨️</span> Imprimir
+                Imprimir
             </button>
         </div>
     </div>
@@ -41,7 +41,8 @@
                     <span class="code-font text-white font-bold text-2xl">&lt;/&gt;</span>
                 </div>
                 <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-emerald-950/90 border border-emerald-500/50 text-emerald-300">
-                    <span>✓</span> Certificado Digital Verificado • CodeView
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    Certificado Digital Verificado • CodeView
                 </span>
             </div>
 
@@ -64,7 +65,7 @@
                 </h2>
                 <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4">
                     <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-cyan-300">
-                        {{ course.technology.icon_name|default:'💻' }} {{ course.technology.name|default:'Programação' }}
+                        {{ course.technology.name|default:'Programação' }}
                     </span>
                     <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-gray-300">
                         Nível: {{ course.get_level_display }}
@@ -127,7 +128,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <span>📢</span> Compartilhe seu Certificado no Portfólio & Redes
+                    Compartilhe seu Certificado no Portfólio & Redes
                 </h3>
                 <p class="text-xs text-gray-400">
                     Mostre aos recrutadores suas habilidades validadas na prática.
@@ -150,7 +151,7 @@
             <button onclick="copyCertLink()"
                     id="copyCertBtn"
                     class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition shrink-0 flex items-center gap-1.5 shadow-lg shadow-cyan-500/20">
-                <span>📋</span> Copiar Link
+                Copiar Link
             </button>
         </div>
 
@@ -161,7 +162,7 @@
                target="_blank"
                rel="noopener noreferrer"
                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0A66C2]/20 hover:bg-[#0A66C2]/30 text-[#0A66C2] border border-[#0A66C2]/40 transition">
-                <span>💼</span> Compartilhar no LinkedIn
+                Compartilhar no LinkedIn
             </a>
 
             <!-- WhatsApp -->
@@ -169,7 +170,7 @@
                target="_blank"
                rel="noopener noreferrer"
                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 transition">
-                <span>💬</span> WhatsApp
+                WhatsApp
             </a>
 
             <!-- Twitter / X -->
@@ -177,14 +178,14 @@
                target="_blank"
                rel="noopener noreferrer"
                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
-                <span>🐦</span> X / Twitter
+                X / Twitter
             </a>
 
             <!-- Native Web Share API -->
             <button onclick="shareCertNative()"
                     id="nativeCertShareBtn"
                     class="hidden inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 transition">
-                <span>📲</span> Compartilhar no Celular
+                Compartilhar no Celular
             </button>
         </div>
     </div>
@@ -199,7 +200,7 @@ function copyCertLink() {
     navigator.clipboard.writeText(input.value).then(() => {
         const btn = document.getElementById('copyCertBtn');
         const origText = btn.innerHTML;
-        btn.innerHTML = '<span>✅</span> Copiado!';
+        btn.innerHTML = 'Copiado!';
         btn.classList.remove('bg-cyan-600', 'hover:bg-cyan-500');
         btn.classList.add('bg-emerald-600');
         setTimeout(() => {

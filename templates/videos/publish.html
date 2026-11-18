@@ -14,8 +14,8 @@
 
     <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
         <div class="mb-6 pb-6 border-b border-gray-800">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
-                🎬 Criador CodeView
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 uppercase tracking-wider mb-2">
+                Criador CodeView
             </span>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 Publicar Pílula de Código (9:16)
@@ -78,12 +78,12 @@
                     <div class="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl text-xs">
                         <button type="button" id="tab-btn-upload" 
                                 class="px-3 py-1.5 rounded-lg font-bold text-white bg-gray-800 shadow transition">
-                            📁 Enviar Arquivo
+                            Enviar Arquivo
                         </button>
                         <button type="button" id="tab-btn-camera" 
                                 class="px-3 py-1.5 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                            📹 Gravar da Câmera (9:16)
+                            Gravar da Câmera (9:16)
                         </button>
                     </div>
                 </div>
@@ -95,7 +95,7 @@
                         Formato recomendado: Vertical 9:16 (.mp4 ou .webm), duração de 15 a 180 segundos.
                     </p>
                     <div id="file-selected-status" class="hidden mt-2 p-2 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-[11px] text-emerald-300 font-medium">
-                        ✓ Arquivo pronto para envio
+                        Arquivo pronto para envio
                     </div>
                 </div>
 
@@ -103,7 +103,7 @@
                 <div id="panel-camera" class="hidden p-5 rounded-2xl border border-cyan-800/40 bg-gray-950/80 space-y-4">
                     <div class="text-center space-y-1">
                         <p class="text-xs font-bold text-white flex items-center justify-center gap-1.5">
-                            <span>🎥</span> Gravação Direta com Enquadramento 9:16
+                            Gravação Direta com Enquadramento 9:16
                         </p>
                         <p class="text-[11px] text-gray-400">
                             Grave sua pílula diretamente pelo navegador com câmera e microfone. O vídeo gravado é anexado automaticamente.
@@ -119,8 +119,10 @@
                     <div class="relative w-full max-w-[280px] sm:max-w-[300px] aspect-[9/16] mx-auto bg-black rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-2xl flex items-center justify-center">
                         <!-- Placeholder antes de ligar a câmera -->
                         <div id="camera-placeholder" class="text-center p-6 space-y-3">
-                            <div class="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl text-cyan-400 mx-auto">
-                                📹
+                            <div class="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
                             </div>
                             <p class="text-xs text-gray-400">Clique em "Ligar Câmera" para iniciar o enquadramento vertical 9:16.</p>
                             <button type="button" id="btn-start-stream" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 shadow-md transition">
@@ -167,13 +169,13 @@
 
                         <button type="button" id="btn-retake"
                                 class="hidden inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 transition">
-                            🔄 Gravar Novamente
+                            Gravar Novamente
                         </button>
                     </div>
 
                     <!-- Status de gravação concluída -->
                     <div id="record-success-status" class="hidden p-3 rounded-xl bg-emerald-950/70 border border-emerald-800 text-center text-xs text-emerald-300 font-semibold">
-                        🎉 Vídeo gravado com sucesso! Arquivo anexado automaticamente ao formulário.
+                        Vídeo gravado com sucesso! Arquivo anexado automaticamente ao formulário.
                     </div>
                 </div>
 
@@ -199,7 +201,7 @@
                     Cancelar
                 </a>
                 <button type="submit" id="btn-publish-submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 hover:scale-105 transition duration-150">
-                    <span>🚀</span> Publicar no Feed
+                    Publicar no Feed
                 </button>
             </div>
         </form>

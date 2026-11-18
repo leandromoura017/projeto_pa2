@@ -21,8 +21,8 @@
     <div class="relative bg-gradient-to-r from-cyan-950/60 via-[#111827] to-blue-950/60 border border-cyan-800/50 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div class="space-y-2 max-w-3xl">
             <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 uppercase tracking-wider">
-                    <span>👑</span> Painel do Super Administrador
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 uppercase tracking-wider">
+                    Painel do Super Administrador
                 </span>
                 <span class="text-xs text-gray-400">Acesso Restrito: {{ user.first_name|default:user.username }}</span>
             </div>
@@ -30,16 +30,16 @@
                 Gestão da Plataforma & Analytics TAM
             </h1>
             <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                Central administrativa oficial do CodeView. Cadastre palavras-chaves/tecnologias, monitore os dados de uso e visualize os gráficos estatísticos do formulário de avaliação TAM.
+                Central administrativa oficial do CodeView. Cadastre palavras-chaves e tecnologias, monitore os dados de uso e visualize os gráficos estatísticos do formulário de avaliação TAM.
             </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <a href="/admin/" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 hover:text-white transition shadow">
-                <span>⚙️</span> Django Admin Nativo ↗
+            <a href="/admin/" target="_blank" class="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 hover:text-white transition shadow">
+                Django Admin Nativo ↗
             </a>
-            <a href="{% url 'tam_evaluation' %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900/70 border border-cyan-800/60 transition shadow">
-                <span>📝</span> Abrir Formulário TAM ↗
+            <a href="{% url 'tam_evaluation' %}" target="_blank" class="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900/70 border border-cyan-800/60 transition shadow">
+                Abrir Formulário TAM ↗
             </a>
         </div>
     </div>
@@ -48,31 +48,31 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
             <span class="text-2xl sm:text-3xl font-extrabold text-white font-mono">{{ total_users }}</span>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">👥 Usuários</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Usuários</p>
             <p class="text-[10px] text-gray-500 mt-0.5">Cadastrados no CodeView</p>
         </div>
 
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
             <span class="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-mono">{{ total_videos }}</span>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">🎬 Pílulas</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Pílulas</p>
             <p class="text-[10px] text-gray-500 mt-0.5">Vídeos verticais publicados</p>
         </div>
 
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
             <span class="text-2xl sm:text-3xl font-extrabold text-blue-400 font-mono">{{ total_courses }}</span>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">📚 Mini Cursos</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Mini Cursos</p>
             <p class="text-[10px] text-gray-500 mt-0.5">Trilhas ativas no catálogo</p>
         </div>
 
         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
             <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">{{ total_technologies }}</span>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">⚡ Tecnologias</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">Tecnologias</p>
             <p class="text-[10px] text-gray-500 mt-0.5">Palavras-chaves ativas</p>
         </div>
 
         <div class="col-span-2 sm:col-span-1 bg-[#111827] border border-cyan-800/50 rounded-2xl p-5 text-center shadow-lg bg-gradient-to-b from-cyan-950/20 to-transparent">
             <span class="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">
-                {% if total_tam > 0 %}⭐ {{ avg_overall }}{% else %}—{% endif %}
+                {% if total_tam > 0 %}{{ avg_overall }}{% else %}—{% endif %}
             </span>
             <p class="text-xs font-semibold uppercase tracking-wider text-cyan-300 mt-1">Índice Geral TAM</p>
             <p class="text-[10px] text-gray-400 mt-0.5">{{ total_tam }} avaliações recebidas</p>
@@ -82,16 +82,16 @@
     <!-- Tab Switcher Navigation -->
     <div class="flex items-center gap-2 border-b border-gray-800 pb-3 overflow-x-auto no-scrollbar">
         <button type="button" id="tab-btn-analytics" 
-                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 shrink-0">
-            <span>📈</span> Analytics TAM & Gráficos
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 shrink-0">
+            Analytics TAM & Gráficos
         </button>
         <button type="button" id="tab-btn-technologies" 
-                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center gap-2 shrink-0">
-            <span>🏷️</span> Palavras-Chaves & Tecnologias ({{ total_technologies }})
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center shrink-0">
+            Palavras-Chaves & Tecnologias ({{ total_technologies }})
         </button>
         <button type="button" id="tab-btn-responses" 
-                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center gap-2 shrink-0">
-            <span>📋</span> Respostas dos Formulários ({{ total_tam }})
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center shrink-0">
+            Respostas dos Formulários ({{ total_tam }})
         </button>
     </div>
 
@@ -105,8 +105,8 @@
         <div class="bg-[#111827] border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-4">
                 <div>
-                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                        <span>🎯</span> Segmentação &amp; Filtro por Perfil Profissional
+                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                        Segmentação &amp; Filtro por Perfil Profissional
                     </span>
                     <h3 class="text-base sm:text-lg font-extrabold text-white mt-1">
                         Distribuição &amp; Avaliação por Perfil Profissional
@@ -116,8 +116,8 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span id="role-filter-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 flex items-center gap-1.5 shadow-sm">
-                        <span>👥</span> <span id="role-filter-badge-text">Todos os Perfis: {{ total_tam }} respondentes</span>
+                    <span id="role-filter-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 shadow-sm">
+                        <span id="role-filter-badge-text">Todos os Perfis: {{ total_tam }} respondentes</span>
                     </span>
                 </div>
             </div>
@@ -125,16 +125,16 @@
             <!-- Menu Suspenso (Dropdown) de Seleção por Perfil Profissional -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
                 <div class="flex-1 max-w-lg">
-                    <label for="role-filter-select" class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
-                        <span>🔍</span> Selecionar Perfil Profissional:
+                    <label for="role-filter-select" class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                        Selecionar Perfil Profissional:
                     </label>
                     <div class="relative">
                         <select id="role-filter-select" class="w-full pl-4 pr-10 py-3 rounded-2xl bg-gray-900 border border-cyan-800/60 hover:border-cyan-500 focus:border-cyan-400 text-white text-xs sm:text-sm font-semibold transition appearance-none shadow-lg focus:outline-none cursor-pointer">
-                            <option value="all">🌐 Todos os Perfis</option>
+                            <option value="all">Todos os Perfis</option>
                             {% for r_key, r_data in roles_analytics.items %}
                                 {% if r_key != 'all' %}
                                     <option value="{{ r_key }}">
-                                        {% if r_key == 'estudante' %}🎓{% elif r_key == 'dev_junior' %}🌱{% elif r_key == 'dev_pleno_senior' %}🚀{% elif r_key == 'recruiter' %}💼{% elif r_key == 'professor' %}👨‍🏫{% else %}⚡{% endif %} {{ r_data.label }}
+                                        {{ r_data.label }}
                                     </option>
                                 {% endif %}
                             {% endfor %}
@@ -149,7 +149,7 @@
 
                 <div class="text-xs text-gray-400 self-center sm:self-end pb-1 text-center sm:text-right">
                     <span class="inline-flex items-center gap-1 text-[11px] text-cyan-300/80 bg-cyan-950/40 border border-cyan-800/40 px-3 py-1.5 rounded-xl">
-                        <span>⚡</span> Atualização dinâmica das médias e gráficos
+                        Atualização dinâmica das médias e gráficos
                     </span>
                 </div>
             </div>
@@ -157,8 +157,10 @@
             <!-- Card Informativo com o Campo de Quantidade de Pessoas que Respondeu -->
             <div id="role-info-card" class="bg-gray-900/90 border border-gray-800/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-lg text-cyan-400 font-bold shrink-0">
-                        👥
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
                     </div>
                     <div>
                         <span class="text-gray-400 block text-[11px]">Perfil Profissional Selecionado:</span>
@@ -176,7 +178,7 @@
                     </div>
                     <div class="bg-gray-950/70 px-3.5 py-2 rounded-xl border border-amber-900/40 text-center sm:text-left">
                         <span class="text-[10px] text-amber-300 uppercase tracking-wider block font-semibold">Média Geral do Perfil</span>
-                        <span id="role-info-avg" class="text-base font-extrabold text-amber-400 font-mono">⭐ {{ avg_overall }}</span>
+                        <span id="role-info-avg" class="text-base font-extrabold text-amber-400 font-mono">{{ avg_overall }}</span>
                     </div>
                 </div>
             </div>
@@ -244,7 +246,7 @@
                     <!-- Geral -->
                     <div class="bg-gradient-to-b from-cyan-950/40 to-blue-950/40 border border-cyan-700/60 rounded-2xl p-4 text-center shadow-md">
                         <span class="text-xs font-bold text-amber-300 uppercase">Índice TAM Geral</span>
-                        <div id="kpi-overall-value" class="text-3xl font-extrabold text-amber-400 font-mono mt-2">⭐ {{ avg_overall }}</div>
+                        <div id="kpi-overall-value" class="text-3xl font-extrabold text-amber-400 font-mono mt-2">{{ avg_overall }}</div>
                         <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
                             <div id="kpi-overall-bar" class="h-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-300" style="width: {{ avg_overall|floatformat:0 }}0%;"></div>
                         </div>
@@ -253,7 +255,6 @@
                 </div>
             {% else %}
                 <div class="p-8 text-center text-gray-400 text-sm bg-gray-900/60 rounded-2xl border border-gray-800">
-                    <span class="text-3xl block mb-2">📊</span>
                     Nenhuma avaliação TAM foi respondida ainda. Envie o link da avaliação para seus usuários testarem a plataforma!
                 </div>
             {% endif %}
@@ -266,7 +267,7 @@
                 <div class="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>📊</span> Desempenho dos Construtos TAM (0.0 a 5.0)
+                            <span>Desempenho dos Construtos TAM (0.0 a 5.0)</span>
                         </h3>
                         <span id="chart-constructs-subtitle" class="text-[11px] text-cyan-400 font-semibold">Segmentação: Todos os Perfis</span>
                     </div>
@@ -279,7 +280,7 @@
                 <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>📱</span> Dispositivos dos Usuários
+                            <span>Dispositivos dos Usuários</span>
                         </h3>
                         <span class="text-[11px] text-gray-400">Proporção</span>
                     </div>
@@ -292,7 +293,7 @@
                 <div class="lg:col-span-1 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>👥</span> Pessoas que Responderam por Perfil
+                            <span>Pessoas que Responderam por Perfil</span>
                         </h3>
                         <span class="text-[11px] text-cyan-400 font-semibold">Total de Avaliadores</span>
                     </div>
@@ -305,7 +306,7 @@
                 <div class="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>⭐</span> Média de Avaliação por Perfil Profissional (0.0 a 5.0)
+                            <span>Média de Avaliação por Perfil Profissional (0.0 a 5.0)</span>
                         </h3>
                         <span class="text-[11px] text-amber-400 font-semibold">Comparativo das Notas Gerais</span>
                     </div>
@@ -349,9 +350,9 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
-                            Ícone / Emoji Representativo
+                            Tag Curta / Sigla (Opcional)
                         </label>
-                        <input type="text" name="icon_name" placeholder="Ex: 🐳, ⚛️, 🦀, ⚡"
+                        <input type="text" name="icon_name" placeholder="Ex: py, js, sql"
                                class="w-full px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
                     </div>
                 </div>
@@ -363,8 +364,8 @@
                         <span>Ativar imediatamente nos filtros da plataforma</span>
                     </label>
 
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/25 transition">
-                        <span>➕</span> Cadastrar Palavra-Chave
+                    <button type="submit" class="inline-flex items-center px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/25 transition">
+                        Cadastrar Palavra-Chave
                     </button>
                 </div>
             </form>
@@ -397,8 +398,7 @@
                     <tbody class="divide-y divide-gray-800/60">
                         {% for tech in technologies %}
                             <tr class="hover:bg-gray-900/40 transition">
-                                <td class="py-3 px-4 flex items-center gap-2">
-                                    <span class="text-base">{{ tech.icon_name|default:'⚡' }}</span>
+                                <td class="py-3 px-4">
                                     <span class="font-bold text-white text-sm">{{ tech.name }}</span>
                                 </td>
                                 <td class="py-3 px-4 font-mono text-[11px] text-cyan-400">{{ tech.slug }}</td>
@@ -407,7 +407,7 @@
                                 <td class="py-3 px-4 text-center">
                                     {% if tech.is_active %}
                                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 border border-emerald-800 text-emerald-300">
-                                            ✓ Ativo
+                                            Ativo
                                         </span>
                                     {% else %}
                                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-800 border border-gray-700 text-gray-400">
@@ -508,7 +508,7 @@
 
                                 <div class="text-right">
                                     <span class="px-3 py-1 rounded-xl text-xs font-bold bg-amber-950/80 border border-amber-700 text-amber-300 shadow">
-                                        ⭐ {{ eval.overall_score|floatformat:2 }} / 5.0
+                                        Média: {{ eval.overall_score|floatformat:2 }} / 5.0
                                     </span>
                                 </div>
                             </div>
@@ -538,21 +538,21 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 text-xs">
                                     {% if eval.highlights %}
                                         <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/40">
-                                            <span class="font-bold text-emerald-400 block mb-1">🌟 Pontos Fortes:</span>
+                                            <span class="font-bold text-emerald-400 block mb-1">Pontos Fortes:</span>
                                             <p class="text-gray-300 leading-relaxed">{{ eval.highlights }}</p>
                                         </div>
                                     {% endif %}
 
                                     {% if eval.difficulties %}
                                         <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-900/40">
-                                            <span class="font-bold text-amber-400 block mb-1">⚠️ Dificuldades / Atritos:</span>
+                                            <span class="font-bold text-amber-400 block mb-1">Dificuldades / Atritos:</span>
                                             <p class="text-gray-300 leading-relaxed">{{ eval.difficulties }}</p>
                                         </div>
                                     {% endif %}
 
                                     {% if eval.suggestions %}
                                         <div class="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40">
-                                            <span class="font-bold text-cyan-400 block mb-1">💡 Sugestões de Melhoria:</span>
+                                            <span class="font-bold text-cyan-400 block mb-1">Sugestões de Melhoria:</span>
                                             <p class="text-gray-300 leading-relaxed">{{ eval.suggestions }}</p>
                                         </div>
                                     {% endif %}
@@ -830,7 +830,7 @@
                 if (roleInfoTitle) roleInfoTitle.textContent = data.label;
                 if (roleInfoCount) roleInfoCount.textContent = `${data.count} ${data.count === 1 ? 'pessoa' : 'pessoas'}`;
                 if (roleInfoPct) roleInfoPct.textContent = `${data.percentage}% da base`;
-                if (roleInfoAvg) roleInfoAvg.textContent = data.count > 0 ? `⭐ ${data.avg_overall}` : '— Sem dados';
+                if (roleInfoAvg) roleInfoAvg.textContent = data.count > 0 ? `${data.avg_overall}` : '— Sem dados';
                 if (roleBadgeText) roleBadgeText.textContent = `${data.short_label}: ${data.count} respondente${data.count === 1 ? '' : 's'}`;
                 if (kpiProfileName) kpiProfileName.textContent = data.label;
                 if (chartSubtitle) chartSubtitle.textContent = `Segmentação: ${data.label}`;
@@ -859,7 +859,7 @@
                 if (kpiBiuVal) kpiBiuVal.textContent = data.count > 0 ? data.avg_biu : '0.0';
                 if (kpiBiuBar) kpiBiuBar.style.width = data.count > 0 ? `${(data.avg_biu / 5.0) * 100}%` : '0%';
 
-                if (kpiOverallVal) kpiOverallVal.textContent = data.count > 0 ? `⭐ ${data.avg_overall}` : '—';
+                if (kpiOverallVal) kpiOverallVal.textContent = data.count > 0 ? `${data.avg_overall}` : '—';
                 if (kpiOverallBar) kpiOverallBar.style.width = data.count > 0 ? `${(data.avg_overall / 5.0) * 100}%` : '0%';
 
                 // Atualizar Gráfico 1 (Médias dos Construtos)
