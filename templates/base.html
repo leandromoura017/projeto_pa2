@@ -64,22 +64,22 @@
     <header class="sticky top-0 z-50 bg-[#0b0f19]/90 backdrop-blur-md border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <!-- Brand Logo -->
-            <a href="{% url 'home' %}" class="flex items-center gap-2 group">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform duration-200">
-                    <span class="code-font text-white font-bold text-xl">&lt;/&gt;</span>
+            <a href="{% url 'home' %}" class="flex items-center gap-2 group shrink-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform duration-200">
+                    <span class="code-font text-white font-bold text-lg sm:text-xl">&lt;/&gt;</span>
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-bold text-lg tracking-tight text-white flex items-center gap-1">
+                    <span class="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1">
                         Code<span class="text-cyan-400">View</span>
-                        <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800/60 text-cyan-300 font-semibold ml-1">MVP</span>
+                        <span class="text-[9px] sm:text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800/60 text-cyan-300 font-semibold ml-0.5 sm:ml-1">MVP</span>
                     </span>
-                    <span class="text-[11px] text-gray-400 tracking-wide">Pílulas de Código</span>
+                    <span class="text-[10px] sm:text-[11px] text-gray-400 tracking-wide hidden sm:inline">Pílulas de Código</span>
                 </div>
             </a>
 
-            <!-- Center Navigation / Links -->
+            <!-- Center Navigation / Links (Desktop md e acima) -->
             {% if user.is_authenticated %}
-            <nav class="flex items-center gap-1 sm:gap-2">
+            <nav class="hidden md:flex items-center gap-1 sm:gap-2">
                 <a href="{% url 'feed' %}" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 flex items-center gap-1.5 {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' or request.resolver_match.url_name == 'video_detail' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
                     <span>🎬</span> <span>Feed</span>
                 </a>
@@ -126,7 +126,7 @@
                                 {% if recent_notifications %}
                                     {% for notif in recent_notifications %}
                                         <a href="{% if notif.link %}{% url 'notification_read' notif.id %}{% else %}{% url 'notifications' %}{% endif %}" class="block p-3.5 hover:bg-gray-800/60 transition {% if not notif.is_read %}bg-cyan-950/20{% endif %}">
-                                            <div class="flex items-start gap-2.5">
+                                             <div class="flex items-start gap-2.5">
                                                 <span class="text-base shrink-0 mt-0.5">{{ notif.icon|default:'🔔' }}</span>
                                                 <div class="flex-1 min-w-0">
                                                     <p class="text-xs font-bold text-white truncate">{{ notif.title }}</p>
@@ -153,8 +153,8 @@
                         </div>
                     </div>
 
-                    <!-- User Profile Button -->
-                    <a href="{% url 'profile' %}" class="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl hover:bg-gray-800/70 border border-transparent hover:border-gray-700 transition group" title="Meu Perfil">
+                    <!-- User Profile Button (Desktop: md e acima) -->
+                    <a href="{% url 'profile' %}" class="hidden md:flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl hover:bg-gray-800/70 border border-transparent hover:border-gray-700 transition group" title="Meu Perfil">
                         {% if user.profile and user.profile.avatar %}
                             <img src="{{ user.profile.avatar.url }}" alt="{{ user.first_name }}" class="w-8 h-8 rounded-lg object-cover border border-cyan-500/40">
                         {% else %}
@@ -166,18 +166,115 @@
                             {{ user.first_name|default:user.username }}
                         </span>
                     </a>
-                    <a href="{% url 'logout' %}" class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 bg-gray-800/80 hover:bg-gray-700 hover:text-white border border-gray-700 transition">
+                    
+                    <!-- Botão Sair (Desktop) -->
+                    <a href="{% url 'logout' %}" class="hidden md:inline-flex px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 bg-gray-800/80 hover:bg-gray-700 hover:text-white border border-gray-700 transition">
                         Sair
                     </a>
+
+                    <!-- Botão Hambúrguer Mobile (visível abaixo de md) -->
+                    <button id="mobile-menu-btn" type="button" 
+                            class="md:hidden p-2 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-800 transition focus:outline-none" 
+                            aria-label="Abrir menu de navegação" aria-expanded="false">
+                        <svg id="hamburger-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg id="hamburger-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 {% else %}
-                    <a href="{% url 'login' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800/60 transition">
-                        Entrar
-                    </a>
-                    <a href="{% url 'signup' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition duration-150">
-                        Criar Conta
-                    </a>
+                    <!-- Visitante Desktop -->
+                    <div class="hidden sm:flex items-center gap-2">
+                        <a href="{% url 'login' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800/60 transition">
+                            Entrar
+                        </a>
+                        <a href="{% url 'signup' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition duration-150">
+                            Criar Conta
+                        </a>
+                    </div>
+                    <!-- Visitante Mobile -->
+                    <button id="mobile-menu-btn" type="button" 
+                            class="sm:hidden p-2 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-800 transition focus:outline-none" 
+                            aria-label="Abrir menu de navegação" aria-expanded="false">
+                        <svg id="hamburger-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg id="hamburger-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 {% endif %}
             </div>
+        </div>
+
+        <!-- Menu Suspenso / Escondido Mobile (md:hidden) -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-800/80 bg-[#0b0f19]/95 backdrop-blur-xl px-4 py-4 space-y-3 shadow-2xl transition-all">
+            {% if user.is_authenticated %}
+                <!-- Mini Card do Usuário Logado -->
+                <div class="flex items-center gap-3 p-3 rounded-2xl bg-gray-900/80 border border-gray-800">
+                    {% if user.profile and user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.first_name }}" class="w-10 h-10 rounded-xl object-cover border border-cyan-500/40">
+                    {% else %}
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40">
+                            {{ user.first_name|default:user.email|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-white truncate">{{ user.first_name|default:user.username }}</p>
+                        <p class="text-[11px] text-gray-400 truncate">{{ user.email }}</p>
+                    </div>
+                </div>
+
+                <!-- Links de Navegação Mobile -->
+                <nav class="flex flex-col gap-1 pt-1">
+                    <a href="{% url 'feed' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'feed' or request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'video_publish' or request.resolver_match.url_name == 'video_detail' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span class="text-base">🎬</span> <span>Feed de Pílulas</span>
+                    </a>
+                    <a href="{% url 'course_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if 'course' in request.resolver_match.url_name or 'lesson' in request.resolver_match.url_name or 'certificate' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span class="text-base">📚</span> <span>Mini Cursos</span>
+                    </a>
+                    <a href="{% url 'profile_search' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'profile_search' or request.resolver_match.url_name == 'public_profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span class="text-base">🔎</span> <span>Busca de Perfis</span>
+                    </a>
+                    <a href="{% url 'dm_inbox' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if 'dm_' in request.resolver_match.url_name %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span class="text-base">💬</span> <span>Mensagens Diretas (DMs)</span>
+                    </a>
+                    <a href="{% url 'profile' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if request.resolver_match.url_name == 'profile' %}bg-cyan-500/20 text-cyan-300 border border-cyan-500/30{% else %}text-gray-300 hover:text-white hover:bg-gray-800/60{% endif %}">
+                        <span class="text-base">👤</span> <span>Meu Portfólio Vivo</span>
+                    </a>
+                    <a href="{% url 'notifications' %}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white hover:bg-gray-800/60 transition">
+                        <div class="flex items-center gap-3">
+                            <span class="text-base">🔔</span> <span>Central de Notificações</span>
+                        </div>
+                        {% if unread_notifications_count > 0 %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
+                                {{ unread_notifications_count }}
+                            </span>
+                        {% endif %}
+                    </a>
+                </nav>
+
+                <!-- Ações do Rodapé do Menu Mobile -->
+                <div class="pt-3 border-t border-gray-800 flex items-center justify-between gap-2">
+                    <a href="{% url 'profile_edit' %}" class="flex-1 text-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-300 bg-gray-800/80 hover:bg-gray-700 hover:text-white border border-gray-700 transition">
+                        ⚙️ Editar Perfil
+                    </a>
+                    <a href="{% url 'logout' %}" class="px-4 py-2.5 rounded-xl text-xs font-bold text-red-300 bg-red-950/60 hover:bg-red-900/60 border border-red-800/60 transition">
+                        🚪 Sair
+                    </a>
+                </div>
+            {% else %}
+                <!-- Visitante no Mobile -->
+                <nav class="flex flex-col gap-2">
+                    <a href="{% url 'login' %}" class="w-full text-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 border border-gray-700 transition">
+                        Entrar
+                    </a>
+                    <a href="{% url 'signup' %}" class="w-full text-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/20 transition">
+                        Criar Conta
+                    </a>
+                </nav>
+            {% endif %}
         </div>
     </header>
 
@@ -221,7 +318,7 @@
         </div>
     </footer>
 
-    <!-- Notification Bell Dropdown Toggle Script -->
+    <!-- Notification Bell Dropdown & Mobile Menu Toggle Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('btn-notifications');
@@ -239,6 +336,49 @@
                         dropdown.classList.add('hidden');
                     }
                 });
+            }
+
+            // Mobile Hamburger Menu Toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const hamburgerIconOpen = document.getElementById('hamburger-icon-open');
+            const hamburgerIconClose = document.getElementById('hamburger-icon-close');
+
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isClosed = mobileMenu.classList.contains('hidden');
+                    if (isClosed) {
+                        mobileMenu.classList.remove('hidden');
+                        if (hamburgerIconOpen) hamburgerIconOpen.classList.add('hidden');
+                        if (hamburgerIconClose) hamburgerIconClose.classList.remove('hidden');
+                        mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                        if (dropdown) dropdown.classList.add('hidden');
+                    } else {
+                        mobileMenu.classList.add('hidden');
+                        if (hamburgerIconOpen) hamburgerIconOpen.classList.remove('hidden');
+                        if (hamburgerIconClose) hamburgerIconClose.classList.add('hidden');
+                        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                        mobileMenu.classList.add('hidden');
+                        if (hamburgerIconOpen) hamburgerIconOpen.classList.remove('hidden');
+                        if (hamburgerIconClose) hamburgerIconClose.classList.add('hidden');
+                        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        mobileMenu.classList.add('hidden');
+                        if (hamburgerIconOpen) hamburgerIconOpen.classList.remove('hidden');
+                        if (hamburgerIconClose) hamburgerIconClose.classList.add('hidden');
+                        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                    });
+                }
             }
         });
     </script>
