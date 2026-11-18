@@ -17,6 +17,15 @@
         scroll-snap-align: start;
         scroll-snap-stop: always;
     }
+
+    /* Ocultar barra de rolagem da lista de tecnologias mantendo o arraste fluido */
+    .no-scrollbar {
+        -ms-overflow-style: none; /* IE e Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari e WebKit */
+    }
 </style>
 {% endblock %}
 
@@ -24,10 +33,10 @@
 <div class="flex-1 flex flex-col items-center justify-start px-4 py-4 w-full max-w-6xl mx-auto">
 
     <!-- Top Bar: Technology Filter Bar + Publish CTA -->
-    <div class="w-full flex flex-wrap items-center justify-between gap-3 mb-4 px-2">
-        <div class="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none flex-1">
+    <div class="w-full flex items-center justify-between gap-2 sm:gap-3 mb-4 px-2">
+        <div id="tech-filter-bar" class="flex items-center gap-2 overflow-x-auto py-1 no-scrollbar flex-1 min-w-0 cursor-grab active:cursor-grabbing select-none" style="-webkit-overflow-scrolling: touch;">
             <a href="{% url 'feed' %}" 
-               class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
+               class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5 shrink-0
                {% if not current_tech %}
                    bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
                {% else %}
@@ -38,7 +47,7 @@
 
             {% for tech in technologies %}
                 <a href="{% url 'feed' %}?tech={{ tech.slug }}" 
-                   class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5
+                   class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition duration-150 flex items-center gap-1.5 shrink-0
                    {% if current_tech == tech.slug %}
                        bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 border border-cyan-400/40
                    {% else %}
@@ -49,8 +58,11 @@
             {% endfor %}
         </div>
 
-        <a href="{% url 'video_publish' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 shadow-lg shadow-emerald-500/20 transition shrink-0">
-            <span>➕</span> Publicar Vídeo
+        <a href="{% url 'video_publish' %}" 
+           class="inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:h-auto px-0 sm:px-4 py-0 sm:py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 shadow-lg shadow-emerald-500/20 transition shrink-0" 
+           title="Publicar Vídeo">
+            <span class="text-base sm:text-xs font-extrabold leading-none">+</span>
+            <span class="hidden sm:inline">Publicar Vídeo</span>
         </a>
     </div>
 
@@ -417,6 +429,58 @@
                 }
             });
         });
+
+        // Drag-to-scroll para a barra de tecnologias (rolagem por arraste)
+        const techBar = document.getElementById('tech-filter-bar');
+        if (techBar) {
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            let hasMoved = false;
+
+            techBar.addEventListener('mousedown', (e) => {
+                isDown = true;
+                hasMoved = false;
+                startX = e.pageX - techBar.offsetLeft;
+                scrollLeft = techBar.scrollLeft;
+            });
+
+            techBar.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+
+            techBar.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            techBar.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - techBar.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                if (Math.abs(x - startX) > 6) {
+                    hasMoved = true;
+                }
+                techBar.scrollLeft = scrollLeft - walk;
+            });
+
+            // Evita abrir o link caso o usuário tenha apenas arrastado a barra
+            techBar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (hasMoved) {
+                        e.preventDefault();
+                        hasMoved = false;
+                    }
+                });
+            });
+
+            // Suporte adicional a rolagem horizontal via roda do mouse
+            techBar.addEventListener('wheel', (e) => {
+                if (e.deltaY !== 0) {
+                    e.preventDefault();
+                    techBar.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+        }
     });
 </script>
 {% endblock %}

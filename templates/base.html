@@ -47,6 +47,14 @@
         .code-font {
             font-family: 'Fira Code', monospace;
         }
+        /* Ocultar barra de rolagem mantendo a navegação por arraste/touch fluida */
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE e Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari e Opera */
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
