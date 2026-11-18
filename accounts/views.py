@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -567,4 +568,142 @@ def tam_evaluation_view(request):
         'biu_questions': biu_questions,
         'likert_scale': likert_scale,
     })
+
+
+@login_required
+def admin_dashboard_view(request):
+    """
+    Painel exclusivo do Super Administrador (Admin Dashboard).
+    Permite organizar e cadastrar palavras-chaves (Tecnologias),
+    visualizar KPIs da plataforma e analisar respostas do formulário TAM com gráficos interativos.
+    """
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Acesso restrito ao Administrador do CodeView.")
+        return redirect('feed')
+
+    from videos.models import Technology, Video
+    from courses.models import Course
+
+    # Ações POST: Cadastrar, alternar e remover tecnologias / palavras-chaves
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create_technology':
+            name = request.POST.get('name', '').strip()
+            icon_name = request.POST.get('icon_name', '').strip()
+            is_active = request.POST.get('is_active') == 'on'
+
+            if not name:
+                messages.error(request, "O nome da palavra-chave / tecnologia é obrigatório.")
+            elif Technology.objects.filter(name__iexact=name).exists():
+                messages.error(request, f"A tecnologia '{name}' já está cadastrada.")
+            else:
+                tech = Technology.objects.create(
+                    name=name,
+                    icon_name=icon_name or '⚡',
+                    is_active=is_active
+                )
+                messages.success(request, f"Palavra-chave / Tecnologia '{tech.name}' cadastrada com sucesso!")
+            return redirect('admin_dashboard')
+
+        elif action == 'toggle_technology':
+            tech_id = request.POST.get('technology_id')
+            tech = get_object_or_404(Technology, id=tech_id)
+            tech.is_active = not tech.is_active
+            tech.save()
+            status_text = "ativada" if tech.is_active else "desativada"
+            messages.success(request, f"Tecnologia '{tech.name}' {status_text} com sucesso!")
+            return redirect('admin_dashboard')
+
+        elif action == 'delete_technology':
+            tech_id = request.POST.get('technology_id')
+            tech = get_object_or_404(Technology, id=tech_id)
+            if tech.videos.exists() or tech.courses.exists():
+                tech.is_active = False
+                tech.save()
+                messages.warning(request, f"A tecnologia '{tech.name}' possui pílulas ou cursos vinculados. Ela foi desativada em vez de excluída para manter a integridade dos dados.")
+            else:
+                tech_name = tech.name
+                tech.delete()
+                messages.success(request, f"Tecnologia '{tech_name}' removida com sucesso!")
+            return redirect('admin_dashboard')
+
+    # Métricas Gerais
+    total_users = User.objects.count()
+    total_videos = Video.objects.count()
+    total_courses = Course.objects.count()
+    total_technologies = Technology.objects.count()
+
+    technologies = Technology.objects.annotate(
+        videos_count=Count('videos', distinct=True),
+        courses_count=Count('courses', distinct=True)
+    ).order_by('-is_active', 'name')
+
+    tam_evaluations = TAMEvaluation.objects.select_related('user').order_by('-created_at')
+    total_tam = tam_evaluations.count()
+
+    if total_tam > 0:
+        avg_pu = round(sum(e.pu_score for e in tam_evaluations) / total_tam, 2)
+        avg_peou = round(sum(e.peou_score for e in tam_evaluations) / total_tam, 2)
+        avg_atu = round(sum(e.atu_score for e in tam_evaluations) / total_tam, 2)
+        avg_biu = round(sum(e.biu_score for e in tam_evaluations) / total_tam, 2)
+        avg_overall = round(sum(e.overall_score for e in tam_evaluations) / total_tam, 2)
+
+        chart_tam_labels = ['PU (Utilidade)', 'PEOU (Facilidade)', 'ATU (Atitude)', 'BIU (Intenção)', 'Média Geral']
+        chart_tam_data = [avg_pu, avg_peou, avg_atu, avg_biu, avg_overall]
+
+        devices_map = {'desktop': 0, 'mobile': 0, 'tablet': 0}
+        for e in tam_evaluations:
+            devices_map[e.device] = devices_map.get(e.device, 0) + 1
+        chart_devices_labels = ['Computador / Desktop', 'Smartphone / Celular', 'Tablet']
+        chart_devices_data = [devices_map.get('desktop', 0), devices_map.get('mobile', 0), devices_map.get('tablet', 0)]
+
+        roles_dict = {
+            'estudante': 'Estudante',
+            'dev_junior': 'Dev Júnior',
+            'dev_pleno_senior': 'Dev Pleno/Sênior',
+            'recruiter': 'Recrutador/RH',
+            'professor': 'Professor/Mentor',
+            'outro': 'Outros'
+        }
+        roles_counts = {k: 0 for k in roles_dict.keys()}
+        for e in tam_evaluations:
+            if e.role in roles_counts:
+                roles_counts[e.role] += 1
+            else:
+                roles_counts['outro'] += 1
+        chart_roles_labels = list(roles_dict.values())
+        chart_roles_data = [roles_counts[k] for k in roles_dict.keys()]
+
+    else:
+        avg_pu = avg_peou = avg_atu = avg_biu = avg_overall = 0.0
+        chart_tam_labels = ['PU (Utilidade)', 'PEOU (Facilidade)', 'ATU (Atitude)', 'BIU (Intenção)', 'Média Geral']
+        chart_tam_data = [0, 0, 0, 0, 0]
+        chart_devices_labels = ['Computador / Desktop', 'Smartphone / Celular', 'Tablet']
+        chart_devices_data = [0, 0, 0]
+        chart_roles_labels = ['Estudante', 'Dev Júnior', 'Dev Pleno/Sênior', 'Recrutador/RH', 'Professor/Mentor', 'Outros']
+        chart_roles_data = [0, 0, 0, 0, 0, 0]
+
+    context = {
+        'total_users': total_users,
+        'total_videos': total_videos,
+        'total_courses': total_courses,
+        'total_technologies': total_technologies,
+        'technologies': technologies,
+        'tam_evaluations': tam_evaluations,
+        'total_tam': total_tam,
+        'avg_pu': avg_pu,
+        'avg_peou': avg_peou,
+        'avg_atu': avg_atu,
+        'avg_biu': avg_biu,
+        'avg_overall': avg_overall,
+        'chart_tam_labels_json': json.dumps(chart_tam_labels),
+        'chart_tam_data_json': json.dumps(chart_tam_data),
+        'chart_devices_labels_json': json.dumps(chart_devices_labels),
+        'chart_devices_data_json': json.dumps(chart_devices_data),
+        'chart_roles_labels_json': json.dumps(chart_roles_labels),
+        'chart_roles_data_json': json.dumps(chart_roles_data),
+    }
+
+    return render(request, 'admin/custom_dashboard.html', context)
 

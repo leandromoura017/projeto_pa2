@@ -1,0 +1,654 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel do Super Administrador | CodeView{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js para gráficos interativos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .chart-container {
+        position: relative;
+        height: 280px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+
+    <!-- Header Hero Banner do Super Admin -->
+    <div class="relative bg-gradient-to-r from-cyan-950/60 via-[#111827] to-blue-950/60 border border-cyan-800/50 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="space-y-2 max-w-3xl">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 uppercase tracking-wider">
+                    <span>👑</span> Painel do Super Administrador
+                </span>
+                <span class="text-xs text-gray-400">Acesso Restrito: {{ user.first_name|default:user.username }}</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Gestão da Plataforma & Analytics TAM
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                Central administrativa oficial do CodeView. Cadastre palavras-chaves/tecnologias, monitore os dados de uso e visualize os gráficos estatísticos do formulário de avaliação TAM.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <a href="/admin/" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 hover:text-white transition shadow">
+                <span>⚙️</span> Django Admin Nativo ↗
+            </a>
+            <a href="{% url 'tam_evaluation' %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900/70 border border-cyan-800/60 transition shadow">
+                <span>📝</span> Abrir Formulário TAM ↗
+            </a>
+        </div>
+    </div>
+
+    <!-- Top KPI Cards Grid (Métricas Gerais) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
+            <span class="text-2xl sm:text-3xl font-extrabold text-white font-mono">{{ total_users }}</span>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">👥 Usuários</p>
+            <p class="text-[10px] text-gray-500 mt-0.5">Cadastrados no CodeView</p>
+        </div>
+
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
+            <span class="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-mono">{{ total_videos }}</span>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">🎬 Pílulas</p>
+            <p class="text-[10px] text-gray-500 mt-0.5">Vídeos verticais publicados</p>
+        </div>
+
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
+            <span class="text-2xl sm:text-3xl font-extrabold text-blue-400 font-mono">{{ total_courses }}</span>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">📚 Mini Cursos</p>
+            <p class="text-[10px] text-gray-500 mt-0.5">Trilhas ativas no catálogo</p>
+        </div>
+
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
+            <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">{{ total_technologies }}</span>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-1">⚡ Tecnologias</p>
+            <p class="text-[10px] text-gray-500 mt-0.5">Palavras-chaves ativas</p>
+        </div>
+
+        <div class="col-span-2 sm:col-span-1 bg-[#111827] border border-cyan-800/50 rounded-2xl p-5 text-center shadow-lg bg-gradient-to-b from-cyan-950/20 to-transparent">
+            <span class="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">
+                {% if total_tam > 0 %}⭐ {{ avg_overall }}{% else %}—{% endif %}
+            </span>
+            <p class="text-xs font-semibold uppercase tracking-wider text-cyan-300 mt-1">Índice Geral TAM</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">{{ total_tam }} avaliações recebidas</p>
+        </div>
+    </div>
+
+    <!-- Tab Switcher Navigation -->
+    <div class="flex items-center gap-2 border-b border-gray-800 pb-3 overflow-x-auto no-scrollbar">
+        <button type="button" id="tab-btn-analytics" 
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 shrink-0">
+            <span>📈</span> Analytics TAM & Gráficos
+        </button>
+        <button type="button" id="tab-btn-technologies" 
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center gap-2 shrink-0">
+            <span>🏷️</span> Palavras-Chaves & Tecnologias ({{ total_technologies }})
+        </button>
+        <button type="button" id="tab-btn-responses" 
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center gap-2 shrink-0">
+            <span>📋</span> Respostas dos Formulários ({{ total_tam }})
+        </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ABA 1: ANALYTICS TAM & GRÁFICOS INTERATIVOS -->
+    <!-- ========================================== -->
+    <div id="tab-panel-analytics" class="space-y-6">
+
+        <!-- Médias dos Construtos TAM (Cards 1 a 5) -->
+        <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-5">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Modelo de Aceitação Tecnológica (Davis, 1989)</span>
+                    <h2 class="text-xl font-extrabold text-white mt-1">Médias Estatísticas Consolidadas (Escala Likert de 1 a 5)</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-950 border border-cyan-800 text-cyan-300">
+                        {{ total_tam }} Avaliações Computadas
+                    </span>
+                </div>
+            </div>
+
+            {% if total_tam > 0 %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <!-- PU -->
+                    <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
+                        <span class="text-xs font-bold text-gray-400 uppercase">Utilidade Percebida (PU)</span>
+                        <div class="text-3xl font-extrabold text-cyan-400 font-mono mt-2">{{ avg_pu }}</div>
+                        <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                            <div class="h-full bg-cyan-400" style="width: {{ avg_pu|floatformat:0 }}0%;"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2">Pílulas curtas agilizam aprendizado</p>
+                    </div>
+
+                    <!-- PEOU -->
+                    <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
+                        <span class="text-xs font-bold text-gray-400 uppercase">Facilidade de Uso (PEOU)</span>
+                        <div class="text-3xl font-extrabold text-blue-400 font-mono mt-2">{{ avg_peou }}</div>
+                        <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                            <div class="h-full bg-blue-400" style="width: {{ avg_peou|floatformat:0 }}0%;"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2">Navegação simples e sem atrito</p>
+                    </div>
+
+                    <!-- ATU -->
+                    <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
+                        <span class="text-xs font-bold text-gray-400 uppercase">Atitude com o Uso (ATU)</span>
+                        <div class="text-3xl font-extrabold text-purple-400 font-mono mt-2">{{ avg_atu }}</div>
+                        <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                            <div class="h-full bg-purple-400" style="width: {{ avg_atu|floatformat:0 }}0%;"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2">Sentimento positivo e engajador</p>
+                    </div>
+
+                    <!-- BIU -->
+                    <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
+                        <span class="text-xs font-bold text-gray-400 uppercase">Intenção de Uso (BIU)</span>
+                        <div class="text-3xl font-extrabold text-emerald-400 font-mono mt-2">{{ avg_biu }}</div>
+                        <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                            <div class="h-full bg-emerald-400" style="width: {{ avg_biu|floatformat:0 }}0%;"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2">Disposição a adotar e indicar</p>
+                    </div>
+
+                    <!-- Geral -->
+                    <div class="bg-gradient-to-b from-cyan-950/40 to-blue-950/40 border border-cyan-700/60 rounded-2xl p-4 text-center shadow-md">
+                        <span class="text-xs font-bold text-amber-300 uppercase">Índice TAM Geral</span>
+                        <div class="text-3xl font-extrabold text-amber-400 font-mono mt-2">⭐ {{ avg_overall }}</div>
+                        <div class="w-full h-1.5 bg-gray-800 rounded-full mt-3 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-amber-400 to-cyan-400" style="width: {{ avg_overall|floatformat:0 }}0%;"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-300 mt-2 font-semibold">Aceitação Geral Comprovada</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="p-8 text-center text-gray-400 text-sm bg-gray-900/60 rounded-2xl border border-gray-800">
+                    <span class="text-3xl block mb-2">📊</span>
+                    Nenhuma avaliação TAM foi respondida ainda. Envie o link da avaliação para seus usuários testarem a plataforma!
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Seção de Gráficos (Chart.js) -->
+        {% if total_tam > 0 %}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gráfico 1: Médias dos Pilares (Barra) -->
+                <div class="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>📊</span> Desempenho dos Construtos TAM (0.0 a 5.0)
+                        </h3>
+                        <span class="text-[11px] text-gray-400">Escala Likert</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartTAMConstructs"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 2: Dispositivos Utilizados (Doughnut) -->
+                <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>📱</span> Dispositivos dos Usuários
+                        </h3>
+                        <span class="text-[11px] text-gray-400">Proporção</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartDevices"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 3: Perfil dos Respondentes (Barra Horizontal) -->
+                <div class="lg:col-span-3 bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>👥</span> Distribuição por Perfil Profissional
+                        </h3>
+                        <span class="text-[11px] text-gray-400">Avaliadores</span>
+                    </div>
+                    <div class="chart-container" style="height: 240px;">
+                        <canvas id="chartRoles"></canvas>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- ABA 2: PALAVRAS-CHAVES & TECNOLOGIAS (ORGANIZAR E CADASTRAR) -->
+    <!-- ========================================================= -->
+    <div id="tab-panel-technologies" class="hidden space-y-6">
+
+        <!-- Formulário para Cadastrar Nova Palavra-Chave / Tecnologia -->
+        <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">
+            <div class="border-b border-gray-800 pb-4">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Novo Cadastro</span>
+                <h2 class="text-lg sm:text-xl font-extrabold text-white mt-1">
+                    Cadastrar Nova Palavra-Chave / Tecnologia
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">
+                    As tecnologias cadastradas aparecem automaticamente nos filtros do feed de vídeos, na publicação e nos Mini-Cursos.
+                </p>
+            </div>
+
+            <form method="POST" action="{% url 'admin_dashboard' %}" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_technology">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
+                            Nome da Tecnologia / Palavra-Chave *
+                        </label>
+                        <input type="text" name="name" placeholder="Ex: Docker, React, TypeScript, Rust, FastAPI" required
+                               class="w-full px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
+                            Ícone / Emoji Representativo
+                        </label>
+                        <input type="text" name="icon_name" placeholder="Ex: 🐳, ⚛️, 🦀, ⚡"
+                               class="w-full px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300 select-none">
+                        <input type="checkbox" name="is_active" checked
+                               class="w-4 h-4 rounded text-cyan-500 bg-gray-900 border-gray-700 focus:ring-cyan-500">
+                        <span>Ativar imediatamente nos filtros da plataforma</span>
+                    </label>
+
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-cyan-500/25 transition">
+                        <span>➕</span> Cadastrar Palavra-Chave
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela / Lista de Palavras-Chaves Existentes -->
+        <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                <div>
+                    <h3 class="text-base font-bold text-white">Palavras-Chaves / Tecnologias Cadastradas</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Organize o catálogo e controle quais filtros aparecem para os usuários.</p>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
+                    {{ technologies|length }} cadastradas
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-gray-300 divide-y divide-gray-800">
+                    <thead class="text-[11px] font-bold uppercase tracking-wider text-gray-400 bg-gray-900/60">
+                        <tr>
+                            <th class="py-3 px-4">Tecnologia</th>
+                            <th class="py-3 px-4">Identificador (Slug)</th>
+                            <th class="py-3 px-4 text-center">Pílulas / Vídeos</th>
+                            <th class="py-3 px-4 text-center">Mini Cursos</th>
+                            <th class="py-3 px-4 text-center">Status</th>
+                            <th class="py-3 px-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-800/60">
+                        {% for tech in technologies %}
+                            <tr class="hover:bg-gray-900/40 transition">
+                                <td class="py-3 px-4 flex items-center gap-2">
+                                    <span class="text-base">{{ tech.icon_name|default:'⚡' }}</span>
+                                    <span class="font-bold text-white text-sm">{{ tech.name }}</span>
+                                </td>
+                                <td class="py-3 px-4 font-mono text-[11px] text-cyan-400">{{ tech.slug }}</td>
+                                <td class="py-3 px-4 text-center font-mono">{{ tech.videos_count }}</td>
+                                <td class="py-3 px-4 text-center font-mono">{{ tech.courses_count }}</td>
+                                <td class="py-3 px-4 text-center">
+                                    {% if tech.is_active %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 border border-emerald-800 text-emerald-300">
+                                            ✓ Ativo
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-800 border border-gray-700 text-gray-400">
+                                            Inativo
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <!-- Toggle Status -->
+                                        <form method="POST" action="{% url 'admin_dashboard' %}" class="inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="toggle_technology">
+                                            <input type="hidden" name="technology_id" value="{{ tech.id }}">
+                                            <button type="submit" 
+                                                    class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition {% if tech.is_active %}bg-amber-950/70 border border-amber-800 text-amber-300 hover:bg-amber-900/70{% else %}bg-emerald-950/70 border border-emerald-800 text-emerald-300 hover:bg-emerald-900/70{% endif %}">
+                                                {% if tech.is_active %}Desativar{% else %}Ativar{% endif %}
+                                            </button>
+                                        </form>
+
+                                        <!-- Delete / Safe Deactivate -->
+                                        <form method="POST" action="{% url 'admin_dashboard' %}" class="inline" onsubmit="return confirm('Tem certeza que deseja remover esta palavra-chave?');">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="delete_technology">
+                                            <input type="hidden" name="technology_id" value="{{ tech.id }}">
+                                            <button type="submit" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-red-950/70 border border-red-800 text-red-300 hover:bg-red-900/70 transition">
+                                                Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-gray-500">
+                                    Nenhuma tecnologia cadastrada no sistema.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- ABA 3: RESPOSTAS DOS FORMULÁRIOS TAM (DETALHES QUALITATIVOS) -->
+    <!-- ========================================================= -->
+    <div id="tab-panel-responses" class="hidden space-y-6">
+
+        <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-5">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">Respostas Individuais dos Formulários TAM</h2>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Consulte as notas pontuais e os feedbacks qualitativos abertos enviados pelos avaliadores.
+                    </p>
+                </div>
+
+                <!-- Input de Busca Rápida -->
+                <div class="w-full sm:w-72">
+                    <input type="text" id="filter-responses-input" placeholder="Filtrar por nome, perfil ou palavra..."
+                           class="w-full px-3.5 py-2 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
+                </div>
+            </div>
+
+            {% if tam_evaluations %}
+                <div class="space-y-4" id="evaluations-container">
+                    {% for eval in tam_evaluations %}
+                        <div class="eval-card bg-gray-900/80 border border-gray-800 hover:border-gray-700 rounded-2xl p-5 space-y-4 transition shadow-md">
+                            
+                            <!-- Header do Avaliador -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800/80 pb-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-sm font-bold text-white">
+                                            {{ eval.evaluator_name|default:eval.user.email|default:"Avaliador Anônimo" }}
+                                        </h4>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 border border-cyan-800 text-cyan-300">
+                                            {{ eval.get_role_display }}
+                                        </span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">
+                                        Exp: <span class="text-gray-300">{{ eval.get_experience_display }}</span> • 
+                                        Dispositivo: <span class="text-gray-300">{{ eval.get_device_display }}</span> • 
+                                        Enviado em {{ eval.created_at|date:"d/m/Y \à\s H:i" }}
+                                    </p>
+                                </div>
+
+                                <div class="text-right">
+                                    <span class="px-3 py-1 rounded-xl text-xs font-bold bg-amber-950/80 border border-amber-700 text-amber-300 shadow">
+                                        ⭐ {{ eval.overall_score|floatformat:2 }} / 5.0
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Faixa das Notas dos 4 Pilares -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                                <div class="p-2 rounded-xl bg-gray-950 border border-gray-800">
+                                    <span class="text-[10px] text-gray-400 block font-semibold">PU (Utilidade)</span>
+                                    <span class="text-sm font-bold text-cyan-300 font-mono">{{ eval.pu_score|floatformat:2 }}</span>
+                                </div>
+                                <div class="p-2 rounded-xl bg-gray-950 border border-gray-800">
+                                    <span class="text-[10px] text-gray-400 block font-semibold">PEOU (Facilidade)</span>
+                                    <span class="text-sm font-bold text-blue-300 font-mono">{{ eval.peou_score|floatformat:2 }}</span>
+                                </div>
+                                <div class="p-2 rounded-xl bg-gray-950 border border-gray-800">
+                                    <span class="text-[10px] text-gray-400 block font-semibold">ATU (Atitude)</span>
+                                    <span class="text-sm font-bold text-purple-300 font-mono">{{ eval.atu_score|floatformat:2 }}</span>
+                                </div>
+                                <div class="p-2 rounded-xl bg-gray-950 border border-gray-800">
+                                    <span class="text-[10px] text-gray-400 block font-semibold">BIU (Intenção)</span>
+                                    <span class="text-sm font-bold text-emerald-300 font-mono">{{ eval.biu_score|floatformat:2 }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Feedbacks Qualitativos Abertos -->
+                            {% if eval.highlights or eval.difficulties or eval.suggestions %}
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 text-xs">
+                                    {% if eval.highlights %}
+                                        <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/40">
+                                            <span class="font-bold text-emerald-400 block mb-1">🌟 Pontos Fortes:</span>
+                                            <p class="text-gray-300 leading-relaxed">{{ eval.highlights }}</p>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if eval.difficulties %}
+                                        <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-900/40">
+                                            <span class="font-bold text-amber-400 block mb-1">⚠️ Dificuldades / Atritos:</span>
+                                            <p class="text-gray-300 leading-relaxed">{{ eval.difficulties }}</p>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if eval.suggestions %}
+                                        <div class="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40">
+                                            <span class="font-bold text-cyan-400 block mb-1">💡 Sugestões de Melhoria:</span>
+                                            <p class="text-gray-300 leading-relaxed">{{ eval.suggestions }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <p class="text-[11px] text-gray-500 italic">Sem comentários abertos adicionais.</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-10 text-center text-gray-400 text-sm bg-gray-900/60 rounded-2xl border border-gray-800">
+                    Nenhuma resposta de avaliação submetida até o momento.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Tab Switching Logic
+        const tabBtnAnalytics = document.getElementById('tab-btn-analytics');
+        const tabBtnTechnologies = document.getElementById('tab-btn-technologies');
+        const tabBtnResponses = document.getElementById('tab-btn-responses');
+
+        const panelAnalytics = document.getElementById('tab-panel-analytics');
+        const panelTechnologies = document.getElementById('tab-panel-technologies');
+        const panelResponses = document.getElementById('tab-panel-responses');
+
+        const activeClasses = 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/25 shrink-0';
+        const inactiveClasses = 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition flex items-center gap-2 shrink-0';
+
+        function switchTab(tab) {
+            panelAnalytics.classList.add('hidden');
+            panelTechnologies.classList.add('hidden');
+            panelResponses.classList.add('hidden');
+
+            tabBtnAnalytics.className = inactiveClasses;
+            tabBtnTechnologies.className = inactiveClasses;
+            tabBtnResponses.className = inactiveClasses;
+
+            if (tab === 'analytics') {
+                panelAnalytics.classList.remove('hidden');
+                tabBtnAnalytics.className = activeClasses;
+            } else if (tab === 'technologies') {
+                panelTechnologies.classList.remove('hidden');
+                tabBtnTechnologies.className = activeClasses;
+            } else if (tab === 'responses') {
+                panelResponses.classList.remove('hidden');
+                tabBtnResponses.className = activeClasses;
+            }
+        }
+
+        tabBtnAnalytics.addEventListener('click', () => switchTab('analytics'));
+        tabBtnTechnologies.addEventListener('click', () => switchTab('technologies'));
+        tabBtnResponses.addEventListener('click', () => switchTab('responses'));
+
+        // Chart.js Gráficos Interativos (quando houver avaliações)
+        {% if total_tam > 0 %}
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+
+            // Gráfico 1: Médias dos Construtos TAM (Bar Chart)
+            const ctxConstructs = document.getElementById('chartTAMConstructs');
+            if (ctxConstructs) {
+                new Chart(ctxConstructs, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ chart_tam_labels_json|safe }},
+                        datasets: [{
+                            label: 'Média de Avaliação (1 a 5)',
+                            data: {{ chart_tam_data_json|safe }},
+                            backgroundColor: [
+                                'rgba(6, 182, 212, 0.75)',  // cyan
+                                'rgba(59, 130, 246, 0.75)',  // blue
+                                'rgba(168, 85, 247, 0.75)', // purple
+                                'rgba(16, 185, 129, 0.75)', // emerald
+                                'rgba(245, 158, 11, 0.85)'  // amber (geral)
+                            ],
+                            borderColor: [
+                                '#06b6d4',
+                                '#3b82f6',
+                                '#a855f7',
+                                '#10b981',
+                                '#f59e0b'
+                            ],
+                            borderWidth: 1.5,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 5,
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { stepSize: 1 }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ` Nota média: ${ctx.parsed.y.toFixed(2)} / 5.00`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico 2: Dispositivos (Doughnut Chart)
+            const ctxDevices = document.getElementById('chartDevices');
+            if (ctxDevices) {
+                new Chart(ctxDevices, {
+                    type: 'doughnut',
+                    data: {
+                        labels: {{ chart_devices_labels_json|safe }},
+                        datasets: [{
+                            data: {{ chart_devices_data_json|safe }},
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(6, 182, 212, 0.8)',
+                                'rgba(168, 85, 247, 0.8)'
+                            ],
+                            borderColor: '#111827',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, padding: 15 }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico 3: Perfis Profissionais (Horizontal Bar)
+            const ctxRoles = document.getElementById('chartRoles');
+            if (ctxRoles) {
+                new Chart(ctxRoles, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ chart_roles_labels_json|safe }},
+                        datasets: [{
+                            label: 'Total de Avaliadores',
+                            data: {{ chart_roles_data_json|safe }},
+                            backgroundColor: 'rgba(6, 182, 212, 0.65)',
+                            borderColor: '#06b6d4',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { precision: 0 }
+                            },
+                            y: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        {% endif %}
+
+        // Filtro em Tempo Real das Respostas
+        const filterInput = document.getElementById('filter-responses-input');
+        if (filterInput) {
+            filterInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                const cards = document.querySelectorAll('.eval-card');
+                cards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

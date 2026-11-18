@@ -571,3 +571,96 @@ class Onda8PortfolioAndLGPDTests(TestCase):
         self.assertRedirects(res, reverse('login'))
         self.assertFalse(User.objects.filter(id=user2_id).exists())
 
+
+class AdminDashboardViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.regular_user = User.objects.create_user(
+            email='user@codeview.com',
+            password='Password123!',
+            first_name='Dev'
+        )
+        self.admin_user = User.objects.create_superuser(
+            email='admin@codeview.com',
+            password='Password123!',
+            first_name='SuperAdmin'
+        )
+        self.url = reverse('admin_dashboard')
+
+    def test_admin_dashboard_anonymous_redirects_to_login(self):
+        res = self.client.get(self.url)
+        self.assertEqual(res.status_code, 302)
+        self.assertIn(reverse('login'), res.url)
+
+    def test_admin_dashboard_regular_user_forbidden_and_redirects(self):
+        self.client.force_login(self.regular_user)
+        res = self.client.get(self.url)
+        self.assertEqual(res.status_code, 302)
+        self.assertRedirects(res, reverse('feed'))
+
+    def test_admin_dashboard_superuser_access_ok(self):
+        from accounts.models import TAMEvaluation
+        from videos.models import Technology
+        
+        Technology.objects.create(name='Python Test', icon_name='🐍', is_active=True)
+        TAMEvaluation.objects.create(
+            user=self.admin_user,
+            device='desktop',
+            role='dev_junior',
+            experience='1_a_3_anos',
+            pu1=5, pu2=5, pu3=5, pu4=5, pu5=5,
+            peou1=4, peou2=4, peou3=4, peou4=4, peou5=4,
+            atu1=5, atu2=5, atu3=5,
+            biu1=5, biu2=5, biu3=5,
+            highlights='Agilidade nas aulas',
+            difficulties='Nenhuma',
+            suggestions='Adicionar mais cursos'
+        )
+        self.client.force_login(self.admin_user)
+        res = self.client.get(self.url)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Painel do Super Administrador')
+        self.assertContains(res, 'Python Test')
+        self.assertContains(res, 'Agilidade nas aulas')
+        self.assertEqual(res.context['total_tam'], 1)
+        self.assertIn('chart_tam_labels_json', res.context)
+
+    def test_admin_dashboard_create_technology(self):
+        from videos.models import Technology
+        self.client.force_login(self.admin_user)
+        res = self.client.post(self.url, {
+            'action': 'create_technology',
+            'name': 'Golang',
+            'icon_name': '🐹',
+            'is_active': 'on'
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(Technology.objects.filter(name='Golang').exists())
+        tech = Technology.objects.get(name='Golang')
+        self.assertEqual(tech.icon_name, '🐹')
+        self.assertTrue(tech.is_active)
+
+    def test_admin_dashboard_toggle_technology(self):
+        from videos.models import Technology
+        tech = Technology.objects.create(name='Rust', icon_name='🦀', is_active=True)
+        self.client.force_login(self.admin_user)
+        res = self.client.post(self.url, {
+            'action': 'toggle_technology',
+            'technology_id': tech.id
+        })
+        self.assertEqual(res.status_code, 302)
+        tech.refresh_from_db()
+        self.assertFalse(tech.is_active)
+
+    def test_admin_dashboard_delete_technology(self):
+        from videos.models import Technology
+        tech = Technology.objects.create(name='Kotlin', icon_name='📱', is_active=True)
+        self.client.force_login(self.admin_user)
+        res = self.client.post(self.url, {
+            'action': 'delete_technology',
+            'technology_id': tech.id
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertFalse(Technology.objects.filter(id=tech.id).exists())
+
+
