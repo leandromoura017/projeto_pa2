@@ -47,6 +47,16 @@
         .code-font {
             font-family: 'Fira Code', monospace;
         }
+        /* Ocultar barra de rolagem lateral da página inteira mantendo a rolagem ativa */
+        html, body {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE e Edge */
+        }
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera e Edge Chromium */
+            width: 0;
+            height: 0;
+        }
         /* Ocultar barra de rolagem mantendo a navegação por arraste/touch fluida */
         .no-scrollbar {
             -ms-overflow-style: none; /* IE e Edge */
@@ -54,6 +64,14 @@
         }
         .no-scrollbar::-webkit-scrollbar {
             display: none; /* Chrome, Safari e Opera */
+        }
+        /* Tipografia fluida e responsiva para o rodapé (footer) não quebrar em celulares pequenos */
+        .footer-fluid-text {
+            font-size: clamp(9px, 2.5vw, 12px);
+            line-height: 1.4;
+        }
+        .footer-fluid-links {
+            font-size: clamp(9.5px, 2.7vw, 12px);
         }
     </style>
     {% block extra_head %}{% endblock %}
@@ -305,15 +323,17 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-800/80 bg-[#070a12] py-6 mt-12 text-xs text-gray-500">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p>&copy; 2026 CodeView. Todos os direitos reservados. Focado no aprendizado prático de devs.</p>
-            <div class="flex items-center gap-6 text-gray-400">
-                <a href="{% url 'tam_evaluation' %}" class="hover:text-cyan-300 text-cyan-400 font-medium transition flex items-center gap-1">
+    <footer class="border-t border-gray-800/80 bg-[#070a12] py-5 sm:py-6 mt-12 text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
+            <p class="text-center md:text-left footer-fluid-text text-gray-400">
+                &copy; 2026 CodeView. Todos os direitos reservados. Focado no aprendizado prático de devs.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-6 gap-y-1.5 text-gray-400 footer-fluid-links">
+                <a href="{% url 'tam_evaluation' %}" class="hover:text-cyan-300 text-cyan-400 font-medium transition flex items-center gap-1 whitespace-nowrap">
                     <span>📝</span> <span>Avaliação TAM (PA2)</span>
                 </a>
-                <a href="{% url 'terms' %}" class="hover:text-cyan-400 transition">Termos de Uso</a>
-                <a href="{% url 'privacy' %}" class="hover:text-cyan-400 transition">Privacidade (LGPD)</a>
+                <a href="{% url 'terms' %}" class="hover:text-cyan-400 transition whitespace-nowrap">Termos de Uso</a>
+                <a href="{% url 'privacy' %}" class="hover:text-cyan-400 transition whitespace-nowrap">Privacidade (LGPD)</a>
             </div>
         </div>
     </footer>
