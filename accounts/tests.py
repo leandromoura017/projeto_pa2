@@ -630,7 +630,7 @@ class AdminDashboardViewTests(TestCase):
         self.assertEqual(res.context['roles_analytics']['dev_junior']['count'], 1)
         self.assertEqual(res.context['roles_analytics']['estudante']['count'], 0)
         self.assertContains(res, 'Distribuição &amp; Avaliação por Perfil Profissional')
-        self.assertContains(res, 'role-filter-buttons')
+        self.assertContains(res, 'role-filter-select')
         self.assertContains(res, 'chartRolesScores')
 
     def test_admin_dashboard_create_technology(self):

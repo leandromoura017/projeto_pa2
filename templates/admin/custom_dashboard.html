@@ -122,19 +122,36 @@
                 </div>
             </div>
 
-            <!-- Botões / Pills de Perfil para Filtro Rápido -->
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="role-filter-buttons">
-                <button type="button" data-role="all" class="role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20 shrink-0">
-                    <span>🌐</span> <span>Todos ({{ total_tam }})</span>
-                </button>
-                {% for r_key, r_data in roles_analytics.items %}
-                    {% if r_key != 'all' %}
-                        <button type="button" data-role="{{ r_key }}" class="role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800 transition flex items-center gap-1.5 shrink-0">
-                            <span>{% if r_key == 'estudante' %}🎓{% elif r_key == 'dev_junior' %}🌱{% elif r_key == 'dev_pleno_senior' %}🚀{% elif r_key == 'recruiter' %}💼{% elif r_key == 'professor' %}👨‍🏫{% else %}⚡{% endif %}</span>
-                            <span>{{ r_data.label }} ({{ r_data.count }})</span>
-                        </button>
-                    {% endif %}
-                {% endfor %}
+            <!-- Menu Suspenso (Dropdown) de Seleção por Perfil Profissional -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
+                <div class="flex-1 max-w-lg">
+                    <label for="role-filter-select" class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
+                        <span>🔍</span> Selecionar Perfil Profissional:
+                    </label>
+                    <div class="relative">
+                        <select id="role-filter-select" class="w-full pl-4 pr-10 py-3 rounded-2xl bg-gray-900 border border-cyan-800/60 hover:border-cyan-500 focus:border-cyan-400 text-white text-xs sm:text-sm font-semibold transition appearance-none shadow-lg focus:outline-none cursor-pointer">
+                            <option value="all">🌐 Todos os Perfis</option>
+                            {% for r_key, r_data in roles_analytics.items %}
+                                {% if r_key != 'all' %}
+                                    <option value="{{ r_key }}">
+                                        {% if r_key == 'estudante' %}🎓{% elif r_key == 'dev_junior' %}🌱{% elif r_key == 'dev_pleno_senior' %}🚀{% elif r_key == 'recruiter' %}💼{% elif r_key == 'professor' %}👨‍🏫{% else %}⚡{% endif %} {{ r_data.label }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-cyan-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-xs text-gray-400 self-center sm:self-end pb-1 text-center sm:text-right">
+                    <span class="inline-flex items-center gap-1 text-[11px] text-cyan-300/80 bg-cyan-950/40 border border-cyan-800/40 px-3 py-1.5 rounded-xl">
+                        <span>⚡</span> Atualização dinâmica das médias e gráficos
+                    </span>
+                </div>
             </div>
 
             <!-- Card Informativo com o Campo de Quantidade de Pessoas que Respondeu -->
@@ -454,10 +471,10 @@
                 <!-- Filtros Combinados (Perfil e Texto) -->
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                     <select id="filter-responses-role" class="px-3.5 py-2 rounded-xl bg-gray-900 border border-gray-700 text-white text-xs focus:border-cyan-500 focus:outline-none">
-                        <option value="all">Todos os Perfis ({{ total_tam }})</option>
+                        <option value="all">Todos os Perfis</option>
                         {% for r_key, r_data in roles_analytics.items %}
                             {% if r_key != 'all' %}
-                                <option value="{{ r_key }}">{{ r_data.label }} ({{ r_data.count }})</option>
+                                <option value="{{ r_key }}">{{ r_data.label }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
@@ -790,20 +807,16 @@
                 });
             }
 
-            // Lógica de Segmentação / Filtro por Perfil Profissional
-            const roleButtons = document.querySelectorAll('.role-filter-btn');
+            // Lógica de Segmentação / Filtro por Perfil Profissional (Menu Suspenso)
+            const roleSelect = document.getElementById('role-filter-select');
 
             function applyRoleSegmentation(roleKey) {
                 const data = rolesAnalytics[roleKey] || rolesAnalytics['all'];
 
-                // Atualizar botões visuais
-                roleButtons.forEach(btn => {
-                    if (btn.dataset.role === roleKey) {
-                        btn.className = 'role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20 shrink-0';
-                    } else {
-                        btn.className = 'role-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800 transition flex items-center gap-1.5 shrink-0';
-                    }
-                });
+                // Atualizar o select se a função for invocada com um novo valor
+                if (roleSelect && roleSelect.value !== roleKey) {
+                    roleSelect.value = roleKey;
+                }
 
                 // Atualizar card de informações de amostragem
                 const roleInfoTitle = document.getElementById('role-info-title');
@@ -862,11 +875,11 @@
                 }
             }
 
-            roleButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    applyRoleSegmentation(btn.dataset.role);
+            if (roleSelect) {
+                roleSelect.addEventListener('change', (e) => {
+                    applyRoleSegmentation(e.target.value);
                 });
-            });
+            }
         {% endif %}
 
         // Filtro Combinado das Respostas (Texto + Perfil Profissional)
