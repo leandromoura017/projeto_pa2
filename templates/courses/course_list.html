@@ -2,6 +2,19 @@
 
 {% block title %}Mini Cursos Práticos | CodeView{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Ocultar barra de rolagem da lista de tecnologias / palavras-chave mantendo o arraste fluido */
+    .no-scrollbar {
+        -ms-overflow-style: none; /* IE e Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari e WebKit */
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
 
@@ -41,15 +54,15 @@
             </div>
 
             <!-- Technology Filter Bar -->
-            <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto scrollbar-none py-1">
+            <div id="course-tech-bar" class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto no-scrollbar py-1 cursor-grab active:cursor-grabbing select-none" style="-webkit-overflow-scrolling: touch;">
                 <a href="{% url 'course_list' %}{% if query %}?q={{ query }}{% endif %}" 
-                   class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition
+                   class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0
                    {% if not current_tech %}bg-cyan-500 text-white shadow-md shadow-cyan-500/20{% else %}bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700{% endif %}">
                     Todas
                 </a>
                 {% for tech in technologies %}
                     <a href="{% url 'course_list' %}?tech={{ tech.slug }}{% if query %}&q={{ query }}{% endif %}" 
-                       class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1
+                       class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1 shrink-0
                        {% if current_tech == tech.slug %}bg-cyan-500 text-white shadow-md shadow-cyan-500/20{% else %}bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700{% endif %}">
                         <span>{{ tech.icon_name|default:'⚡' }}</span> {{ tech.name }}
                     </a>
@@ -151,4 +164,62 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Drag-to-scroll para a barra de tecnologias / palavras-chave em Mini Cursos
+        const courseTechBar = document.getElementById('course-tech-bar');
+        if (courseTechBar) {
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            let hasMoved = false;
+
+            courseTechBar.addEventListener('mousedown', (e) => {
+                isDown = true;
+                hasMoved = false;
+                startX = e.pageX - courseTechBar.offsetLeft;
+                scrollLeft = courseTechBar.scrollLeft;
+            });
+
+            courseTechBar.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+
+            courseTechBar.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            courseTechBar.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - courseTechBar.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                if (Math.abs(x - startX) > 6) {
+                    hasMoved = true;
+                }
+                courseTechBar.scrollLeft = scrollLeft - walk;
+            });
+
+            // Evita abrir o filtro caso o usuário tenha apenas arrastado as palavras-chaves
+            courseTechBar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (hasMoved) {
+                        e.preventDefault();
+                        hasMoved = false;
+                    }
+                });
+            });
+
+            // Suporte adicional a rolagem horizontal via roda do mouse
+            courseTechBar.addEventListener('wheel', (e) => {
+                if (e.deltaY !== 0) {
+                    e.preventDefault();
+                    courseTechBar.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+        }
+    });
+</script>
 {% endblock %}
