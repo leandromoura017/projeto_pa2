@@ -67,21 +67,51 @@ def publish_video_view(request):
             video.is_published = True
             video.save()
 
-            # Disparo de Notificações / Alerta no Sininho (Onda 5 - #23)
-            from accounts.models import User, Notification
-            other_users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+            # Disparo de Notificações / Alerta no Sininho direcionado e escalável
+            # Notifica apenas usuários matriculados em cursos da tecnologia,
+            # ou com especialidade cadastrada no perfil, ou instrutores da tecnologia.
+            from accounts.models import User, Notification, Profile
+            from courses.models import Enrollment, Course
+
             author_name = request.user.first_name or request.user.username
             video_share_url = reverse('video_detail', kwargs={'video_id': video.id})
             
+            enrolled_user_ids = set()
+            specialty_user_ids = set()
+            mentor_user_ids = set()
+
+            if video.technology:
+                enrolled_user_ids = set(
+                    Enrollment.objects.filter(
+                        is_active=True,
+                        course__technology=video.technology
+                    ).exclude(user=request.user).values_list('user_id', flat=True)
+                )
+
+                specialty_user_ids = set(
+                    Profile.objects.filter(
+                        specialties__icontains=video.technology.name
+                    ).exclude(user=request.user).values_list('user_id', flat=True)
+                )
+
+                mentor_user_ids = set(
+                    Course.objects.filter(
+                        technology=video.technology
+                    ).exclude(instructor=request.user).values_list('instructor_id', flat=True)
+                )
+
+            target_user_ids = enrolled_user_ids | specialty_user_ids | mentor_user_ids
+            target_users = User.objects.filter(id__in=target_user_ids, is_active=True)
+
             notifications = [
                 Notification(
                     user=u,
-                    title=f"Nova pílula de {video.technology.name}!",
+                    title=f"Nova pílula de {video.technology.name if video.technology else 'Código'}!",
                     message=f"{author_name} publicou '{video.title}'. Assista agora!",
                     link=video_share_url,
                     icon='🎬'
                 )
-                for u in other_users
+                for u in target_users
             ]
             if notifications:
                 Notification.objects.bulk_create(notifications)

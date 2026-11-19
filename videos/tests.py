@@ -273,6 +273,24 @@ class VideoShareAndNotificationTests(TestCase):
 
     def test_publishing_video_creates_notifications_for_other_users(self):
         from accounts.models import Notification
+        from courses.models import Course, Enrollment
+
+        # Inscreve self.subscriber em um curso da mesma tecnologia para qualificar a notificação
+        course = Course.objects.create(
+            title='TypeScript Essencial',
+            technology=self.tech,
+            instructor=self.creator,
+            estimated_minutes=60
+        )
+        Enrollment.objects.create(user=self.subscriber, course=course, is_active=True)
+
+        # Cria usuário sem qualquer relação com a tecnologia
+        unrelated_user = User.objects.create_user(
+            email='unrelated5@codeview.com',
+            password='Password123!',
+            first_name='Sem Interesse'
+        )
+
         self.client.force_login(self.creator)
 
         new_video_file = SimpleUploadedFile("clean_code.mp4", b"clean code bytes", content_type="video/mp4")
@@ -285,7 +303,7 @@ class VideoShareAndNotificationTests(TestCase):
         })
         self.assertEqual(res.status_code, 302)
 
-        # O outro usuário (subscriber) deve ter recebido a notificação
+        # O aluno matriculado na tecnologia deve ter recebido a notificação
         notif = Notification.objects.filter(
             user=self.subscriber,
             title__icontains='Nova pílula'
@@ -293,6 +311,10 @@ class VideoShareAndNotificationTests(TestCase):
         self.assertIsNotNone(notif)
         self.assertIn('3 Regras de Clean Code', notif.message)
         self.assertEqual(notif.icon, '🎬')
+
+        # O usuário não matriculado e sem a tecnologia no perfil NÃO deve receber
+        unrelated_notif = Notification.objects.filter(user=unrelated_user).first()
+        self.assertIsNone(unrelated_notif)
 
 
 

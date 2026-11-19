@@ -6,7 +6,7 @@
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
 
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-800">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-800">
         <div>
             <div class="flex items-center gap-3">
                 <span class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
@@ -14,41 +14,97 @@
                 </span>
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                        Central de Notificações & Alertas
+                        Central de Notificações
                     </h1>
                     <p class="text-xs sm:text-sm text-gray-400 mt-0.5">
-                        Fique por dentro de novas pílulas de código, atualizações de trilhas e novidades de mentores.
+                        Alertas direcionados ao seu perfil, cursos matriculados e interações na plataforma.
                     </p>
                 </div>
             </div>
         </div>
 
-        {% if unread_count > 0 %}
-            <form method="POST" action="{% url 'notifications_read_all' %}">
-                {% csrf_token %}
-                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 transition">
-                    Marcar todas como lidas
-                </button>
-            </form>
-        {% endif %}
+        <!-- Global Quick Actions -->
+        <div class="flex items-center gap-2">
+            {% if unread_count > 0 %}
+                <form method="POST" action="{% url 'notifications_read_all' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Marcar todas como lidas</span>
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if notifications %}
+                <form method="POST" action="{% url 'notification_batch_action' %}" onsubmit="return confirm('Deseja excluir todas as notificações que já foram lidas?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_all_read">
+                    <button type="submit" class="px-3 py-2 rounded-xl text-xs font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/80 border border-gray-800 hover:border-gray-700 transition flex items-center gap-1.5" title="Limpar todas as notificações já lidas">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <span>Limpar lidas</span>
+                    </button>
+                </form>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Notification Feed -->
+    <!-- Notification Feed & Selection Toolbar -->
     {% if notifications %}
+
+        <!-- Selection Toolbar -->
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-3 sm:px-4 mb-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+                <label class="inline-flex items-center gap-2 text-gray-300 cursor-pointer select-none">
+                    <input type="checkbox" id="selectAllNotifications" class="w-4 h-4 rounded bg-gray-950 border-gray-700 text-cyan-500 focus:ring-cyan-500/30">
+                    <span class="font-medium">Selecionar todas</span>
+                </label>
+                <span id="notifSelectedBadge" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    0 selecionada(s)
+                </span>
+            </div>
+
+            <!-- Batch Action Form -->
+            <form id="notifBatchForm" method="POST" action="{% url 'notification_batch_action' %}" class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" id="notifBatchAction" value="">
+                <div id="batchNotifInputs"></div>
+
+                <div id="notifBatchButtons" class="hidden items-center gap-2">
+                    <button type="button" onclick="submitNotifBatch('mark_read')" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5" title="Marcar selecionadas como lidas">
+                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span>Marcar como lida</span>
+                    </button>
+                    <button type="button" onclick="submitNotifBatch('delete')" class="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 transition flex items-center gap-1.5" title="Excluir selecionadas">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <span>Excluir</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Notification List -->
         <div class="space-y-3">
             {% for notif in notifications %}
-                <div class="bg-[#111827] border {% if not notif.is_read %}border-cyan-500/50 bg-cyan-950/10{% else %}border-gray-800/80{% endif %} rounded-2xl p-4 sm:p-5 flex items-start justify-between gap-4 transition shadow-md hover:border-gray-700">
-                    <div class="flex items-start gap-4">
+                <div class="bg-[#111827] border {% if not notif.is_read %}border-cyan-500/50 bg-cyan-950/10{% else %}border-gray-800/80{% endif %} rounded-2xl p-4 sm:p-5 flex items-start justify-between gap-4 transition shadow-md hover:border-gray-700 group" id="notif-card-{{ notif.id }}">
+                    <div class="flex items-start gap-3.5 min-w-0">
+                        <!-- Checkbox -->
+                        <div class="pt-1 shrink-0">
+                            <input type="checkbox" value="{{ notif.id }}" class="notif-select-check w-4 h-4 rounded bg-gray-950 border-gray-700 text-cyan-500 focus:ring-cyan-500/20 cursor-pointer">
+                        </div>
+
+                        <!-- Icon -->
                         <div class="w-10 h-10 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center shrink-0 mt-0.5 text-cyan-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                         </div>
-                        <div>
+
+                        <!-- Content -->
+                        <div class="min-w-0">
                             <div class="flex items-center gap-2">
                                 <h3 class="text-sm sm:text-base font-bold text-white">
                                     {{ notif.title }}
                                 </h3>
                                 {% if not notif.is_read %}
-                                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" title="Nova notificação"></span>
+                                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" title="Nova notificação"></span>
                                 {% endif %}
                             </div>
                             <p class="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed">
@@ -60,6 +116,7 @@
                         </div>
                     </div>
 
+                    <!-- Individual Actions -->
                     <div class="flex items-center gap-2 shrink-0">
                         {% if notif.link %}
                             <form method="POST" action="{% url 'notification_read' notif.id %}">
@@ -78,6 +135,14 @@
                                 </form>
                             {% endif %}
                         {% endif %}
+
+                        <!-- Individual Delete -->
+                        <form method="POST" action="{% url 'notification_delete' notif.id %}" onsubmit="return confirm('Excluir esta notificação?');">
+                            {% csrf_token %}
+                            <button type="submit" class="p-2 rounded-xl text-xs text-gray-500 hover:text-rose-400 hover:bg-gray-800 transition" title="Excluir notificação">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </form>
                     </div>
                 </div>
             {% endfor %}
@@ -89,7 +154,7 @@
             </div>
             <h3 class="text-lg font-bold text-white">Nenhum alerta no momento</h3>
             <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                Você receberá notificações automáticas aqui sempre que novos micro-vídeos ou novos mini-cursos forem publicados na plataforma!
+                Você receberá notificações automáticas aqui sempre que houver novidades sobre seus cursos matriculados, mensagens de mentores ou interações com suas publicações!
             </p>
         </div>
     {% endif %}
@@ -97,3 +162,74 @@
 </div>
 {% endblock %}
 
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAll = document.getElementById('selectAllNotifications');
+        const checkboxes = document.querySelectorAll('.notif-select-check');
+        const countBadge = document.getElementById('notifSelectedBadge');
+        const batchButtons = document.getElementById('notifBatchButtons');
+        const batchInputsContainer = document.getElementById('batchNotifInputs');
+        const batchForm = document.getElementById('notifBatchForm');
+        const batchActionInput = document.getElementById('notifBatchAction');
+
+        function updateNotifSelection() {
+            const selected = Array.from(checkboxes).filter(cb => cb.checked);
+            const count = selected.length;
+
+            if (count > 0) {
+                countBadge.textContent = `${count} selecionada${count > 1 ? 's' : ''}`;
+                countBadge.classList.remove('hidden');
+                batchButtons.classList.remove('hidden');
+                batchButtons.classList.add('flex');
+            } else {
+                countBadge.classList.add('hidden');
+                batchButtons.classList.add('hidden');
+                batchButtons.classList.remove('flex');
+            }
+
+            if (selectAll) {
+                selectAll.checked = checkboxes.length > 0 && selected.length === checkboxes.length;
+                selectAll.indeterminate = selected.length > 0 && selected.length < checkboxes.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', () => {
+                checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+                updateNotifSelection();
+            });
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateNotifSelection);
+        });
+
+        window.submitNotifBatch = function(action) {
+            const selected = Array.from(checkboxes).filter(cb => cb.checked);
+            if (selected.length === 0) {
+                alert('Selecione pelo menos uma notificação.');
+                return;
+            }
+
+            if (action === 'delete') {
+                if (!confirm(`Tem certeza que deseja excluir ${selected.length} notificação(ões) selecionada(s)?`)) {
+                    return;
+                }
+            }
+
+            batchActionInput.value = action;
+            batchInputsContainer.innerHTML = '';
+            selected.forEach(cb => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'notification_ids';
+                hiddenInput.value = cb.value;
+                batchInputsContainer.appendChild(hiddenInput);
+            });
+
+            batchForm.submit();
+        };
+    });
+</script>
+{% endblock %}

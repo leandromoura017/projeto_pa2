@@ -35,18 +35,19 @@
             {% if conversations %}
                 <div class="space-y-3">
                     {% for conv in conversations %}
-                        <a href="{% url 'dm_thread' conv.partner.id %}" class="bg-[#111827] border {% if conv.unread_count > 0 %}border-cyan-500/60{% else %}border-gray-800{% endif %} hover:border-cyan-500/50 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition shadow-lg block">
-                            <div class="flex items-center gap-4 min-w-0">
+                        <div class="bg-[#111827] border {% if conv.unread_count > 0 %}border-cyan-500/60{% else %}border-gray-800{% endif %} hover:border-cyan-500/50 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition shadow-lg group">
+                            <!-- Clickable conversation area -->
+                            <a href="{% url 'dm_thread' conv.partner.id %}" class="flex items-center gap-4 min-w-0 flex-1">
                                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-base font-bold text-white shrink-0 border border-cyan-400/40">
                                     {{ conv.partner.first_name|default:conv.partner.email|slice:":1"|upper }}
                                 </div>
-                                <div class="min-w-0">
+                                <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-sm sm:text-base font-bold text-white truncate">
+                                        <span class="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition truncate">
                                             {{ conv.partner.get_full_name|default:conv.partner.first_name|default:conv.partner.username }}
                                         </span>
                                         {% if conv.partner.profile and conv.partner.profile.is_mentor %}
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 border border-amber-700 text-amber-300">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 border border-amber-700 text-amber-300 shrink-0">
                                                 Mentor
                                             </span>
                                         {% endif %}
@@ -57,21 +58,44 @@
                                         </p>
                                     {% endif %}
                                 </div>
-                            </div>
+                            </a>
 
-                            <div class="flex flex-col items-end gap-1 shrink-0">
-                                {% if conv.last_message %}
-                                    <span class="text-[11px] text-gray-500">{{ conv.last_message.created_at|date:"d/m H:i" }}</span>
-                                {% endif %}
-                                {% if conv.unread_count > 0 %}
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500 text-black">
-                                        {{ conv.unread_count }} nova{{ conv.unread_count|pluralize:"s" }}
-                                    </span>
-                                {% else %}
-                                    <span class="text-xs text-cyan-400 font-semibold">Abrir &rarr;</span>
-                                {% endif %}
+                            <!-- Meta & Quick Actions -->
+                            <div class="flex items-center gap-3 shrink-0">
+                                <div class="flex flex-col items-end gap-1">
+                                    {% if conv.last_message %}
+                                        <span class="text-[11px] text-gray-500">{{ conv.last_message.created_at|date:"d/m H:i" }}</span>
+                                    {% endif %}
+                                    {% if conv.unread_count > 0 %}
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500 text-black">
+                                            {{ conv.unread_count }} nova{{ conv.unread_count|pluralize:"s" }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="flex items-center gap-1.5 pl-2 border-l border-gray-800">
+                                    {% if conv.unread_count > 0 %}
+                                        <form method="POST" action="{% url 'dm_mark_thread_read' conv.partner.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="p-2 rounded-xl text-xs text-gray-400 hover:text-emerald-400 hover:bg-gray-800 border border-transparent hover:border-gray-700 transition" title="Marcar conversa como lida">
+                                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    <form method="POST" action="{% url 'dm_delete_thread' conv.partner.id %}" onsubmit="return confirm('Tem certeza que deseja excluir toda a conversa com {{ conv.partner.first_name|default:conv.partner.username }}?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-2 rounded-xl text-xs text-gray-500 hover:text-rose-400 hover:bg-gray-800 border border-transparent hover:border-gray-700 transition" title="Excluir conversa">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
+
+                                    <a href="{% url 'dm_thread' conv.partner.id %}" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-cyan-400 hover:bg-cyan-950/60 border border-cyan-800/40 transition">
+                                        Abrir &rarr;
+                                    </a>
+                                </div>
                             </div>
-                        </a>
+                        </div>
                     {% endfor %}
                 </div>
             {% else %}

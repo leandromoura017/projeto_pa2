@@ -428,6 +428,134 @@ def dm_thread_view(request, user_id):
 
 
 @login_required
+def dm_delete_message_view(request, message_id):
+    """
+    Exclui uma mensagem individual (DM) pertencente ao usuário atual (como remetente ou destinatário).
+    """
+    msg = get_object_or_404(
+        DirectMessage.objects.filter(Q(sender=request.user) | Q(recipient=request.user)),
+        id=message_id
+    )
+    partner_id = msg.recipient_id if msg.sender_id == request.user.id else msg.sender_id
+    msg.delete()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'success', 'message_id': message_id})
+
+    messages.success(request, "Mensagem excluída com sucesso.")
+    return redirect('dm_thread', user_id=partner_id)
+
+
+@login_required
+def dm_batch_action_view(request):
+    """
+    Executa ações em lote em mensagens diretas selecionadas:
+    - delete: exclui as mensagens selecionadas
+    - mark_read: marca as mensagens recebidas selecionadas como lidas
+    - mark_unread: marca as mensagens recebidas selecionadas como não lidas
+    """
+    if request.method != 'POST':
+        return redirect('dm_inbox')
+
+    action = request.POST.get('action')
+    message_ids = request.POST.getlist('message_ids')
+    partner_id = request.POST.get('partner_id')
+
+    if not message_ids and request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action', action)
+            message_ids = data.get('message_ids', [])
+            partner_id = data.get('partner_id', partner_id)
+        except Exception:
+            pass
+
+    if not message_ids:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'status': 'error', 'message': 'Nenhuma mensagem selecionada.'}, status=400)
+        messages.warning(request, "Nenhuma mensagem foi selecionada.")
+        if partner_id:
+            return redirect('dm_thread', user_id=partner_id)
+        return redirect('dm_inbox')
+
+    user_messages = DirectMessage.objects.filter(
+        id__in=message_ids
+    ).filter(Q(sender=request.user) | Q(recipient=request.user))
+
+    count = user_messages.count()
+
+    if action == 'delete':
+        user_messages.delete()
+        msg_feedback = f"{count} mensagem(ns) excluída(s) com sucesso."
+    elif action == 'mark_read':
+        received = user_messages.filter(recipient=request.user)
+        updated = received.update(is_read=True)
+        msg_feedback = f"{updated} mensagem(ns) marcada(s) como lida(s)."
+    elif action == 'mark_unread':
+        received = user_messages.filter(recipient=request.user)
+        updated = received.update(is_read=False)
+        msg_feedback = f"{updated} mensagem(ns) marcada(s) como não lida(s)."
+    else:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'status': 'error', 'message': 'Ação inválida.'}, status=400)
+        messages.error(request, "Ação inválida.")
+        if partner_id:
+            return redirect('dm_thread', user_id=partner_id)
+        return redirect('dm_inbox')
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'success', 'message': msg_feedback, 'count': count, 'action': action})
+
+    messages.success(request, msg_feedback)
+    if partner_id:
+        return redirect('dm_thread', user_id=partner_id)
+    return redirect('dm_inbox')
+
+
+@login_required
+def dm_delete_thread_view(request, user_id):
+    """
+    Exclui todo o histórico de mensagens entre o usuário logado e o usuário parceiro.
+    """
+    if request.method != 'POST':
+        return redirect('dm_inbox')
+
+    partner = get_object_or_404(User, id=user_id)
+    DirectMessage.objects.filter(
+        Q(sender=request.user, recipient=partner) |
+        Q(sender=partner, recipient=request.user)
+    ).delete()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'success', 'partner_id': user_id})
+
+    messages.success(request, f"Toda a conversa com {partner.first_name or partner.username} foi excluída.")
+    return redirect('dm_inbox')
+
+
+@login_required
+def dm_mark_thread_read_view(request, user_id):
+    """
+    Marca todas as mensagens recebidas de um determinado usuário como lidas.
+    """
+    if request.method != 'POST':
+        return redirect('dm_inbox')
+
+    partner = get_object_or_404(User, id=user_id)
+    updated = DirectMessage.objects.filter(
+        sender=partner,
+        recipient=request.user,
+        is_read=False
+    ).update(is_read=True)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'success', 'partner_id': user_id, 'updated': updated})
+
+    messages.success(request, f"Mensagens de {partner.first_name or partner.username} marcadas como lidas.")
+    return redirect('dm_inbox')
+
+
+@login_required
 def notification_list_view(request):
     """
     Central de Notificações / Alertas (sininho) de novas publicações e avisos (Onda 5 - #23).
@@ -475,6 +603,88 @@ def mark_all_notifications_read_view(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'success', 'unread_count': 0})
 
+    return redirect('notifications')
+
+
+@login_required
+def notification_delete_view(request, notification_id):
+    """
+    Exclui uma notificação específica pertencente ao usuário logado.
+    """
+    if request.method != 'POST':
+        return redirect('notifications')
+
+    notif = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notif.delete()
+    unread_count = request.user.notifications.filter(is_read=False).count()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'success', 'notification_id': notification_id, 'unread_count': unread_count})
+
+    messages.success(request, "Notificação excluída com sucesso.")
+    return redirect('notifications')
+
+
+@login_required
+def notification_batch_action_view(request):
+    """
+    Ações em lote para notificações: excluir selecionadas, marcar selecionadas como lidas,
+    excluir todas as lidas, ou excluir todas.
+    """
+    if request.method != 'POST':
+        return redirect('notifications')
+
+    action = request.POST.get('action')
+    notification_ids = request.POST.getlist('notification_ids')
+
+    if not notification_ids and request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action', action)
+            notification_ids = data.get('notification_ids', [])
+        except Exception:
+            pass
+
+    if action == 'delete_all_read':
+        deleted, _ = request.user.notifications.filter(is_read=True).delete()
+        msg_feedback = f"{deleted} notificação(ões) lida(s) excluída(s) com sucesso."
+    elif action == 'delete_all':
+        deleted, _ = request.user.notifications.all().delete()
+        msg_feedback = "Todas as notificações foram excluídas."
+    elif action == 'mark_all_read':
+        updated = request.user.notifications.filter(is_read=False).update(is_read=True)
+        msg_feedback = "Todas as notificações foram marcadas como lidas."
+    elif not notification_ids:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'status': 'error', 'message': 'Nenhuma notificação selecionada.'}, status=400)
+        messages.warning(request, "Nenhuma notificação foi selecionada.")
+        return redirect('notifications')
+    elif action == 'delete':
+        user_notifs = request.user.notifications.filter(id__in=notification_ids)
+        count = user_notifs.count()
+        user_notifs.delete()
+        msg_feedback = f"{count} notificação(ões) excluída(s) com sucesso."
+    elif action == 'mark_read':
+        user_notifs = request.user.notifications.filter(id__in=notification_ids)
+        count = user_notifs.update(is_read=True)
+        msg_feedback = f"{count} notificação(ões) marcada(s) como lida(s)."
+    else:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'status': 'error', 'message': 'Ação inválida.'}, status=400)
+        messages.error(request, "Ação inválida.")
+        return redirect('notifications')
+
+    unread_count = request.user.notifications.filter(is_read=False).count()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({
+            'status': 'success',
+            'message': msg_feedback,
+            'unread_count': unread_count,
+            'action': action
+        })
+
+    messages.success(request, msg_feedback)
     return redirect('notifications')
 
 

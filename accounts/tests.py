@@ -295,6 +295,100 @@ class ProfileSearchAndDirectMessageTests(TestCase):
         self.assertIn('Carlinhos', notif.title)
         self.assertIn('Dúvida técnica aqui', notif.message)
 
+    def test_delete_single_dm(self):
+        """Exclusão de mensagem direta individual"""
+        from .models import DirectMessage
+        msg = DirectMessage.objects.create(
+            sender=self.student,
+            recipient=self.mentor,
+            content='Mensagem a ser apagada'
+        )
+        self.client.force_login(self.student)
+        url = reverse('dm_delete_message', kwargs={'message_id': msg.id})
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, 302)
+        self.assertFalse(DirectMessage.objects.filter(id=msg.id).exists())
+
+    def test_batch_delete_and_mark_read_unread_dms(self):
+        """Ações em lote para seleção de mensagens (excluir, marcar como lida e não lida)"""
+        from .models import DirectMessage
+        m1 = DirectMessage.objects.create(
+            sender=self.mentor,
+            recipient=self.student,
+            content='Primeira mensagem recebida',
+            is_read=False
+        )
+        m2 = DirectMessage.objects.create(
+            sender=self.mentor,
+            recipient=self.student,
+            content='Segunda mensagem recebida',
+            is_read=False
+        )
+
+        self.client.force_login(self.student)
+        batch_url = reverse('dm_batch_action')
+
+        # 1. Marcar como lida
+        res_read = self.client.post(batch_url, {
+            'action': 'mark_read',
+            'message_ids': [m1.id, m2.id],
+            'partner_id': self.mentor.id
+        })
+        self.assertEqual(res_read.status_code, 302)
+        m1.refresh_from_db()
+        m2.refresh_from_db()
+        self.assertTrue(m1.is_read)
+        self.assertTrue(m2.is_read)
+
+        # 2. Marcar como não lida
+        res_unread = self.client.post(batch_url, {
+            'action': 'mark_unread',
+            'message_ids': [m1.id],
+            'partner_id': self.mentor.id
+        })
+        self.assertEqual(res_unread.status_code, 302)
+        m1.refresh_from_db()
+        self.assertFalse(m1.is_read)
+
+        # 3. Excluir selecionadas
+        res_del = self.client.post(batch_url, {
+            'action': 'delete',
+            'message_ids': [m1.id, m2.id],
+            'partner_id': self.mentor.id
+        })
+        self.assertEqual(res_del.status_code, 302)
+        self.assertFalse(DirectMessage.objects.filter(id__in=[m1.id, m2.id]).exists())
+
+    def test_delete_and_mark_thread_read(self):
+        """Excluir conversa inteira e marcar thread como lida a partir da caixa de entrada"""
+        from .models import DirectMessage
+        m1 = DirectMessage.objects.create(
+            sender=self.mentor,
+            recipient=self.student,
+            content='Mensagem 1 da thread',
+            is_read=False
+        )
+        m2 = DirectMessage.objects.create(
+            sender=self.student,
+            recipient=self.mentor,
+            content='Mensagem 2 da thread'
+        )
+
+        self.client.force_login(self.student)
+
+        # Marcar thread como lida
+        mark_url = reverse('dm_mark_thread_read', kwargs={'user_id': self.mentor.id})
+        res_mark = self.client.post(mark_url)
+        self.assertEqual(res_mark.status_code, 302)
+        m1.refresh_from_db()
+        self.assertTrue(m1.is_read)
+
+        # Excluir conversa inteira
+        del_url = reverse('dm_delete_thread', kwargs={'user_id': self.mentor.id})
+        res_del = self.client.post(del_url)
+        self.assertEqual(res_del.status_code, 302)
+        self.assertFalse(DirectMessage.objects.filter(id__in=[m1.id, m2.id]).exists())
+
 
 class NotificationBellTests(TestCase):
     """
@@ -360,6 +454,53 @@ class NotificationBellTests(TestCase):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['unread_notifications_count'], 2)
+
+    def test_delete_single_notification(self):
+        """Exclusão de uma notificação individual"""
+        from .models import Notification
+        self.client.force_login(self.user)
+        url = reverse('notification_delete', kwargs={'notification_id': self.n1.id})
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, 302)
+        self.assertFalse(Notification.objects.filter(id=self.n1.id).exists())
+
+    def test_batch_actions_notifications(self):
+        """Ações em lote para seleção de notificações (marcar como lida, excluir selecionadas e limpar lidas)"""
+        from .models import Notification
+        self.client.force_login(self.user)
+        batch_url = reverse('notification_batch_action')
+
+        # 1. Marcar selecionadas como lidas
+        res_read = self.client.post(batch_url, {
+            'action': 'mark_read',
+            'notification_ids': [self.n1.id, self.n2.id]
+        })
+        self.assertEqual(res_read.status_code, 302)
+        self.n1.refresh_from_db()
+        self.n2.refresh_from_db()
+        self.assertTrue(self.n1.is_read)
+        self.assertTrue(self.n2.is_read)
+
+        # 2. Limpar lidas (deve remover n1 e n2 pois ambas estão lidas)
+        res_clean = self.client.post(batch_url, {
+            'action': 'delete_all_read'
+        })
+        self.assertEqual(res_clean.status_code, 302)
+        self.assertFalse(Notification.objects.filter(id__in=[self.n1.id, self.n2.id]).exists())
+
+        # 3. Cria nova notificação e exclui via batch delete
+        n3 = Notification.objects.create(
+            user=self.user,
+            title='Alerta 3',
+            message='Terceira notificação',
+            icon='🔔'
+        )
+        res_del = self.client.post(batch_url, {
+            'action': 'delete',
+            'notification_ids': [n3.id]
+        })
+        self.assertEqual(res_del.status_code, 302)
+        self.assertFalse(Notification.objects.filter(id=n3.id).exists())
 
 
 class TAMEvaluationTests(TestCase):
