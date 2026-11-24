@@ -115,6 +115,16 @@ class Lesson(models.Model):
     def __str__(self):
         return f"{self.course.title} - Aula {self.order}: {self.title}"
 
+    @property
+    def challenge(self):
+        """Retorna o primeiro desafio da aula para compatibilidade retroativa."""
+        return self.challenges.first()
+
+    @property
+    def challenges_count(self):
+        """Retorna o total de desafios vinculados à aula."""
+        return self.challenges.count()
+
 
 class Enrollment(models.Model):
     """
@@ -183,8 +193,14 @@ class LessonProgress(models.Model):
 class Challenge(models.Model):
     """
     Desafio prático / pergunta interativa vinculada a uma aula.
-    Fornece verificação com feedback instantâneo (múltipla escolha e/ou submissão de código).
+    Pode ser do tipo 'alternativa' (múltipla escolha) ou 'discursiva' (questão aberta / código).
+    Uma aula pode ter múltiplos desafios configurados pelo criador de conteúdo.
     """
+    TYPE_CHOICES = [
+        ('alternativa', 'Múltipla Escolha (Alternativas)'),
+        ('discursiva', 'Discursiva / Questão Aberta / Código'),
+    ]
+
     OPTION_CHOICES = [
         ('A', 'Opção A'),
         ('B', 'Opção B'),
@@ -192,29 +208,45 @@ class Challenge(models.Model):
         ('D', 'Opção D'),
     ]
 
-    lesson = models.OneToOneField(
+    lesson = models.ForeignKey(
         Lesson,
         on_delete=models.CASCADE,
-        related_name='challenge',
+        related_name='challenges',
         verbose_name="Aula Associada"
     )
+    challenge_type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default='alternativa',
+        verbose_name="Tipo de Questão"
+    )
     title = models.CharField(max_length=150, verbose_name="Título do Desafio")
+    order = models.PositiveIntegerField(default=1, verbose_name="Ordem do Desafio")
     question_text = models.TextField(verbose_name="Enunciado da Questão")
-    code_snippet = models.TextField(blank=True, verbose_name="Código de Exemplo / Contexto")
-    option_a = models.CharField(max_length=255, verbose_name="Opção A")
-    option_b = models.CharField(max_length=255, verbose_name="Opção B")
-    option_c = models.CharField(max_length=255, verbose_name="Opção C")
-    option_d = models.CharField(max_length=255, blank=True, verbose_name="Opção D")
+    code_snippet = models.TextField(blank=True, default='', verbose_name="Código de Exemplo / Contexto")
+
+    # Campos para tipo 'alternativa'
+    option_a = models.CharField(max_length=255, blank=True, default='', verbose_name="Opção A")
+    option_b = models.CharField(max_length=255, blank=True, default='', verbose_name="Opção B")
+    option_c = models.CharField(max_length=255, blank=True, default='', verbose_name="Opção C")
+    option_d = models.CharField(max_length=255, blank=True, default='', verbose_name="Opção D")
     correct_option = models.CharField(
         max_length=1,
         choices=OPTION_CHOICES,
+        blank=True,
+        default='A',
         verbose_name="Opção Correta"
     )
+
+    # Campos para tipo 'discursiva' e verificação inteligente
+    expected_answer = models.TextField(blank=True, default='', verbose_name="Gabarito / Resposta de Referência (Discursiva)")
     expected_code_keyword = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="Token/Palavra-chave Esperada no Código (Opcional)"
+        default='',
+        verbose_name="Palavra-chave ou Expressão Esperada (Opcional)"
     )
+
     explanation = models.TextField(verbose_name="Explicação / Feedback da Resposta")
     points = models.PositiveIntegerField(default=10, verbose_name="Pontos de Domínio")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -222,9 +254,14 @@ class Challenge(models.Model):
     class Meta:
         verbose_name = "Desafio Prático"
         verbose_name_plural = "Desafios Práticos"
+        ordering = ['order', 'id']
 
     def __str__(self):
         return f"Desafio: {self.title} ({self.lesson.course.title})"
+
+    @property
+    def is_discursive(self):
+        return self.challenge_type == 'discursiva'
 
 
 class ChallengeAttempt(models.Model):

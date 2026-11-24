@@ -110,9 +110,9 @@
                                                     Sem vídeo
                                                 </span>
                                             {% endif %}
-                                            {% if lesson.challenge %}
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950 border border-amber-800 text-amber-300" title="Mini-atividade ativa">
-                                                    Desafio (+{{ lesson.challenge.points }}pts)
+                                            {% if lesson.challenges_count > 0 %}
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950 border border-amber-800 text-amber-300" title="Mini-atividades configuradas">
+                                                    {{ lesson.challenges_count }} Desafio{{ lesson.challenges_count|pluralize:"s" }}
                                                 </span>
                                             {% endif %}
                                         </div>
@@ -136,11 +136,11 @@
                                         </a>
                                     {% endif %}
 
-                                    <!-- Botão Mini-Atividade / Desafio -->
+                                    <!-- Botão Mini-Atividades / Desafios -->
                                     <a href="{% url 'challenge_manage' course.slug lesson.id %}" 
-                                       class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition {% if lesson.challenge %}bg-amber-950/70 border border-amber-700/80 text-amber-300 hover:bg-amber-900{% else %}bg-gray-800 text-gray-300 hover:text-white border border-gray-700{% endif %}"
-                                       title="Configurar Mini-Atividade / Desafio Prático">
-                                        {% if lesson.challenge %}Editar Desafio{% else %}+ Desafio{% endif %}
+                                       class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition {% if lesson.challenges_count > 0 %}bg-amber-950/70 border border-amber-700/80 text-amber-300 hover:bg-amber-900{% else %}bg-gray-800 text-gray-300 hover:text-white border border-gray-700{% endif %}"
+                                       title="Configurar Desafios da Aula">
+                                        {% if lesson.challenges_count > 0 %}Desafios ({{ lesson.challenges_count }}){% else %}+ Desafio{% endif %}
                                     </a>
 
                                     <!-- Editar Aula -->

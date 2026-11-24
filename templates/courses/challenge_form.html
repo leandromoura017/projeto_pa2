@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if challenge %}Editar Mini-Atividade{% else %}Cadastrar Mini-Atividade{% endif %} | CodeView{% endblock %}
+{% block title %}{% if is_edit %}Editar Desafio: {{ challenge.title }}{% else %}Cadastrar Desafio na Aula {{ lesson.order }}{% endif %} | CodeView{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full">
@@ -11,7 +11,9 @@
         <span>/</span>
         <a href="{% url 'course_manage' course.slug %}" class="hover:text-cyan-400 transition">{{ course.title }}</a>
         <span>/</span>
-        <span class="text-gray-200 font-semibold truncate">Mini-Atividade da Aula {{ lesson.order }}</span>
+        <a href="{% url 'challenge_manage' course.slug lesson.id %}" class="hover:text-cyan-400 transition">Desafios da Aula {{ lesson.order }}</a>
+        <span>/</span>
+        <span class="text-gray-200 font-semibold truncate">{% if is_edit %}Editar Desafio{% else %}Novo Desafio{% endif %}</span>
     </nav>
 
     <!-- Formulário Card -->
@@ -21,23 +23,60 @@
                 Aula {{ lesson.order }}: {{ lesson.title }}
             </span>
             <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight mt-2">
-                {% if challenge %}Editar Mini-Atividade Prática{% else %}Cadastrar Nova Mini-Atividade Prática{% endif %}
+                {% if is_edit %}Editar Desafio: {{ challenge.title }}{% else %}Cadastrar Nova Mini-Atividade / Desafio{% endif %}
             </h1>
             <p class="text-xs sm:text-sm text-gray-400 mt-1">
-                Crie um desafio prático de código com verificação instantânea para os alunos testarem seus conhecimentos.
+                Escolha se a questão será de <strong>Múltipla Escolha</strong> ou <strong>Discursiva</strong> e configure a verificação.
             </p>
         </div>
 
-        <form method="POST" class="space-y-5">
+        <form method="POST" class="space-y-5" id="challenge-form">
             {% csrf_token %}
 
-            <!-- Título do Desafio -->
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
-                    Título do Desafio *
+            <!-- Tipo de Questão: Múltipla Escolha vs Discursiva -->
+            <div class="p-4 rounded-2xl bg-gray-950 border border-amber-500/40">
+                <label class="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-2">
+                    Tipo de Questão *
                 </label>
-                <input type="text" name="title" value="{{ challenge.title|default:'' }}" required placeholder="Ex: Desafio Prático: Resolvendo a Corrida com Mutex"
-                       class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 transition">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-gray-900 border border-gray-800 hover:border-amber-400 cursor-pointer transition">
+                        <input type="radio" name="challenge_type" value="alternativa" id="type_alternativa"
+                               {% if not challenge or challenge.challenge_type == 'alternativa' %}checked{% endif %}
+                               class="w-4 h-4 text-amber-500 bg-gray-800 border-gray-700 focus:ring-amber-400">
+                        <div>
+                            <span class="text-xs font-bold text-white block">Múltipla Escolha (Alternativas)</span>
+                            <span class="text-[11px] text-gray-400 block">Opções A, B, C, D com uma alternativa correta.</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-gray-900 border border-gray-800 hover:border-cyan-400 cursor-pointer transition">
+                        <input type="radio" name="challenge_type" value="discursiva" id="type_discursiva"
+                               {% if challenge and challenge.challenge_type == 'discursiva' %}checked{% endif %}
+                               class="w-4 h-4 text-cyan-500 bg-gray-800 border-gray-700 focus:ring-cyan-400">
+                        <div>
+                            <span class="text-xs font-bold text-white block">Discursiva / Aberta / Código</span>
+                            <span class="text-[11px] text-gray-400 block">Aluno digita texto ou código com feedback e gabarito.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Título do Desafio & Pontos -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                        Título do Desafio *
+                    </label>
+                    <input type="text" name="title" value="{{ challenge.title|default:'' }}" required placeholder="Ex: Fixação: Criando Goroutines em Go"
+                           class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                        Pontos de Domínio *
+                    </label>
+                    <input type="number" name="points" value="{{ challenge.points|default:'10' }}" min="5" max="100" required
+                           class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
+                </div>
             </div>
 
             <!-- Enunciado da Pergunta -->
@@ -45,7 +84,7 @@
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
                     Enunciado da Questão *
                 </label>
-                <textarea name="question_text" rows="3" required placeholder="Apresente o problema prático ou pergunta técnica a ser respondida pelo aluno..."
+                <textarea name="question_text" rows="3" required placeholder="Apresente o problema técnico, a dúvida ou o exercício prático que o aluno deve resolver..."
                           class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 transition resize-none">{{ challenge.question_text|default:'' }}</textarea>
             </div>
 
@@ -55,12 +94,12 @@
                     <span>Código de Exemplo / Snippet</span>
                     <span class="text-[10px] text-gray-500 lowercase font-normal">opcional</span>
                 </label>
-                <textarea name="code_snippet" rows="4" placeholder="// Cole aqui o código de exemplo se houver..."
+                <textarea name="code_snippet" rows="4" placeholder="// Cole aqui o código de contexto se houver..."
                           class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-400 transition resize-none">{{ challenge.code_snippet|default:'' }}</textarea>
             </div>
 
-            <!-- Alternativas A, B, C, D -->
-            <div class="space-y-3 pt-2 border-t border-gray-800/80">
+            <!-- PAINEL A: Múltipla Escolha (Alternativas) -->
+            <div id="panel-alternativas" class="space-y-3 pt-2 border-t border-gray-800/80">
                 <span class="text-xs font-bold uppercase tracking-wider text-amber-300 block">
                     Alternativas de Resposta
                 </span>
@@ -68,66 +107,110 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-gray-300 mb-1 font-semibold">Opção A *</label>
-                        <input type="text" name="option_a" value="{{ challenge.option_a|default:'' }}" required placeholder="Texto da alternativa A"
+                        <input type="text" name="option_a" value="{{ challenge.option_a|default:'' }}" placeholder="Primeira alternativa"
                                class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-300 mb-1 font-semibold">Opção B *</label>
-                        <input type="text" name="option_b" value="{{ challenge.option_b|default:'' }}" required placeholder="Texto da alternativa B"
+                        <input type="text" name="option_b" value="{{ challenge.option_b|default:'' }}" placeholder="Segunda alternativa"
                                class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-300 mb-1 font-semibold">Opção C (Opcional)</label>
-                        <input type="text" name="option_c" value="{{ challenge.option_c|default:'' }}" placeholder="Texto da alternativa C"
+                        <input type="text" name="option_c" value="{{ challenge.option_c|default:'' }}" placeholder="Terceira alternativa"
                                class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-300 mb-1 font-semibold">Opção D (Opcional)</label>
-                        <input type="text" name="option_d" value="{{ challenge.option_d|default:'' }}" placeholder="Texto da alternativa D"
+                        <input type="text" name="option_d" value="{{ challenge.option_d|default:'' }}" placeholder="Quarta alternativa"
                                class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
                     </div>
                 </div>
 
-                <!-- Seleção da Alternativa Correta & Pontos -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <div>
-                        <label class="block text-xs font-bold text-amber-300 mb-1">Alternativa Correta *</label>
-                        <select name="correct_option" class="w-full px-3.5 py-2.5 bg-gray-900 border border-amber-600/60 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-amber-400">
-                            <option value="A" {% if challenge and challenge.correct_option == 'A' %}selected{% endif %}>Opção A é a correta</option>
-                            <option value="B" {% if challenge and challenge.correct_option == 'B' %}selected{% endif %}>Opção B é a correta</option>
-                            <option value="C" {% if challenge and challenge.correct_option == 'C' %}selected{% endif %}>Opção C é a correta</option>
-                            <option value="D" {% if challenge and challenge.correct_option == 'D' %}selected{% endif %}>Opção D é a correta</option>
-                        </select>
-                    </div>
+                <div class="pt-1">
+                    <label class="block text-xs font-bold text-amber-300 mb-1">Alternativa Correta *</label>
+                    <select name="correct_option" class="w-full sm:w-64 px-3.5 py-2.5 bg-gray-900 border border-amber-600/60 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-amber-400">
+                        <option value="A" {% if challenge and challenge.correct_option == 'A' %}selected{% endif %}>Opção A é a correta</option>
+                        <option value="B" {% if challenge and challenge.correct_option == 'B' %}selected{% endif %}>Opção B é a correta</option>
+                        <option value="C" {% if challenge and challenge.correct_option == 'C' %}selected{% endif %}>Opção C é a correta</option>
+                        <option value="D" {% if challenge and challenge.correct_option == 'D' %}selected{% endif %}>Opção D é a correta</option>
+                    </select>
+                </div>
+            </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Pontos de Domínio *</label>
-                        <input type="number" name="points" value="{{ challenge.points|default:'10' }}" min="5" max="100" required
-                               class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
-                    </div>
+            <!-- PAINEL B: Questão Discursiva / Aberta / Código -->
+            <div id="panel-discursiva" class="hidden space-y-3 pt-2 border-t border-gray-800/80">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-300 block">
+                    Gabarito de Referência & Parâmetros da Questão Discursiva
+                </span>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">
+                        Gabarito / Resposta de Referência (Aparecerá como feedback ao aluno após responder)
+                    </label>
+                    <textarea name="expected_answer" rows="3" placeholder="Escreva a resposta de referência esperada pelo instrutor..."
+                              class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400 transition resize-none">{{ challenge.expected_answer|default:'' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1 flex items-center justify-between">
+                        <span>Palavra-chave ou Expressão Obrigatória no Código / Texto (Opcional)</span>
+                        <span class="text-[10px] text-gray-500 lowercase">autocorreção inteligente</span>
+                    </label>
+                    <input type="text" name="expected_code_keyword" value="{{ challenge.expected_code_keyword|default:'' }}" placeholder="Ex: mutex.Lock() ou async def"
+                           class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-cyan-400">
+                    <span class="text-[11px] text-gray-400 mt-1 block">
+                        Se preenchido, o sistema verifica automaticamente se o aluno incluiu este termo essencial na resposta discursiva.
+                    </span>
                 </div>
             </div>
 
             <!-- Feedback Didático / Explicação -->
-            <div class="pt-2">
+            <div class="pt-2 border-t border-gray-800/80">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
-                    Explicação / Feedback da Resposta (Didático)
+                    Explicação Didática / Resolução Detalhada *
                 </label>
-                <textarea name="explanation" rows="3" placeholder="Explique didaticamente por que esta opção é a correta e quais boas práticas foram demonstradas..."
+                <textarea name="explanation" rows="3" required placeholder="Explique os fundamentos técnicos, por que esta é a solução correta e quais erros comuns devem ser evitados..."
                           class="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-gray-300 focus:outline-none focus:border-amber-400 transition resize-none">{{ challenge.explanation|default:'' }}</textarea>
             </div>
 
             <!-- Botões de Ação -->
             <div class="pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <a href="{% url 'course_manage' course.slug %}" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold text-center transition">
+                <a href="{% url 'challenge_manage' course.slug lesson.id %}" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold text-center transition">
                     Cancelar
                 </a>
                 <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-bold text-xs shadow-lg shadow-amber-500/25 transition">
-                    {% if challenge %}Salvar Desafio{% else %}Criar e Vincular Mini-Atividade{% endif %}
+                    {% if is_edit %}Salvar Alterações do Desafio{% else %}Criar Desafio na Aula{% endif %}
                 </button>
             </div>
         </form>
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Alternância dinâmica entre Múltipla Escolha e Discursiva
+    const radioAlt = document.getElementById('type_alternativa');
+    const radioDisc = document.getElementById('type_discursiva');
+    const panelAlt = document.getElementById('panel-alternativas');
+    const panelDisc = document.getElementById('panel-discursiva');
+
+    function toggleChallengeType() {
+        if (radioDisc && radioDisc.checked) {
+            panelAlt.classList.add('hidden');
+            panelDisc.classList.remove('hidden');
+        } else {
+            panelAlt.classList.remove('hidden');
+            panelDisc.classList.add('hidden');
+        }
+    }
+
+    if (radioAlt && radioDisc) {
+        radioAlt.addEventListener('change', toggleChallengeType);
+        radioDisc.addEventListener('change', toggleChallengeType);
+        toggleChallengeType();
+    }
+</script>
 {% endblock %}

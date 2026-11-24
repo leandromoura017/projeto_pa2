@@ -46,7 +46,7 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
                         Ordem na Trilha *
                     </label>
-                    <input type="number" name="order" value="{{ lesson.order|default:next_order }}" min="1" required
+                    <input type="number" name="order" value="{% if lesson %}{{ lesson.order }}{% elif next_order %}{{ next_order }}{% else %}1{% endif %}" min="1" required
                            class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 transition">
                 </div>
 

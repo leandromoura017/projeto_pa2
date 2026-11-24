@@ -276,23 +276,47 @@ def complete_lesson_view(request, lesson_id):
 @login_required
 def lesson_challenge_view(request, lesson_id):
     """
-    Tela de Desafio Prático / Pergunta de fixação atrelada à aula,
-    com suporte a resposta de múltipla escolha E submissão de código prático (Onda 3),
-    além de atualização automática de progresso da aula (Onda 4).
+    Tela de Desafios Práticos da aula com suporte a múltiplos desafios por aula,
+    questões de múltipla escolha (alternativas) e questões discursivas/código aberto,
+    além de acompanhamento inteligente de progresso e fixação imediata.
     """
     lesson = get_object_or_404(
         Lesson.objects.select_related('course', 'video'),
         id=lesson_id
     )
 
-    try:
-        challenge = lesson.challenge
-    except Challenge.DoesNotExist:
-        messages.info(request, "Esta aula ainda não possui um desafio prático cadastrado.")
+    challenges = list(lesson.challenges.all().order_by('order', 'id'))
+    if not challenges:
+        messages.info(request, "Esta aula ainda não possui desafios práticos cadastrados.")
         return redirect('course_detail', slug=lesson.course.slug)
 
-    attempt = ChallengeAttempt.objects.filter(user=request.user, challenge=challenge).first()
+    # Seleciona o desafio ativo (via ?c=<id> ou o primeiro pendente)
+    selected_c_id = request.GET.get('c')
+    challenge = None
+    if selected_c_id:
+        challenge = next((c for c in challenges if str(c.id) == str(selected_c_id)), None)
 
+    attempts_by_challenge = {
+        att.challenge_id: att for att in ChallengeAttempt.objects.filter(user=request.user, challenge__in=challenges)
+    }
+
+    if not challenge:
+        # Pega o primeiro desafio ainda não resolvido corretamente, ou o primeiro
+        for ch in challenges:
+            att = attempts_by_challenge.get(ch.id)
+            if not att or not att.is_correct:
+                challenge = ch
+                break
+        if not challenge:
+            challenge = challenges[0]
+
+    attempt = attempts_by_challenge.get(challenge.id)
+
+    # Próximo desafio dentro da mesma aula (se houver)
+    curr_idx = challenges.index(challenge)
+    next_challenge_in_lesson = challenges[curr_idx + 1] if curr_idx < len(challenges) - 1 else None
+
+    # Próxima aula na trilha
     next_lesson = Lesson.objects.filter(
         course=lesson.course,
         order__gt=lesson.order
@@ -300,7 +324,7 @@ def lesson_challenge_view(request, lesson_id):
 
     if request.method == 'POST':
         selected_option = request.POST.get('selected_option', '').strip().upper()
-        submitted_code = request.POST.get('submitted_code', '').strip()
+        submitted_code = (request.POST.get('submitted_code') or request.POST.get('answer_text', '')).strip()
 
         if request.content_type == 'application/json':
             try:
@@ -310,32 +334,44 @@ def lesson_challenge_view(request, lesson_id):
             except Exception:
                 pass
 
+        is_discursive = (challenge.challenge_type == 'discursiva')
         has_valid_option = selected_option in ['A', 'B', 'C', 'D']
-        has_code = len(submitted_code) > 0
+        has_text_answer = len(submitted_code) > 0
 
-        if not has_valid_option and not has_code:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Selecione uma alternativa ou envie seu código prático.'
-                }, status=400)
-            messages.error(request, "Por favor, selecione uma opção válida ou envie seu código prático.")
-            return redirect('lesson_challenge', lesson_id=lesson.id)
+        if is_discursive:
+            if not has_text_answer:
+                msg = "Por favor, escreva sua resposta discursiva ou código da solução."
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                    return JsonResponse({'status': 'error', 'message': msg}, status=400)
+                messages.error(request, msg)
+                return redirect(f"{reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})}?c={challenge.id}")
 
-        # Validação da resposta (opção e/ou submissão de código)
-        if has_valid_option:
-            is_correct = (selected_option == challenge.correct_option)
-        else:
-            # Validação por submissão de código prático
+            # Validação discursiva: confere palavra-chave esperada se configurada, ou extensão mínima
             if challenge.expected_code_keyword:
                 is_correct = challenge.expected_code_keyword.lower() in submitted_code.lower()
             else:
-                is_correct = len(submitted_code) >= 3
+                is_correct = len(submitted_code) >= 5
+        else:
+            # Questão de alternativas
+            if not has_valid_option and not has_text_answer:
+                msg = "Por favor, selecione uma alternativa válida."
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                    return JsonResponse({'status': 'error', 'message': msg}, status=400)
+                messages.error(request, msg)
+                return redirect(f"{reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})}?c={challenge.id}")
+
+            if has_valid_option:
+                is_correct = (selected_option == challenge.correct_option)
+            else:
+                if challenge.expected_code_keyword:
+                    is_correct = challenge.expected_code_keyword.lower() in submitted_code.lower()
+                else:
+                    is_correct = len(submitted_code) >= 3
 
         if attempt:
-            if has_valid_option:
+            if not is_discursive and has_valid_option:
                 attempt.selected_option = selected_option
-            if has_code:
+            if has_text_answer:
                 attempt.submitted_code = submitted_code
             attempt.is_correct = is_correct
             attempt.save()
@@ -343,13 +379,22 @@ def lesson_challenge_view(request, lesson_id):
             attempt = ChallengeAttempt.objects.create(
                 user=request.user,
                 challenge=challenge,
-                selected_option=selected_option if has_valid_option else '',
+                selected_option=selected_option if not is_discursive else '',
                 submitted_code=submitted_code,
                 is_correct=is_correct
             )
+        attempts_by_challenge[challenge.id] = attempt
 
-        # Se acertou o desafio, marca automaticamente a aula como concluída no Progresso do Curso (Onda 4)
-        if is_correct:
+        # Verifica se TODOS os desafios da aula estão concluídos com acerto
+        all_challenges_completed = True
+        for ch in challenges:
+            att = attempts_by_challenge.get(ch.id)
+            if not att or not att.is_correct:
+                all_challenges_completed = False
+                break
+
+        # Se todos os desafios da aula foram concluídos com sucesso, marca a aula como concluída
+        if all_challenges_completed:
             Enrollment.objects.update_or_create(
                 user=request.user,
                 course=lesson.course,
@@ -363,22 +408,49 @@ def lesson_challenge_view(request, lesson_id):
             _sync_course_completion(request.user, lesson.course)
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            next_url = f"/courses/aulas/{next_lesson.id}/desafio/" if next_lesson else f"/courses/{lesson.course.slug}/"
+            if next_challenge_in_lesson and not attempt.is_correct:
+                next_url = f"{reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})}?c={next_challenge_in_lesson.id}"
+            elif all_challenges_completed:
+                next_url = f"/courses/aulas/{next_lesson.id}/desafio/" if next_lesson else f"/courses/{lesson.course.slug}/"
+            elif next_challenge_in_lesson:
+                next_url = f"{reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})}?c={next_challenge_in_lesson.id}"
+            else:
+                next_url = f"/courses/{lesson.course.slug}/"
+
             return JsonResponse({
                 'status': 'success',
                 'is_correct': is_correct,
+                'is_discursive': is_discursive,
                 'selected_option': attempt.selected_option,
                 'submitted_code': attempt.submitted_code,
                 'correct_option': challenge.correct_option,
                 'explanation': challenge.explanation,
+                'expected_answer': challenge.expected_answer if is_discursive else '',
                 'points': challenge.points if is_correct else 0,
-                'next_lesson_url': next_url,
+                'all_completed': all_challenges_completed,
+                'next_url': next_url,
             })
+
+    # Lista de itens para navegação entre os desafios da aula
+    challenge_tabs = []
+    for idx, ch in enumerate(challenges, start=1):
+        att = attempts_by_challenge.get(ch.id)
+        challenge_tabs.append({
+            'challenge': ch,
+            'index': idx,
+            'is_current': (ch.id == challenge.id),
+            'is_solved': (att.is_correct if att else False),
+        })
 
     return render(request, 'courses/challenge.html', {
         'lesson': lesson,
         'course': lesson.course,
         'challenge': challenge,
+        'challenges': challenges,
+        'challenge_tabs': challenge_tabs,
+        'current_index': curr_idx + 1,
+        'total_challenges': len(challenges),
+        'next_challenge_in_lesson': next_challenge_in_lesson,
         'attempt': attempt,
         'next_lesson': next_lesson,
     })
@@ -953,6 +1025,7 @@ def lesson_edit_view(request, slug, lesson_id):
                         'course': course,
                         'lesson': lesson,
                         'user_videos': user_videos,
+                        'next_order': lesson.order,
                         'is_edit': True,
                     })
 
@@ -979,6 +1052,7 @@ def lesson_edit_view(request, slug, lesson_id):
         'course': course,
         'lesson': lesson,
         'user_videos': user_videos,
+        'next_order': lesson.order,
         'is_edit': True,
     })
 
@@ -1055,8 +1129,8 @@ def lesson_reorder_view(request, slug, lesson_id, direction):
 @login_required
 def challenge_manage_view(request, slug, lesson_id):
     """
-    Interface para cadastrar ou editar a mini-atividade / desafio prático
-    interativo de uma aula específica da trilha.
+    Lista todos os desafios práticos da aula para o criador, permitindo
+    adicionar quantos desafios desejar (discursivos ou alternativas).
     """
     course = get_object_or_404(Course, slug=slug)
     lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
@@ -1065,62 +1139,178 @@ def challenge_manage_view(request, slug, lesson_id):
         messages.error(request, "Você não tem permissão para gerenciar desafios deste curso.")
         return redirect('course_detail', slug=course.slug)
 
-    challenge = getattr(lesson, 'challenge', None)
+    challenges = lesson.challenges.all().order_by('order', 'id')
+    if not challenges.exists():
+        # Se ainda não possui nenhum desafio, encaminha direto para a tela de criação
+        return redirect('challenge_create', slug=course.slug, lesson_id=lesson.id)
+
+    return render(request, 'courses/challenge_list.html', {
+        'course': course,
+        'lesson': lesson,
+        'challenges': challenges,
+    })
+
+
+@login_required
+def challenge_create_view(request, slug, lesson_id):
+    """
+    Cria um novo desafio prático para a aula (Múltipla Escolha ou Discursiva).
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para adicionar desafios.")
+        return redirect('course_detail', slug=course.slug)
 
     if request.method == 'POST':
+        challenge_type = request.POST.get('challenge_type', 'alternativa')
         title = request.POST.get('title', '').strip()
         question_text = request.POST.get('question_text', '').strip()
         code_snippet = request.POST.get('code_snippet', '').strip()
+        points = request.POST.get('points', '10')
+        explanation = request.POST.get('explanation', '').strip()
+
+        # Alternativas
         option_a = request.POST.get('option_a', '').strip()
         option_b = request.POST.get('option_b', '').strip()
         option_c = request.POST.get('option_c', '').strip()
         option_d = request.POST.get('option_d', '').strip()
         correct_option = request.POST.get('correct_option', 'A')
-        explanation = request.POST.get('explanation', '').strip()
-        points = request.POST.get('points', '10')
 
-        if not title or not question_text or not option_a or not option_b:
-            messages.error(request, "Título, enunciado e pelo menos as opções A e B são obrigatórias.")
+        # Discursiva
+        expected_answer = request.POST.get('expected_answer', '').strip()
+        expected_code_keyword = request.POST.get('expected_code_keyword', '').strip()
+
+        if not title or not question_text:
+            messages.error(request, "Título e enunciado da questão são obrigatórios.")
+        elif challenge_type == 'alternativa' and (not option_a or not option_b):
+            messages.error(request, "Para questões de alternativas, forneça pelo menos as opções A e B.")
         else:
             try:
                 pts = max(1, int(points))
             except ValueError:
                 pts = 10
 
-            corr = correct_option if correct_option in ['A', 'B', 'C', 'D'] else 'A'
-
-            if challenge:
-                challenge.title = title
-                challenge.question_text = question_text
-                challenge.code_snippet = code_snippet
-                challenge.option_a = option_a
-                challenge.option_b = option_b
-                challenge.option_c = option_c or 'N.D.A.'
-                challenge.option_d = option_d
-                challenge.correct_option = corr
-                challenge.explanation = explanation or 'Resposta correta conforme verificação técnica.'
-                challenge.points = pts
-                challenge.save()
-                messages.success(request, f"Mini-atividade prática da aula '{lesson.title}' atualizada!")
-            else:
-                challenge = Challenge.objects.create(
-                    lesson=lesson,
-                    title=title,
-                    question_text=question_text,
-                    code_snippet=code_snippet,
-                    option_a=option_a,
-                    option_b=option_b,
-                    option_c=option_c or 'N.D.A.',
-                    option_d=option_d,
-                    correct_option=corr,
-                    explanation=explanation or 'Resposta correta conforme verificação técnica.',
-                    points=pts
-                )
-                messages.success(request, f"Mini-atividade prática vinculada à aula '{lesson.title}' com sucesso!")
-
-            return redirect('course_manage', slug=course.slug)
+            next_order = lesson.challenges.count() + 1
+            Challenge.objects.create(
+                lesson=lesson,
+                challenge_type=challenge_type if challenge_type in ['alternativa', 'discursiva'] else 'alternativa',
+                title=title,
+                order=next_order,
+                question_text=question_text,
+                code_snippet=code_snippet,
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c,
+                option_d=option_d,
+                correct_option=correct_option if correct_option in ['A', 'B', 'C', 'D'] else 'A',
+                expected_answer=expected_answer,
+                expected_code_keyword=expected_code_keyword,
+                explanation=explanation or 'Resposta correta conforme verificação técnica do instrutor.',
+                points=pts
+            )
+            messages.success(request, f"Desafio '{title}' adicionado à aula {lesson.order} com sucesso!")
+            return redirect('challenge_manage', slug=course.slug, lesson_id=lesson.id)
 
     return render(request, 'courses/challenge_form.html', {
+        'course': course,
+        'lesson': lesson,
+        'challenge': None,
+        'is_edit': False,
+    })
+
+
+@login_required
+def challenge_edit_view(request, slug, lesson_id, challenge_id):
+    """
+    Edita um desafio prático existente na aula.
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+    challenge = get_object_or_404(Challenge, id=challenge_id, lesson=lesson)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para editar este desafio.")
+        return redirect('course_detail', slug=course.slug)
+
+    if request.method == 'POST':
+        challenge_type = request.POST.get('challenge_type', challenge.challenge_type)
+        title = request.POST.get('title', '').strip()
+        question_text = request.POST.get('question_text', '').strip()
+        code_snippet = request.POST.get('code_snippet', '').strip()
+        points = request.POST.get('points', str(challenge.points))
+        explanation = request.POST.get('explanation', '').strip()
+
+        option_a = request.POST.get('option_a', '').strip()
+        option_b = request.POST.get('option_b', '').strip()
+        option_c = request.POST.get('option_c', '').strip()
+        option_d = request.POST.get('option_d', '').strip()
+        correct_option = request.POST.get('correct_option', 'A')
+
+        expected_answer = request.POST.get('expected_answer', '').strip()
+        expected_code_keyword = request.POST.get('expected_code_keyword', '').strip()
+
+        if not title or not question_text:
+            messages.error(request, "Título e enunciado da questão são obrigatórios.")
+        else:
+            try:
+                challenge.points = max(1, int(points))
+            except ValueError:
+                pass
+
+            challenge.challenge_type = challenge_type if challenge_type in ['alternativa', 'discursiva'] else challenge.challenge_type
+            challenge.title = title
+            challenge.question_text = question_text
+            challenge.code_snippet = code_snippet
+            challenge.option_a = option_a
+            challenge.option_b = option_b
+            challenge.option_c = option_c
+            challenge.option_d = option_d
+            challenge.correct_option = correct_option if correct_option in ['A', 'B', 'C', 'D'] else challenge.correct_option
+            challenge.expected_answer = expected_answer
+            challenge.expected_code_keyword = expected_code_keyword
+            challenge.explanation = explanation
+            challenge.save()
+
+            messages.success(request, f"Desafio '{challenge.title}' atualizado com sucesso!")
+            return redirect('challenge_manage', slug=course.slug, lesson_id=lesson.id)
+
+    return render(request, 'courses/challenge_form.html', {
+        'course': course,
+        'lesson': lesson,
+        'challenge': challenge,
+        'is_edit': True,
+    })
+
+
+@login_required
+def challenge_delete_view(request, slug, lesson_id, challenge_id):
+    """
+    Exclui um desafio prático de uma aula e reordena os desafios restantes.
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+    challenge = get_object_or_404(Challenge, id=challenge_id, lesson=lesson)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para excluir este desafio.")
+        return redirect('course_detail', slug=course.slug)
+
+    if request.method == 'POST':
+        title = challenge.title
+        challenge.delete()
+
+        # Reordena os desafios restantes da aula
+        for idx, ch in enumerate(lesson.challenges.all().order_by('order', 'id'), start=1):
+            if ch.order != idx:
+                ch.order = idx
+                ch.save(update_fields=['order'])
+
+        messages.success(request, f"Desafio '{title}' excluído da aula.")
+        return redirect('challenge_manage', slug=course.slug, lesson_id=lesson.id)
+
+    return render(request, 'courses/challenge_confirm_delete.html', {
         'course': course,
         'lesson': lesson,
         'challenge': challenge,

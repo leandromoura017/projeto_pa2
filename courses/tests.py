@@ -763,6 +763,137 @@ class DynamicCourseCreatorTests(TestCase):
         self.assertEqual(lesson.challenge.correct_option, 'A')
         self.assertEqual(lesson.challenge.points, 20)
 
+    def test_lesson_edit_get_view_rendering_no_error(self):
+        """GET na tela de edição de aula não deve disparar VariableDoesNotExist (ex: next_order)."""
+        course = Course.objects.create(
+            title='Trilha Get Teste',
+            slug='trilha-get-teste',
+            description='Curso',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        lesson = Lesson.objects.create(course=course, title='Aula 1', order=1, duration_seconds=60)
+        res = self.client.get(reverse('lesson_edit', kwargs={'slug': course.slug, 'lesson_id': lesson.id}))
+        self.assertEqual(res.status_code, 200)
+        self.assertTemplateUsed(res, 'courses/lesson_form.html')
+        self.assertContains(res, 'Aula 1')
+
+    def test_multiple_challenges_and_discursive_type(self):
+        """Suporte a múltiplos desafios por aula e modalidades alternativas vs discursivas."""
+        course = Course.objects.create(
+            title='Trilha Multi-Desafios',
+            slug='trilha-multi-desafios',
+            description='Curso',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        lesson = Lesson.objects.create(course=course, title='Aula Concorrência', order=1)
+
+        # 1. Cria desafio de Múltipla Escolha
+        ch1 = Challenge.objects.create(
+            lesson=lesson,
+            challenge_type='alternativa',
+            order=1,
+            title='O que é uma Goroutine?',
+            question_text='Qual a melhor definição de Goroutine em Go?',
+            option_a='Uma thread leve gerenciada pelo runtime do Go',
+            option_b='Um processo pesado do sistema operacional',
+            option_c='Uma função assíncrona do JavaScript',
+            correct_option='A',
+            points=15
+        )
+
+        # 2. Cria desafio Discursivo / Código
+        ch2 = Challenge.objects.create(
+            lesson=lesson,
+            challenge_type='discursiva',
+            order=2,
+            title='Implemente uma Goroutine',
+            question_text='Escreva a sintaxe básica para disparar uma goroutine.',
+            expected_answer='Basta usar a palavra-chave go antes da chamada da função, ex: go minhaFuncao()',
+            expected_code_keyword='go ',
+            points=20
+        )
+
+        self.assertEqual(lesson.challenges_count, 2)
+        self.assertEqual(ch1.challenge_type, 'alternativa')
+        self.assertEqual(ch2.challenge_type, 'discursiva')
+
+        # Aluno acessa e responde o primeiro desafio (alternativa)
+        student = User.objects.create_user(email='aluno_multi@codeview.com', password='Password123!', first_name='Aluno')
+        self.client.force_login(student)
+
+        res1 = self.client.post(
+            f"{reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})}?c={ch1.id}",
+            data={'selected_option': 'A'}
+        )
+        self.assertEqual(res1.status_code, 200)
+        # Ainda não deve ter concluído a aula inteira pois falta o desafio 2
+        from courses.models import LessonProgress
+        prog = LessonProgress.objects.filter(user=student, lesson=lesson).first()
+        self.assertTrue(prog is None or not prog.is_completed)
+
+        # Aluno responde o segundo desafio (discursiva com keyword 'go ')
+        res2 = self.client.post(
+            f"{reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})}?c={ch2.id}",
+            data={'submitted_code': 'func main() { go worker() }'}
+        )
+        self.assertEqual(res2.status_code, 200)
+
+        # Agora que TODOS os desafios foram resolvidos, a aula deve estar concluída
+        prog = LessonProgress.objects.get(user=student, lesson=lesson)
+        self.assertTrue(prog.is_completed)
+
+    def test_challenge_crud_views(self):
+        """Criador pode criar, editar e excluir desafios via views dedicadas."""
+        course = Course.objects.create(
+            title='Trilha CRUD Desafios',
+            slug='trilha-crud-desafios',
+            description='Curso',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        lesson = Lesson.objects.create(course=course, title='Aula 1', order=1)
+
+        # Create
+        create_url = reverse('challenge_create', kwargs={'slug': course.slug, 'lesson_id': lesson.id})
+        res_create = self.client.post(create_url, data={
+            'challenge_type': 'discursiva',
+            'title': 'Desafio Discursivo de Algoritmos',
+            'question_text': 'Explique a complexidade de busca binária.',
+            'expected_answer': 'O(log n) pois divide o espaço de busca pela metade a cada passo.',
+            'expected_code_keyword': 'log',
+            'points': 25,
+            'explanation': 'Busca binária reduz pela metade a cada iteração.'
+        })
+        self.assertEqual(res_create.status_code, 302)
+        ch = lesson.challenges.first()
+        self.assertIsNotNone(ch)
+        self.assertEqual(ch.challenge_type, 'discursiva')
+        self.assertEqual(ch.expected_code_keyword, 'log')
+
+        # Edit
+        edit_url = reverse('challenge_edit', kwargs={'slug': course.slug, 'lesson_id': lesson.id, 'challenge_id': ch.id})
+        res_edit = self.client.post(edit_url, data={
+            'challenge_type': 'discursiva',
+            'title': 'Desafio Discursivo Modificado',
+            'question_text': 'Explique a complexidade de busca binária em arrays ordenados.',
+            'expected_answer': 'O(log n).',
+            'expected_code_keyword': 'O(log n)',
+            'points': 30,
+            'explanation': 'Explicação atualizada.'
+        })
+        self.assertEqual(res_edit.status_code, 302)
+        ch.refresh_from_db()
+        self.assertEqual(ch.title, 'Desafio Discursivo Modificado')
+        self.assertEqual(ch.points, 30)
+
+        # Delete
+        del_url = reverse('challenge_delete', kwargs={'slug': course.slug, 'lesson_id': lesson.id, 'challenge_id': ch.id})
+        res_del = self.client.post(del_url)
+        self.assertEqual(res_del.status_code, 302)
+        self.assertFalse(lesson.challenges.filter(id=ch.id).exists())
+
     def test_my_courses_view(self):
         """View meus-cursos deve listar os cursos criados pelo usuário logado."""
         Course.objects.create(
