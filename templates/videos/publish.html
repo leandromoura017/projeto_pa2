@@ -92,8 +92,11 @@
                 <div id="panel-upload" class="p-5 rounded-2xl border-2 border-dashed border-gray-700 bg-gray-900/50 hover:border-cyan-500/50 transition">
                     {{ form.video_file }}
                     <p class="text-[11px] text-gray-400 mt-2">
-                        Formato recomendado: Vertical 9:16 (.mp4 ou .webm), duração de 15 a 180 segundos.
+                        Formatos aceitos: Vídeos .mp4, .webm ou .mov (imagens não são permitidas). Duração recomendada: 15 a 180 segundos.
                     </p>
+                    <div id="file-error-status" class="hidden mt-2 p-2.5 rounded-lg bg-red-950/80 border border-red-800 text-[11px] text-red-200 font-medium">
+                        O arquivo selecionado é inválido. Apenas vídeos são permitidos.
+                    </div>
                     <div id="file-selected-status" class="hidden mt-2 p-2 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-[11px] text-emerald-300 font-medium">
                         Arquivo pronto para envio
                     </div>
@@ -239,16 +242,54 @@
     tabBtnUpload.addEventListener('click', () => switchTab('upload'));
     tabBtnCamera.addEventListener('click', () => switchTab('camera'));
 
-    // File input change indicator
+    // File input change indicator and strict validation (blocking images)
     const fileInput = document.querySelector('input[type="file"][name="video_file"]');
     const fileStatus = document.getElementById('file-selected-status');
-    if (fileInput && fileStatus) {
+    const fileErrorStatus = document.getElementById('file-error-status');
+    const blockedImageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.tiff', '.ico', '.jfif', '.avif'];
+    const validVideoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'];
+
+    function validateSelectedFile(file) {
+        if (!file) return { valid: false, message: 'Nenhum arquivo selecionado.' };
+        const fileName = (file.name || '').toLowerCase();
+        const fileExt = fileName.substring(fileName.lastIndexOf('.'));
+
+        if (file.type && file.type.startsWith('image/')) {
+            return { valid: false, message: 'Imagens não são permitidas. Por favor, selecione um arquivo de vídeo (.mp4, .webm, .mov).' };
+        }
+        if (blockedImageExts.includes(fileExt)) {
+            return { valid: false, message: 'O arquivo selecionado (' + fileExt + ') é uma imagem. Selecione um vídeo válido.' };
+        }
+        if (fileExt && !validVideoExts.includes(fileExt) && !file.type.startsWith('video/')) {
+            return { valid: false, message: 'Formato de arquivo não suportado. Envie apenas vídeos (.mp4, .webm, .mov, etc.).' };
+        }
+        return { valid: true };
+    }
+
+    if (fileInput) {
         fileInput.addEventListener('change', () => {
             if (fileInput.files.length > 0) {
-                fileStatus.textContent = `✓ Arquivo selecionado: ${fileInput.files[0].name} (${(fileInput.files[0].size / 1024 / 1024).toFixed(2)} MB)`;
-                fileStatus.classList.remove('hidden');
+                const file = fileInput.files[0];
+                const validation = validateSelectedFile(file);
+
+                if (!validation.valid) {
+                    fileInput.value = ''; // Limpa o arquivo inválido
+                    if (fileStatus) fileStatus.classList.add('hidden');
+                    if (fileErrorStatus) {
+                        fileErrorStatus.textContent = validation.message;
+                        fileErrorStatus.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                if (fileErrorStatus) fileErrorStatus.classList.add('hidden');
+                if (fileStatus) {
+                    fileStatus.textContent = `✓ Vídeo pronto para envio: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    fileStatus.classList.remove('hidden');
+                }
             } else {
-                fileStatus.classList.add('hidden');
+                if (fileStatus) fileStatus.classList.add('hidden');
+                if (fileErrorStatus) fileErrorStatus.classList.add('hidden');
             }
         });
     }
@@ -413,6 +454,25 @@
 
     if (btnStop) {
         btnStop.addEventListener('click', stopRecording);
+    }
+
+    // Form submit validation
+    const publishForm = document.getElementById('video-publish-form');
+    if (publishForm) {
+        publishForm.addEventListener('submit', (e) => {
+            if (fileInput && fileInput.files.length > 0) {
+                const validation = validateSelectedFile(fileInput.files[0]);
+                if (!validation.valid) {
+                    e.preventDefault();
+                    if (fileErrorStatus) {
+                        fileErrorStatus.textContent = validation.message;
+                        fileErrorStatus.classList.remove('hidden');
+                    }
+                    alert(validation.message);
+                    return false;
+                }
+            }
+        });
     }
 
     // Retake Recording

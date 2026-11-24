@@ -1,6 +1,33 @@
+import os
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+from django.core.exceptions import ValidationError
+
+ALLOWED_VIDEO_EXTENSIONS = {'.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'}
+BLOCKED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.tiff', '.ico', '.jfif', '.avif'}
+
+
+def validate_video_file(file):
+    """
+    Valida se o arquivo enviado é de fato um vídeo e bloqueia uploads de imagens.
+    """
+    name = getattr(file, 'name', '')
+    ext = os.path.splitext(name)[1].lower() if name else ''
+
+    if ext in BLOCKED_IMAGE_EXTENSIONS:
+        raise ValidationError("O arquivo selecionado é uma imagem. Por favor, envie um arquivo de vídeo (.mp4, .webm, .mov).")
+
+    if ext and ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise ValidationError(f"Formato de arquivo '{ext}' não suportado. Envie apenas vídeos (.mp4, .webm, .mov, .avi, .mkv).")
+
+    content_type = getattr(file, 'content_type', '')
+    if content_type:
+        if content_type.startswith('image/'):
+            raise ValidationError("O arquivo selecionado é uma imagem. Apenas vídeos são permitidos.")
+        if not content_type.startswith('video/') and content_type not in ('application/octet-stream', ''):
+            raise ValidationError("O arquivo enviado não é um vídeo válido.")
+
 
 
 class Technology(models.Model):
@@ -32,7 +59,11 @@ class Video(models.Model):
     """
     title = models.CharField(max_length=150, verbose_name="Título da Pílula")
     description = models.TextField(blank=True, verbose_name="Descrição / Resumo do Código")
-    video_file = models.FileField(upload_to='videos/', verbose_name="Arquivo de Vídeo (9:16 MP4/WebM)")
+    video_file = models.FileField(
+        upload_to='videos/',
+        validators=[validate_video_file],
+        verbose_name="Arquivo de Vídeo (9:16 MP4/WebM)"
+    )
     technology = models.ForeignKey(
         Technology,
         on_delete=models.PROTECT,

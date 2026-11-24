@@ -538,3 +538,109 @@ class Onda8CameraRecordingTests(TestCase):
         self.assertEqual(video.duration_seconds, 40)
         self.assertTrue(video.video_file.name.endswith('.webm'))
 
+
+class VideoValidationAndAdaptivePlayerTests(TestCase):
+    """
+    Testes para validação estrita de vídeos (bloqueio de imagens)
+    e dinâmica adaptativa proporcional do player com Tela Cheia (estilo TikTok).
+    """
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            email='tester_tiktok@codeview.com',
+            password='Password123!',
+            first_name='Tester'
+        )
+        self.tech = Technology.objects.create(name='Python', slug='python', icon_name='🐍')
+        self.client.force_login(self.user)
+
+    def test_upload_image_fails_form_validation(self):
+        """Envio de imagem PNG deve ser rejeitado pelo formulário de publicação."""
+        fake_png = SimpleUploadedFile(
+            'screenshot.png',
+            b'\x89PNG\r\n\x1a\nfake-image-bytes',
+            content_type='image/png'
+        )
+        payload = {
+            'title': 'Tentativa de Upload de Imagem',
+            'technology': self.tech.id,
+            'description': 'Não deve ser aceito',
+            'duration_seconds': 30,
+            'video_file': fake_png
+        }
+        res = self.client.post(reverse('video_publish'), data=payload)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('video_file', res.context['form'].errors)
+        error_msg = res.context['form'].errors['video_file'][0]
+        self.assertIn('imagem', error_msg.lower())
+        self.assertFalse(Video.objects.filter(title='Tentativa de Upload de Imagem').exists())
+
+    def test_upload_jpeg_fails_form_validation(self):
+        """Envio de imagem JPEG deve ser rejeitado pelo formulário de publicação."""
+        fake_jpg = SimpleUploadedFile(
+            'foto.jpeg',
+            b'\xff\xd8\xfffake-jpeg-bytes',
+            content_type='image/jpeg'
+        )
+        payload = {
+            'title': 'Tentativa com JPEG',
+            'technology': self.tech.id,
+            'description': 'Não deve ser aceito',
+            'duration_seconds': 30,
+            'video_file': fake_jpg
+        }
+        res = self.client.post(reverse('video_publish'), data=payload)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('video_file', res.context['form'].errors)
+        self.assertFalse(Video.objects.filter(title='Tentativa com JPEG').exists())
+
+    def test_validate_video_file_direct(self):
+        """Função validate_video_file deve lançar ValidationError para imagens."""
+        from django.core.exceptions import ValidationError
+        from .models import validate_video_file
+
+        fake_png = SimpleUploadedFile('teste.png', b'data', content_type='image/png')
+        with self.assertRaises(ValidationError):
+            validate_video_file(fake_png)
+
+        fake_webp = SimpleUploadedFile('teste.webp', b'data', content_type='image/webp')
+        with self.assertRaises(ValidationError):
+            validate_video_file(fake_webp)
+
+        valid_mp4 = SimpleUploadedFile('video.mp4', b'data', content_type='video/mp4')
+        # Não deve lançar exceção
+        validate_video_file(valid_mp4)
+
+    def test_feed_renders_fullscreen_button_and_contain_class(self):
+        """O Feed deve renderizar o botão Tela Cheia e a classe adaptativa object-contain."""
+        valid_video = SimpleUploadedFile('reel.mp4', b'data', content_type='video/mp4')
+        video = Video.objects.create(
+            title='Vídeo Horizontal de Teste',
+            technology=self.tech,
+            author=self.user,
+            video_file=valid_video,
+            is_published=True
+        )
+        res = self.client.get(reverse('feed'))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'object-contain')
+        self.assertContains(res, 'btn-fullscreen')
+        self.assertContains(res, 'Tela Cheia')
+
+    def test_video_detail_renders_fullscreen_button_and_contain_class(self):
+        """A página de detalhes do vídeo deve renderizar o botão Tela Cheia e a classe object-contain."""
+        valid_video = SimpleUploadedFile('reel_detail.mp4', b'data', content_type='video/mp4')
+        video = Video.objects.create(
+            title='Vídeo Detalhe Adaptativo',
+            technology=self.tech,
+            author=self.user,
+            video_file=valid_video,
+            is_published=True
+        )
+        res = self.client.get(reverse('video_detail', kwargs={'video_id': video.id}))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'object-contain')
+        self.assertContains(res, 'btn-detail-fullscreen')
+        self.assertContains(res, 'Tela Cheia')
+
+

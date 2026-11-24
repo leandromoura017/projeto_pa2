@@ -70,21 +70,21 @@
         <!-- Feed Wrapper with Desktop Side Controls -->
         <div class="relative flex items-center justify-center w-full">
             
-            <!-- Video Reel Container -->
-            <div id="video-feed" class="video-feed-container relative w-full max-w-[380px] sm:max-w-[420px] h-[640px] sm:h-[720px] overflow-y-scroll rounded-3xl border border-gray-800 shadow-2xl bg-black">
+            <!-- Video Reel Container (Dinâmica adaptativa proporcional estilo TikTok) -->
+            <div id="video-feed" class="video-feed-container relative w-full max-w-[380px] sm:max-w-[420px] h-[calc(100vh-140px)] min-h-[480px] max-h-[720px] sm:h-[720px] overflow-y-scroll rounded-3xl border border-gray-800 shadow-2xl bg-black">
                 
                 {% for video in videos %}
                     <div class="video-card-snap relative w-full h-full flex items-center justify-center bg-black overflow-hidden select-none" data-video-index="{{ forloop.counter0 }}">
                         
-                        <!-- Video Element (HTML5 9:16) -->
-                        <video class="player-video w-full h-full object-cover cursor-pointer" 
+                        <!-- Video Element (Proporcional adaptativo: não distorce nem corta vídeos deitados ou verticais) -->
+                        <video class="player-video w-full h-full object-contain bg-black cursor-pointer" 
                                src="{{ video.video_file.url }}" 
                                loop 
                                playsinline 
                                preload="metadata"
                                muted></video>
 
-                        <!-- Top Controls: Technology Badge, Trust Seal & Mute Toggle -->
+                        <!-- Top Controls: Technology Badge, Trust Seal, Fullscreen & Mute Toggle -->
                         <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
                             <div class="flex items-center gap-1.5 pointer-events-auto">
                                 <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
@@ -100,15 +100,28 @@
                                 {% endif %}
                             </div>
 
-                            <button type="button" class="btn-mute p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:scale-110 pointer-events-auto transition">
-                                <svg class="icon-mute w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                                </svg>
-                                <svg class="icon-unmute w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                </svg>
-                            </button>
+                            <div class="flex items-center gap-2 pointer-events-auto">
+                                <!-- Botão Tela Cheia (Fullscreen) -->
+                                <button type="button" class="btn-fullscreen p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:scale-110 pointer-events-auto transition" title="Tela Cheia" aria-label="Tela Cheia">
+                                    <svg class="icon-fs-expand w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                    </svg>
+                                    <svg class="icon-fs-compress w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9L4 4m0 5h5M9 4v5m6 6l5 5m0-5h-5m5 5v-5" />
+                                    </svg>
+                                </button>
+
+                                <!-- Botão Silenciar / Ativar Som -->
+                                <button type="button" class="btn-mute p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:scale-110 pointer-events-auto transition" title="Silenciar / Ativar Som">
+                                    <svg class="icon-mute w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                    </svg>
+                                    <svg class="icon-unmute w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Center Play/Pause Indicator (Overlay on tap) -->
@@ -334,6 +347,21 @@
                 }
             });
 
+            // Botão Tela Cheia (Fullscreen)
+            const btnFs = card.querySelector('.btn-fullscreen');
+            if (btnFs) {
+                btnFs.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFullscreen(video);
+                });
+            }
+
+            // Duplo clique no vídeo para tela cheia imediata
+            video.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                toggleFullscreen(video);
+            });
+
             // Botão Mute / Unmute
             if (btnMute) {
                 btnMute.addEventListener('click', (e) => {
@@ -492,6 +520,44 @@
                 }
             }, { passive: false });
         }
+
+        // Funções para controle de Tela Cheia (Fullscreen)
+        function toggleFullscreen(element) {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (element.requestFullscreen) {
+                    element.requestFullscreen().catch(err => console.log('Erro ao entrar em tela cheia:', err));
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(err => console.log('Erro ao sair da tela cheia:', err));
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function handleFullscreenChange() {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            document.querySelectorAll('.btn-fullscreen').forEach(btn => {
+                const exp = btn.querySelector('.icon-fs-expand');
+                const cmp = btn.querySelector('.icon-fs-compress');
+                if (exp && cmp) {
+                    if (isFs) {
+                        exp.classList.add('hidden');
+                        cmp.classList.remove('hidden');
+                    } else {
+                        exp.classList.remove('hidden');
+                        cmp.classList.add('hidden');
+                    }
+                }
+            });
+        }
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     });
 </script>
 {% endblock %}
