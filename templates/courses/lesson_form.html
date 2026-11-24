@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Editar Aula: {{ lesson.title }}{% else %}Adicionar Nova Aula à Trilha{% endif %} | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-xs text-gray-400 mb-6 flex-wrap">
+        <a href="{% url 'course_list' %}" class="hover:text-cyan-400 transition">Mini-Cursos</a>
+        <span>/</span>
+        <a href="{% url 'course_manage' course.slug %}" class="hover:text-cyan-400 transition">{{ course.title }}</a>
+        <span>/</span>
+        <span class="text-gray-200 font-semibold truncate">{% if is_edit %}Editar Aula{% else %}Nova Aula{% endif %}</span>
+    </nav>
+
+    <!-- Formulário Card -->
+    <div class="bg-[#111827] border border-gray-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-2xl space-y-6">
+        <div class="border-b border-gray-800 pb-4">
+            <span class="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider border border-cyan-500/30">
+                Trilha: {{ course.title }}
+            </span>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight mt-2">
+                {% if is_edit %}Editar Aula: {{ lesson.title }}{% else %}Adicionar Nova Pílula / Aula{% endif %}
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-400 mt-1">
+                Suba o vídeo da pílula, forneça a descrição e cadastre os desafios práticos da formação.
+            </p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6" id="lesson-form">
+            {% csrf_token %}
+
+            <!-- Título da Aula -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                    Título da Aula *
+                </label>
+                <input type="text" name="title" value="{{ lesson.title|default:'' }}" required placeholder="Ex: Aula 1: Como Funciona a Sintaxe de Async / Await"
+                       class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+            </div>
+
+            <!-- Ordem & Duração (lado a lado) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                        Ordem na Trilha *
+                    </label>
+                    <input type="number" name="order" value="{{ lesson.order|default:next_order }}" min="1" required
+                           class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                        Duração da Aula (segundos) *
+                    </label>
+                    <input type="number" name="duration_seconds" value="{{ lesson.duration_seconds|default:'60' }}" min="5" max="600" required
+                           class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                </div>
+            </div>
+
+            <!-- Vídeo da Aula: Upload Próprio ou Seleção de Pílula Existente -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-gray-950/60 border border-cyan-800/40 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-cyan-300 mb-1 flex items-center justify-between">
+                        <span>Arquivo de Vídeo da Pílula</span>
+                        <span class="text-[10px] text-gray-400 lowercase font-normal">vertical 9:16 ou horizontal proporcional</span>
+                    </label>
+                    <p class="text-[11px] text-gray-400 mb-3">
+                        Suba um vídeo (.mp4, .webm ou .mov). Imagens não são permitidas. O vídeo se adapta proporcionalmente sem distorcer.
+                    </p>
+                    <input type="file" name="video_file" id="lesson_video_file" accept="video/mp4,video/webm,video/quicktime,video/*"
+                           class="block w-full text-xs text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-600 file:text-white hover:file:bg-cyan-500 file:cursor-pointer">
+                    
+                    <div id="video-error-msg" class="hidden mt-2 p-2.5 rounded-lg bg-red-950/80 border border-red-800 text-xs text-red-200"></div>
+                    <div id="video-success-msg" class="hidden mt-2 p-2 rounded-lg bg-emerald-950/70 border border-emerald-800 text-xs text-emerald-300"></div>
+
+                    {% if lesson and lesson.video %}
+                        <div class="mt-2 text-[11px] text-cyan-400 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Vídeo atualmente vinculado: <strong>{{ lesson.video.title }}</strong></span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if user_videos %}
+                    <div class="pt-3 border-t border-gray-800/80">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">
+                            Ou vincular a uma pílula que você já publicou no Feed:
+                        </label>
+                        <select name="existing_video" class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <option value="">-- Não vincular pílula existente --</option>
+                            {% for v in user_videos %}
+                                <option value="{{ v.id }}" {% if lesson and lesson.video_id == v.id %}selected{% endif %}>
+                                    {{ v.title }} ({{ v.technology.name }} - {{ v.duration_seconds }}s)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Conteúdo Complementar / Snippet de Código -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                    Conteúdo Complementar / Resumo do Código
+                </label>
+                <textarea name="content" rows="4" placeholder="Explique os pontos-chave ensinados nesta pílula, forneça os comandos para o terminal ou snippets de código que o aluno precisará..."
+                          class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none">{{ lesson.content|default:'' }}</textarea>
+            </div>
+
+            {% if not is_edit %}
+                <!-- Seção Integrada: Cadastrar Mini-Atividade (Desafio Prático) -->
+                <div class="p-4 sm:p-5 rounded-2xl bg-[#111827] border border-amber-500/30 space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <h3 class="text-xs sm:text-sm font-bold text-amber-300 uppercase tracking-wider">
+                                Mini-Atividade / Desafio Prático da Aula
+                            </h3>
+                        </div>
+                        <span class="text-[10px] text-gray-400">opcional</span>
+                    </div>
+
+                    <p class="text-[11px] text-gray-300 leading-relaxed">
+                        Desafios imediatos aumentam a fixação. Você pode cadastrar uma pergunta de múltipla escolha com verificação instantânea para esta aula agora ou depois.
+                    </p>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Título do Desafio</label>
+                        <input type="text" name="challenge_title" placeholder="Ex: Fixação: Identificando a Promessa no Código"
+                               class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Enunciado da Questão</label>
+                        <textarea name="question_text" rows="2" placeholder="Qual será a saída do código ou qual a boa prática correta a ser aplicada?"
+                                  class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400 resize-none"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">Opção A</label>
+                            <input type="text" name="option_a" placeholder="Primeira alternativa"
+                                   class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">Opção B</label>
+                            <input type="text" name="option_b" placeholder="Segunda alternativa"
+                                   class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">Opção C (Opcional)</label>
+                            <input type="text" name="option_c" placeholder="Terceira alternativa"
+                                   class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">Opção D (Opcional)</label>
+                            <input type="text" name="option_d" placeholder="Quarta alternativa"
+                                   class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <div>
+                            <label class="block text-xs font-bold text-amber-300 mb-1">Alternativa Correta *</label>
+                            <select name="correct_option" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
+                                <option value="A">Opção A é a correta</option>
+                                <option value="B">Opção B é a correta</option>
+                                <option value="C">Opção C é a correta</option>
+                                <option value="D">Opção D é a correta</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">Pontos de Domínio</label>
+                            <input type="number" name="points" value="10" min="5" max="100"
+                                   class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white">
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Botões de Ação -->
+            <div class="pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <a href="{% url 'course_manage' course.slug %}" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold text-center transition">
+                    Cancelar
+                </a>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 transition">
+                    {% if is_edit %}Salvar Alterações da Aula{% else %}Adicionar Aula à Trilha{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Validação estrita de arquivo de vídeo no frontend (bloqueando imagens)
+    const videoInput = document.getElementById('lesson_video_file');
+    const errorMsg = document.getElementById('video-error-msg');
+    const successMsg = document.getElementById('video-success-msg');
+    const blockedImageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.tiff', '.ico', '.jfif', '.avif'];
+    const validVideoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'];
+
+    if (videoInput) {
+        videoInput.addEventListener('change', () => {
+            if (videoInput.files.length > 0) {
+                const file = videoInput.files[0];
+                const fileName = (file.name || '').toLowerCase();
+                const fileExt = fileName.substring(fileName.lastIndexOf('.'));
+
+                if ((file.type && file.type.startsWith('image/')) || blockedImageExts.includes(fileExt)) {
+                    videoInput.value = '';
+                    if (successMsg) successMsg.classList.add('hidden');
+                    if (errorMsg) {
+                        errorMsg.textContent = 'O arquivo selecionado (' + fileExt + ') é uma imagem. Selecione um arquivo de vídeo válido (.mp4, .webm, .mov).';
+                        errorMsg.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                if (fileExt && !validVideoExts.includes(fileExt) && !file.type.startsWith('video/')) {
+                    videoInput.value = '';
+                    if (successMsg) successMsg.classList.add('hidden');
+                    if (errorMsg) {
+                        errorMsg.textContent = 'Formato não suportado. Por favor, envie vídeos (.mp4, .webm, .mov).';
+                        errorMsg.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                if (errorMsg) errorMsg.classList.add('hidden');
+                if (successMsg) {
+                    successMsg.textContent = `✓ Vídeo pronto: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    successMsg.classList.remove('hidden');
+                }
+            } else {
+                if (errorMsg) errorMsg.classList.add('hidden');
+                if (successMsg) successMsg.classList.add('hidden');
+            }
+        });
+    }
+</script>
+{% endblock %}

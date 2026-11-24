@@ -14,7 +14,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from reportlab.lib.utils import ImageReader
 
-from videos.models import Technology
+from videos.models import Technology, Video, validate_video_file
+from django.core.exceptions import ValidationError
 from accounts.models import Notification
 from .models import (
     Course,
@@ -163,6 +164,7 @@ def course_detail_view(request, slug):
         'total_count': total_count,
         'progress_pct': progress_pct,
         'certificate': certificate,
+        'is_instructor': request.user.is_authenticated and (request.user == course.instructor or request.user.is_superuser),
     })
 
 
@@ -627,10 +629,22 @@ def download_certificate_pdf_view(request, validation_code):
 
 
 @login_required
+def my_courses_view(request):
+    """
+    Lista os mini-cursos criados e instruídos pelo usuário logado,
+    permitindo gerenciar e editar suas trilhas, vídeos e desafios.
+    """
+    courses = Course.objects.filter(instructor=request.user).select_related('technology').prefetch_related('lessons', 'enrollments').order_by('-created_at')
+    return render(request, 'courses/my_courses.html', {
+        'courses': courses,
+    })
+
+
+@login_required
 def course_create_view(request):
     """
-    Aba / Interface de cadastro de novos mini-cursos (Onda 7 - #30).
-    Permite que instrutores e mentores publiquem novas trilhas de microaprendizado.
+    Criação dinâmica de novos mini-cursos por qualquer usuário da plataforma.
+    Permite configurar os dados do curso, cronograma personalizado e adicionar pílulas de vídeo.
     """
     technologies = Technology.objects.filter(is_active=True).order_by('name')
 
@@ -640,6 +654,7 @@ def course_create_view(request):
         technology_id = request.POST.get('technology')
         level = request.POST.get('level', 'iniciante')
         estimated_minutes = request.POST.get('estimated_minutes', '30')
+        custom_schedule = request.POST.get('custom_schedule', '').strip()
         thumbnail = request.FILES.get('thumbnail')
 
         if not title:
@@ -669,24 +684,446 @@ def course_create_view(request):
                 instructor=request.user,
                 level=level if level in dict(Course.LEVEL_CHOICES) else 'iniciante',
                 estimated_minutes=est_min,
+                custom_schedule=custom_schedule,
                 thumbnail=thumbnail,
                 is_published=True
             )
+
+            # Promove o perfil a criador/mentor automaticamente caso ainda não seja
+            if hasattr(request.user, 'profile') and not request.user.profile.is_mentor:
+                request.user.profile.is_mentor = True
+                request.user.profile.save()
 
             # Notifica o usuário criador da trilha
             Notification.objects.create(
                 user=request.user,
                 title="📚 Nova Trilha Criada com Sucesso!",
-                message=f"Sua trilha '{course.title}' foi publicada no catálogo do CodeView! Agora você pode enriquecê-la com novas pílulas de código.",
-                link=reverse('course_detail', kwargs={'slug': course.slug}),
+                message=f"Sua trilha '{course.title}' foi cadastrada! Agora você pode gerenciar e adicionar aulas, pílulas de vídeo e desafios práticos.",
+                link=reverse('course_manage', kwargs={'slug': course.slug}),
                 icon='🚀'
             )
 
-            messages.success(request, f"Parabéns! O curso '{course.title}' foi cadastrado e publicado com sucesso!")
-            return redirect('course_detail', slug=course.slug)
+            messages.success(request, f"Trilha '{course.title}' criada com sucesso! Agora configure as aulas, vídeos e desafios.")
+            return redirect('course_manage', slug=course.slug)
 
     return render(request, 'courses/course_create.html', {
         'technologies': technologies,
         'levels': Course.LEVEL_CHOICES,
     })
+
+
+@login_required
+def course_manage_view(request, slug):
+    """
+    Painel de gerenciamento completo do criador para um Mini-Curso:
+    - Edição dos dados do curso (título, ementa, cronograma personalizado, nível, capa)
+    - Lista de pílulas/aulas cadastradas com ordem, vídeo associado e status do desafio
+    - Ações dinâmicas para adicionar, editar, reordenar ou remover aulas e mini-atividades.
+    """
+    course = get_object_or_404(Course, slug=slug)
+
+    # Permissão: apenas o autor/instrutor do curso ou superuser
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para gerenciar este curso.")
+        return redirect('course_detail', slug=course.slug)
+
+    technologies = Technology.objects.filter(is_active=True).order_by('name')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'update_course')
+        if action == 'update_course':
+            title = request.POST.get('title', '').strip()
+            description = request.POST.get('description', '').strip()
+            technology_id = request.POST.get('technology')
+            level = request.POST.get('level', course.level)
+            estimated_minutes = request.POST.get('estimated_minutes', str(course.estimated_minutes))
+            custom_schedule = request.POST.get('custom_schedule', '').strip()
+            is_published = request.POST.get('is_published') == 'on'
+
+            if not title:
+                messages.error(request, "O título do curso não pode ficar vazio.")
+            elif not description:
+                messages.error(request, "A descrição do curso não pode ficar vazia.")
+            else:
+                course.title = title
+                course.description = description
+                course.level = level if level in dict(Course.LEVEL_CHOICES) else course.level
+                try:
+                    course.estimated_minutes = max(5, int(estimated_minutes))
+                except ValueError:
+                    pass
+                course.custom_schedule = custom_schedule
+                course.is_published = is_published
+
+                if technology_id:
+                    course.technology = Technology.objects.filter(id=technology_id).first()
+
+                if 'thumbnail' in request.FILES:
+                    course.thumbnail = request.FILES['thumbnail']
+
+                course.save()
+                messages.success(request, "Dados da trilha atualizados com sucesso!")
+                return redirect('course_manage', slug=course.slug)
+
+    lessons = course.lessons.select_related('video', 'challenge').order_by('order', 'id')
+    user_videos = Video.objects.filter(author=request.user).order_by('-created_at')
+
+    total_enrollments = Enrollment.objects.filter(course=course, is_active=True).count()
+    completed_enrollments = Enrollment.objects.filter(course=course, completed_at__isnull=False).count()
+    total_challenges = sum(1 for l in lessons if hasattr(l, 'challenge') and l.challenge is not None)
+
+    return render(request, 'courses/course_manage.html', {
+        'course': course,
+        'lessons': lessons,
+        'user_videos': user_videos,
+        'technologies': technologies,
+        'levels': Course.LEVEL_CHOICES,
+        'total_enrollments': total_enrollments,
+        'completed_enrollments': completed_enrollments,
+        'total_challenges': total_challenges,
+    })
+
+
+@login_required
+def lesson_create_view(request, slug):
+    """
+    Adiciona dinamicamente uma nova aula / pílula a uma trilha existente.
+    Permite subir arquivo de vídeo próprio (com validação estrita sem imagens),
+    vincular pílula do feed e cadastrar mini-atividade interativa vinculada.
+    """
+    course = get_object_or_404(Course, slug=slug)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para adicionar aulas a este curso.")
+        return redirect('course_detail', slug=course.slug)
+
+    user_videos = Video.objects.filter(author=request.user).order_by('-created_at')
+    next_order = course.lessons.count() + 1
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        content = request.POST.get('content', '').strip()
+        duration_seconds = request.POST.get('duration_seconds', '60')
+        order = request.POST.get('order', str(next_order))
+        existing_video_id = request.POST.get('existing_video')
+        video_file = request.FILES.get('video_file')
+
+        if not title:
+            messages.error(request, "O título da aula é obrigatório.")
+            return render(request, 'courses/lesson_form.html', {
+                'course': course,
+                'user_videos': user_videos,
+                'next_order': next_order,
+                'is_edit': False,
+            })
+
+        try:
+            dur = max(5, int(duration_seconds))
+        except ValueError:
+            dur = 60
+
+        try:
+            ord_num = max(1, int(order))
+        except ValueError:
+            ord_num = next_order
+
+        # Processamento de vídeo
+        video_obj = None
+        if video_file:
+            try:
+                validate_video_file(video_file)
+            except ValidationError as e:
+                messages.error(request, f"Arquivo de vídeo inválido: {e.message}")
+                return render(request, 'courses/lesson_form.html', {
+                    'course': course,
+                    'user_videos': user_videos,
+                    'next_order': next_order,
+                    'is_edit': False,
+                })
+
+            video_obj = Video.objects.create(
+                title=f"{course.title}: {title}",
+                description=content or f"Pílula prática da trilha {course.title}.",
+                video_file=video_file,
+                technology=course.technology or Technology.objects.first(),
+                author=request.user,
+                duration_seconds=dur,
+                is_published=True
+            )
+        elif existing_video_id:
+            video_obj = Video.objects.filter(id=existing_video_id, author=request.user).first()
+
+        lesson = Lesson.objects.create(
+            course=course,
+            title=title,
+            content=content,
+            duration_seconds=dur,
+            order=ord_num,
+            video=video_obj
+        )
+
+        # Cadastro opcional de mini-atividade (desafio) se preenchido na mesma tela
+        challenge_title = request.POST.get('challenge_title', '').strip()
+        question_text = request.POST.get('question_text', '').strip()
+        option_a = request.POST.get('option_a', '').strip()
+        option_b = request.POST.get('option_b', '').strip()
+        option_c = request.POST.get('option_c', '').strip()
+        option_d = request.POST.get('option_d', '').strip()
+        correct_option = request.POST.get('correct_option', 'A')
+        code_snippet = request.POST.get('code_snippet', '').strip()
+        explanation = request.POST.get('explanation', '').strip()
+        points = request.POST.get('points', '10')
+
+        if challenge_title and question_text and option_a and option_b:
+            try:
+                pts = max(1, int(points))
+            except ValueError:
+                pts = 10
+
+            Challenge.objects.create(
+                lesson=lesson,
+                title=challenge_title,
+                question_text=question_text,
+                code_snippet=code_snippet,
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c or 'N.D.A.',
+                option_d=option_d,
+                correct_option=correct_option if correct_option in ['A', 'B', 'C', 'D'] else 'A',
+                explanation=explanation or 'Resposta validada pelo instrutor.',
+                points=pts
+            )
+
+        messages.success(request, f"Aula '{lesson.title}' adicionada com sucesso à trilha!")
+        return redirect('course_manage', slug=course.slug)
+
+    return render(request, 'courses/lesson_form.html', {
+        'course': course,
+        'user_videos': user_videos,
+        'next_order': next_order,
+        'is_edit': False,
+    })
+
+
+@login_required
+def lesson_edit_view(request, slug, lesson_id):
+    """
+    Edição de uma aula / pílula existente na trilha pelo criador.
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para editar esta aula.")
+        return redirect('course_detail', slug=course.slug)
+
+    user_videos = Video.objects.filter(author=request.user).order_by('-created_at')
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        content = request.POST.get('content', '').strip()
+        duration_seconds = request.POST.get('duration_seconds', str(lesson.duration_seconds))
+        order = request.POST.get('order', str(lesson.order))
+        existing_video_id = request.POST.get('existing_video')
+        video_file = request.FILES.get('video_file')
+
+        if not title:
+            messages.error(request, "O título da aula é obrigatório.")
+        else:
+            try:
+                lesson.duration_seconds = max(5, int(duration_seconds))
+            except ValueError:
+                pass
+
+            try:
+                lesson.order = max(1, int(order))
+            except ValueError:
+                pass
+
+            lesson.title = title
+            lesson.content = content
+
+            # Atualização de vídeo
+            if video_file:
+                try:
+                    validate_video_file(video_file)
+                except ValidationError as e:
+                    messages.error(request, f"Arquivo de vídeo inválido: {e.message}")
+                    return render(request, 'courses/lesson_form.html', {
+                        'course': course,
+                        'lesson': lesson,
+                        'user_videos': user_videos,
+                        'is_edit': True,
+                    })
+
+                new_video = Video.objects.create(
+                    title=f"{course.title}: {title}",
+                    description=content or f"Pílula prática da trilha {course.title}.",
+                    video_file=video_file,
+                    technology=course.technology or Technology.objects.first(),
+                    author=request.user,
+                    duration_seconds=lesson.duration_seconds,
+                    is_published=True
+                )
+                lesson.video = new_video
+            elif existing_video_id:
+                sel_video = Video.objects.filter(id=existing_video_id, author=request.user).first()
+                if sel_video:
+                    lesson.video = sel_video
+
+            lesson.save()
+            messages.success(request, f"Aula '{lesson.title}' atualizada com sucesso!")
+            return redirect('course_manage', slug=course.slug)
+
+    return render(request, 'courses/lesson_form.html', {
+        'course': course,
+        'lesson': lesson,
+        'user_videos': user_videos,
+        'is_edit': True,
+    })
+
+
+@login_required
+def lesson_delete_view(request, slug, lesson_id):
+    """
+    Exclui uma aula da trilha e reordena as aulas subsequentes.
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para excluir esta aula.")
+        return redirect('course_detail', slug=course.slug)
+
+    if request.method == 'POST':
+        title = lesson.title
+        lesson.delete()
+
+        # Reordenação contínua das aulas restantes
+        for idx, l in enumerate(course.lessons.all().order_by('order', 'id'), start=1):
+            if l.order != idx:
+                l.order = idx
+                l.save(update_fields=['order'])
+
+        messages.success(request, f"Aula '{title}' excluída da trilha.")
+        return redirect('course_manage', slug=course.slug)
+
+    return render(request, 'courses/lesson_confirm_delete.html', {
+        'course': course,
+        'lesson': lesson,
+    })
+
+
+@login_required
+def lesson_reorder_view(request, slug, lesson_id, direction):
+    """
+    Ajusta a sequência pedagógica da aula na trilha (subir ou descer).
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Sem permissão para alterar ordem.")
+        return redirect('course_detail', slug=course.slug)
+
+    lessons = list(course.lessons.all().order_by('order', 'id'))
+    try:
+        curr_idx = lessons.index(lesson)
+    except ValueError:
+        return redirect('course_manage', slug=course.slug)
+
+    if direction == 'up' and curr_idx > 0:
+        prev_lesson = lessons[curr_idx - 1]
+        prev_order = prev_lesson.order
+        prev_lesson.order = lesson.order
+        lesson.order = prev_order
+        lesson.save(update_fields=['order'])
+        prev_lesson.save(update_fields=['order'])
+        messages.success(request, f"Aula '{lesson.title}' movida para cima.")
+    elif direction == 'down' and curr_idx < len(lessons) - 1:
+        next_lesson = lessons[curr_idx + 1]
+        next_order = next_lesson.order
+        next_lesson.order = lesson.order
+        lesson.order = next_order
+        lesson.save(update_fields=['order'])
+        next_lesson.save(update_fields=['order'])
+        messages.success(request, f"Aula '{lesson.title}' movida para baixo.")
+
+    return redirect('course_manage', slug=course.slug)
+
+
+@login_required
+def challenge_manage_view(request, slug, lesson_id):
+    """
+    Interface para cadastrar ou editar a mini-atividade / desafio prático
+    interativo de uma aula específica da trilha.
+    """
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    if request.user != course.instructor and not request.user.is_superuser:
+        messages.error(request, "Você não tem permissão para gerenciar desafios deste curso.")
+        return redirect('course_detail', slug=course.slug)
+
+    challenge = getattr(lesson, 'challenge', None)
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        question_text = request.POST.get('question_text', '').strip()
+        code_snippet = request.POST.get('code_snippet', '').strip()
+        option_a = request.POST.get('option_a', '').strip()
+        option_b = request.POST.get('option_b', '').strip()
+        option_c = request.POST.get('option_c', '').strip()
+        option_d = request.POST.get('option_d', '').strip()
+        correct_option = request.POST.get('correct_option', 'A')
+        explanation = request.POST.get('explanation', '').strip()
+        points = request.POST.get('points', '10')
+
+        if not title or not question_text or not option_a or not option_b:
+            messages.error(request, "Título, enunciado e pelo menos as opções A e B são obrigatórias.")
+        else:
+            try:
+                pts = max(1, int(points))
+            except ValueError:
+                pts = 10
+
+            corr = correct_option if correct_option in ['A', 'B', 'C', 'D'] else 'A'
+
+            if challenge:
+                challenge.title = title
+                challenge.question_text = question_text
+                challenge.code_snippet = code_snippet
+                challenge.option_a = option_a
+                challenge.option_b = option_b
+                challenge.option_c = option_c or 'N.D.A.'
+                challenge.option_d = option_d
+                challenge.correct_option = corr
+                challenge.explanation = explanation or 'Resposta correta conforme verificação técnica.'
+                challenge.points = pts
+                challenge.save()
+                messages.success(request, f"Mini-atividade prática da aula '{lesson.title}' atualizada!")
+            else:
+                challenge = Challenge.objects.create(
+                    lesson=lesson,
+                    title=title,
+                    question_text=question_text,
+                    code_snippet=code_snippet,
+                    option_a=option_a,
+                    option_b=option_b,
+                    option_c=option_c or 'N.D.A.',
+                    option_d=option_d,
+                    correct_option=corr,
+                    explanation=explanation or 'Resposta correta conforme verificação técnica.',
+                    points=pts
+                )
+                messages.success(request, f"Mini-atividade prática vinculada à aula '{lesson.title}' com sucesso!")
+
+            return redirect('course_manage', slug=course.slug)
+
+    return render(request, 'courses/challenge_form.html', {
+        'course': course,
+        'lesson': lesson,
+        'challenge': challenge,
+    })
+
 

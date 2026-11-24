@@ -40,6 +40,7 @@ class Course(models.Model):
     )
     estimated_minutes = models.PositiveIntegerField(default=30, verbose_name="Duração Estimada (minutos)")
     thumbnail = models.ImageField(upload_to='courses/', null=True, blank=True, verbose_name="Imagem de Capa")
+    custom_schedule = models.TextField(blank=True, default='', verbose_name="Cronograma Personalizado de Estudos")
     is_published = models.BooleanField(default=True, verbose_name="Publicado no Catálogo")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")

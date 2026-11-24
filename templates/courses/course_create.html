@@ -93,10 +93,23 @@
                               class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition resize-none"></textarea>
                 </div>
 
+                <!-- Cronograma Personalizado de Estudos (Opcional - Montar por inteiro) -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-cyan-400 mb-1 flex items-center justify-between">
+                        <span>Cronograma de Estudos da Formação</span>
+                        <span class="text-[10px] text-gray-400 lowercase font-normal">opcional</span>
+                    </label>
+                    <textarea name="custom_schedule" rows="3" placeholder="Você tem a opção de montar por inteiro o cronograma de estudos aqui (ex: Dia 1, Dia 2, Semana 1...) ou deixar em branco para que o sistema estruture automaticamente as etapas sugeridas conforme as aulas adicionadas."
+                              class="w-full px-4 py-3 bg-gray-900 border border-cyan-800/50 rounded-xl text-xs sm:text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition resize-none"></textarea>
+                    <span class="text-[11px] text-gray-400 mt-1 block">
+                        Dica: Após salvar, você poderá cadastrar quantas aulas e vídeos quiser, além de adicionar mini-atividades interativas a qualquer momento.
+                    </span>
+                </div>
+
                 <!-- Botões de Ação -->
                 <div class="pt-4 flex flex-col sm:flex-row items-center gap-3">
                     <button type="submit" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-sm shadow-xl shadow-cyan-500/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2">
-                        <span>Publicar Trilha no Catálogo</span>
+                        <span>Criar Trilha e Gerenciar Aulas &rarr;</span>
                     </button>
                     <a href="{% url 'course_list' %}" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-semibold text-sm border border-gray-700 text-center transition">
                         Cancelar

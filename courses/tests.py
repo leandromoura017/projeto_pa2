@@ -572,3 +572,210 @@ class Onda7CourseFeaturesTests(TestCase):
         self.assertEqual(notif.icon, '⚠️')
 
 
+class DynamicCourseCreatorTests(TestCase):
+    """
+    Testes para criação dinâmica de cursos, gestão de aulas, upload de vídeos,
+    cronograma customizado e cadastro de mini-atividades pelo criador de conteúdo.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.creator = User.objects.create_user(
+            email='creator_dynamic@codeview.com',
+            password='Password123!',
+            first_name='Criador Dinamico'
+        )
+        self.other_user = User.objects.create_user(
+            email='other_user@codeview.com',
+            password='Password123!',
+            first_name='Outro Usuario'
+        )
+        self.tech = Technology.objects.create(name='Python', slug='python', icon_name='🐍')
+        self.client.force_login(self.creator)
+
+    def test_create_course_with_custom_schedule(self):
+        """Qualquer perfil pode criar curso com cronograma personalizado."""
+        payload = {
+            'title': 'Engenharia de Dados Prática',
+            'technology': self.tech.id,
+            'description': 'Pipeline de dados em tempo real com Python.',
+            'level': 'intermediario',
+            'estimated_minutes': 90,
+            'custom_schedule': 'Dia 1: Ingestão de dados\nDia 2: Transformação com Pandas\nDia 3: Carga e testes',
+        }
+        res = self.client.post(reverse('course_create'), data=payload)
+        self.assertEqual(res.status_code, 302)
+
+        course = Course.objects.filter(title='Engenharia de Dados Prática').first()
+        self.assertIsNotNone(course)
+        self.assertEqual(course.instructor, self.creator)
+        self.assertIn('Dia 1: Ingestão de dados', course.custom_schedule)
+        # Verifica se o perfil foi atualizado para is_mentor
+        self.creator.profile.refresh_from_db()
+        self.assertTrue(self.creator.profile.is_mentor)
+
+    def test_course_manage_view_access_permissions(self):
+        """Apenas o criador ou superusuário pode acessar o gerenciamento do curso."""
+        course = Course.objects.create(
+            title='Docker do Zero',
+            slug='docker-do-zero',
+            description='Curso de containers',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        # Criador acessa com 200
+        res = self.client.get(reverse('course_manage', kwargs={'slug': course.slug}))
+        self.assertEqual(res.status_code, 200)
+        self.assertTemplateUsed(res, 'courses/course_manage.html')
+
+        # Outro usuário é barrado com redirect
+        self.client.force_login(self.other_user)
+        res_other = self.client.get(reverse('course_manage', kwargs={'slug': course.slug}))
+        self.assertEqual(res_other.status_code, 302)
+
+    def test_lesson_create_with_video_and_challenge(self):
+        """Criador adiciona nova aula com upload de vídeo e desafio prático na mesma trilha."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        course = Course.objects.create(
+            title='FastAPI Moderno',
+            slug='fastapi-moderno',
+            description='APIs assíncronas',
+            technology=self.tech,
+            instructor=self.creator
+        )
+
+        fake_video = SimpleUploadedFile('aula1.mp4', b'fake-mp4-data', content_type='video/mp4')
+        payload = {
+            'title': 'Aula 1: Primeiro Endpoint com FastAPI',
+            'order': 1,
+            'duration_seconds': 90,
+            'content': 'Explicação da rota @app.get("/")',
+            'video_file': fake_video,
+            # Dados da mini-atividade / desafio
+            'challenge_title': 'Desafio: Retorno de Status Code',
+            'question_text': 'Qual o decorator correto para criar uma rota GET?',
+            'option_a': '@app.get("/")',
+            'option_b': '@app.post("/")',
+            'option_c': '@app.route("/")',
+            'option_d': '@app.view("/")',
+            'correct_option': 'A',
+            'points': 15,
+        }
+        res = self.client.post(reverse('lesson_create', kwargs={'slug': course.slug}), data=payload)
+        self.assertEqual(res.status_code, 302)
+        self.assertRedirects(res, reverse('course_manage', kwargs={'slug': course.slug}))
+
+        lesson = Lesson.objects.filter(course=course, title='Aula 1: Primeiro Endpoint com FastAPI').first()
+        self.assertIsNotNone(lesson)
+        self.assertIsNotNone(lesson.video)
+        self.assertEqual(lesson.duration_seconds, 90)
+
+        # Desafio criado e vinculado à aula
+        self.assertIsNotNone(lesson.challenge)
+        self.assertEqual(lesson.challenge.title, 'Desafio: Retorno de Status Code')
+        self.assertEqual(lesson.challenge.correct_option, 'A')
+        self.assertEqual(lesson.challenge.points, 15)
+
+    def test_lesson_create_rejects_image_file(self):
+        """Tentativa de subir imagem como vídeo da aula deve ser rejeitada."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        course = Course.objects.create(
+            title='Django Security',
+            slug='django-security',
+            description='Segurança web',
+            technology=self.tech,
+            instructor=self.creator
+        )
+
+        fake_png = SimpleUploadedFile('foto.png', b'fake-png-data', content_type='image/png')
+        payload = {
+            'title': 'Aula com Imagem Inválida',
+            'order': 1,
+            'duration_seconds': 60,
+            'content': 'Teste',
+            'video_file': fake_png,
+        }
+        res = self.client.post(reverse('lesson_create', kwargs={'slug': course.slug}), data=payload)
+        self.assertEqual(res.status_code, 200) # Permanece no form com erro
+        self.assertFalse(Lesson.objects.filter(course=course, title='Aula com Imagem Inválida').exists())
+
+    def test_lesson_edit_and_delete(self):
+        """Criador pode editar e excluir aulas da sua trilha com reordenação automática."""
+        course = Course.objects.create(
+            title='Trilha com Aulas',
+            slug='trilha-com-aulas',
+            description='Curso',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        l1 = Lesson.objects.create(course=course, title='Aula 1', order=1, duration_seconds=60)
+        l2 = Lesson.objects.create(course=course, title='Aula 2', order=2, duration_seconds=60)
+
+        # Edição
+        edit_payload = {
+            'title': 'Aula 1 Modificada',
+            'order': 1,
+            'duration_seconds': 120,
+            'content': 'Novo conteúdo complementar',
+        }
+        res_edit = self.client.post(reverse('lesson_edit', kwargs={'slug': course.slug, 'lesson_id': l1.id}), data=edit_payload)
+        self.assertEqual(res_edit.status_code, 302)
+        l1.refresh_from_db()
+        self.assertEqual(l1.title, 'Aula 1 Modificada')
+        self.assertEqual(l1.duration_seconds, 120)
+
+        # Exclusão da Aula 1
+        res_del = self.client.post(reverse('lesson_delete', kwargs={'slug': course.slug, 'lesson_id': l1.id}))
+        self.assertEqual(res_del.status_code, 302)
+        self.assertFalse(Lesson.objects.filter(id=l1.id).exists())
+
+        # Aula 2 deve ser reordenada para order=1
+        l2.refresh_from_db()
+        self.assertEqual(l2.order, 1)
+
+    def test_challenge_manage_create_and_update(self):
+        """Criador pode cadastrar e editar mini-atividade interativa para qualquer aula."""
+        course = Course.objects.create(
+            title='Trilha Desafio',
+            slug='trilha-desafio',
+            description='Curso',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        lesson = Lesson.objects.create(course=course, title='Aula Única', order=1)
+
+        url = reverse('challenge_manage', kwargs={'slug': course.slug, 'lesson_id': lesson.id})
+        payload = {
+            'title': 'Qual a função de len() em Python?',
+            'question_text': 'O que a função len() retorna?',
+            'option_a': 'O tamanho/comprimento de um objeto',
+            'option_b': 'O tipo do objeto',
+            'option_c': 'Um número aleatório',
+            'option_d': 'Um erro em listas vazias',
+            'correct_option': 'A',
+            'explanation': 'len() retorna a contagem de elementos.',
+            'points': 20,
+        }
+        res = self.client.post(url, data=payload)
+        self.assertEqual(res.status_code, 302)
+
+        lesson.refresh_from_db()
+        self.assertIsNotNone(lesson.challenge)
+        self.assertEqual(lesson.challenge.correct_option, 'A')
+        self.assertEqual(lesson.challenge.points, 20)
+
+    def test_my_courses_view(self):
+        """View meus-cursos deve listar os cursos criados pelo usuário logado."""
+        Course.objects.create(
+            title='Meu Curso 1',
+            slug='meu-curso-1',
+            description='Desc 1',
+            technology=self.tech,
+            instructor=self.creator
+        )
+        res = self.client.get(reverse('my_courses'))
+        self.assertEqual(res.status_code, 200)
+        self.assertTemplateUsed(res, 'courses/my_courses.html')
+        self.assertContains(res, 'Meu Curso 1')
+
+
+

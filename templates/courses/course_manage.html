@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciar Trilha: {{ course.title }} | CodeView{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-xs text-gray-400 mb-6 flex-wrap">
+        <a href="{% url 'course_list' %}" class="hover:text-cyan-400 transition">Mini-Cursos</a>
+        <span>/</span>
+        <a href="{% url 'my_courses' %}" class="hover:text-cyan-400 transition">Meus Cursos</a>
+        <span>/</span>
+        <span class="text-gray-200 font-semibold truncate">{{ course.title }} (Gerenciar)</span>
+    </nav>
+
+    <!-- Top Management Header Banner -->
+    <div class="bg-gradient-to-r from-blue-900/40 via-cyan-900/30 to-gray-900 border border-cyan-800/40 rounded-2xl sm:rounded-3xl p-5 sm:p-8 mb-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="space-y-1 max-w-2xl">
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider border border-cyan-500/30">
+                    Gestão da Trilha
+                </span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-md
+                    {% if course.is_published %}bg-emerald-950/80 border border-emerald-700/60 text-emerald-300{% else %}bg-amber-950/80 border border-amber-700/60 text-amber-300{% endif %}">
+                    {% if course.is_published %}Publicado no Catálogo{% else %}Modo Rascunho{% endif %}
+                </span>
+            </div>
+            <h1 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
+                {{ course.title }}
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                Adicione vídeos, organize o cronograma de estudos e cadastre os desafios práticos para os alunos.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+            <a href="{% url 'course_detail' course.slug %}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>Visualizar Trilha Pública</span>
+            </a>
+            <a href="{% url 'lesson_create' course.slug %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition transform hover:scale-105">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span>+ Adicionar Aula</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards de Métricas do Curso -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">Pílulas / Aulas</span>
+            <span class="text-2xl font-black text-white mt-1 block">{{ lessons.count }}</span>
+        </div>
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-400 block">Desafios Práticos</span>
+            <span class="text-2xl font-black text-cyan-300 mt-1 block">{{ total_challenges }}</span>
+        </div>
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">Alunos Ativos</span>
+            <span class="text-2xl font-black text-emerald-300 mt-1 block">{{ total_enrollments }}</span>
+        </div>
+        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-400 block">Conclusões 100%</span>
+            <span class="text-2xl font-black text-purple-300 mt-1 block">{{ completed_enrollments }}</span>
+        </div>
+    </div>
+
+    <!-- Duas Colunas: Aulas & Pílulas da Trilha (esquerda) + Configurações e Cronograma (direita) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Coluna Esquerda (7 cols): Ementa Dinâmica de Aulas -->
+        <div class="lg:col-span-7 space-y-5">
+            <div class="bg-[#111827] border border-gray-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xl space-y-5">
+                <div class="flex items-center justify-between gap-3 border-b border-gray-800 pb-4">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                            Aulas e Pílulas da Trilha
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-0.5">
+                            Organize a sequência pedagógica, associe vídeos e desafios.
+                        </p>
+                    </div>
+                    <a href="{% url 'lesson_create' course.slug %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-600/30 text-xs font-bold transition">
+                        <span>+ Nova Aula</span>
+                    </a>
+                </div>
+
+                <!-- Lista de Aulas -->
+                {% if lessons %}
+                    <div class="space-y-3">
+                        {% for lesson in lessons %}
+                            <div class="bg-gray-900/90 border border-gray-800 hover:border-gray-700 rounded-2xl p-4 transition shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div class="flex items-start gap-3 min-w-0 flex-1">
+                                    <!-- Ordem Badge -->
+                                    <div class="w-8 h-8 rounded-xl bg-gray-800 text-cyan-400 font-bold text-xs flex items-center justify-center shrink-0 border border-gray-700">
+                                        {{ lesson.order }}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <h3 class="text-xs sm:text-sm font-bold text-white leading-tight">
+                                                {{ lesson.title }}
+                                            </h3>
+                                            {% if lesson.video %}
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-950 border border-cyan-800 text-cyan-300" title="Vídeo anexado">
+                                                    Vídeo OK
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-800 text-gray-400 border border-gray-700" title="Sem vídeo vinculado">
+                                                    Sem vídeo
+                                                </span>
+                                            {% endif %}
+                                            {% if lesson.challenge %}
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950 border border-amber-800 text-amber-300" title="Mini-atividade ativa">
+                                                    Desafio (+{{ lesson.challenge.points }}pts)
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-[11px] text-gray-400 mt-1 line-clamp-1">
+                                            {{ lesson.content|default:"Sem descrição adicional" }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Ações da Aula -->
+                                <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-auto flex-wrap">
+                                    <!-- Reordenar Up / Down -->
+                                    {% if not forloop.first %}
+                                        <a href="{% url 'lesson_reorder' course.slug lesson.id 'up' %}" class="p-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition" title="Mover para Cima">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                        </a>
+                                    {% endif %}
+                                    {% if not forloop.last %}
+                                        <a href="{% url 'lesson_reorder' course.slug lesson.id 'down' %}" class="p-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition" title="Mover para Baixo">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </a>
+                                    {% endif %}
+
+                                    <!-- Botão Mini-Atividade / Desafio -->
+                                    <a href="{% url 'challenge_manage' course.slug lesson.id %}" 
+                                       class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition {% if lesson.challenge %}bg-amber-950/70 border border-amber-700/80 text-amber-300 hover:bg-amber-900{% else %}bg-gray-800 text-gray-300 hover:text-white border border-gray-700{% endif %}"
+                                       title="Configurar Mini-Atividade / Desafio Prático">
+                                        {% if lesson.challenge %}Editar Desafio{% else %}+ Desafio{% endif %}
+                                    </a>
+
+                                    <!-- Editar Aula -->
+                                    <a href="{% url 'lesson_edit' course.slug lesson.id %}" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition" title="Editar Aula">
+                                        Editar
+                                    </a>
+
+                                    <!-- Excluir Aula -->
+                                    <form method="POST" action="{% url 'lesson_delete' course.slug lesson.id %}" onsubmit="return confirm('Tem certeza que deseja remover a aula \'{{ lesson.title|escapejs }}\'?');" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-1.5 rounded-lg bg-red-950/50 hover:bg-red-900 border border-red-800 text-red-300 transition" title="Excluir Aula">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-8 rounded-2xl bg-gray-900/50 border border-dashed border-gray-800 text-center space-y-3">
+                        <p class="text-xs sm:text-sm text-gray-400">
+                            Nenhuma pílula ou aula cadastrada nesta trilha ainda.
+                        </p>
+                        <a href="{% url 'lesson_create' course.slug %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-xs font-bold shadow transition">
+                            <span>+ Adicionar Primeira Aula</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Coluna Direita (5 cols): Configurações Gerais & Cronograma Personalizado -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="bg-[#111827] border border-gray-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xl space-y-5">
+                <div class="border-b border-gray-800 pb-3">
+                    <h2 class="text-base font-bold text-white">
+                        Configurações da Trilha
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                        Edite título, tecnologia, cronograma de estudos e status.
+                    </p>
+                </div>
+
+                <form method="POST" action="{% url 'course_manage' course.slug %}" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_course">
+
+                    <!-- Título -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                            Título do Mini-Curso *
+                        </label>
+                        <input type="text" name="title" value="{{ course.title }}" required
+                               class="w-full px-3.5 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+
+                    <!-- Tecnologia & Nível -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                                Tecnologia *
+                            </label>
+                            <select name="technology" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                                {% for tech in technologies %}
+                                    <option value="{{ tech.id }}" {% if course.technology_id == tech.id %}selected{% endif %}>
+                                        {{ tech.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                                Nível *
+                            </label>
+                            <select name="level" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                                {% for code, label in levels %}
+                                    <option value="{{ code }}" {% if course.level == code %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Duração Estimada (minutos) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                            Duração Estimada (minutos) *
+                        </label>
+                        <input type="number" name="estimated_minutes" value="{{ course.estimated_minutes }}" min="5" max="600" required
+                               class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Imagem de Capa -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                            Imagem de Capa (Thumbnail)
+                        </label>
+                        {% if course.thumbnail %}
+                            <div class="mb-2">
+                                <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="w-full h-24 object-cover rounded-xl border border-gray-800">
+                            </div>
+                        {% endif %}
+                        <input type="file" name="thumbnail" accept="image/*"
+                               class="block w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-600/20 file:text-cyan-300 hover:file:bg-cyan-600/30 file:cursor-pointer">
+                    </div>
+
+                    <!-- Descrição da Ementa -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1">
+                            Descrição da Trilha *
+                        </label>
+                        <textarea name="description" rows="3" required
+                                  class="w-full px-3.5 py-2 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 transition resize-none">{{ course.description }}</textarea>
+                    </div>
+
+                    <!-- Cronograma Personalizado de Estudos (Montado por inteiro pelo Criador) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-cyan-400 mb-1 flex items-center justify-between">
+                            <span>Cronograma Personalizado de Estudos</span>
+                            <span class="text-[10px] text-gray-400 lowercase font-normal">opcional</span>
+                        </label>
+                        <textarea name="custom_schedule" rows="4" placeholder="Exemplo:&#10;• Dia 1: Assistir pílulas 1 e 2 e resolver o desafio de sintaxe&#10;• Dia 2: Implementar a lógica com a pílula 3&#10;• Dia 3: Concluir o desafio final e emitir o certificado"
+                                  class="w-full px-3.5 py-2 bg-gray-900 border border-cyan-800/50 rounded-xl text-xs text-white font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition resize-none">{{ course.custom_schedule }}</textarea>
+                        <span class="text-[11px] text-gray-400 mt-1 block leading-relaxed">
+                            Se preenchido, os alunos verão seu cronograma personalizado na página da trilha. Caso deixe em branco, o sistema dividirá automaticamente em etapas recomendadas.
+                        </span>
+                    </div>
+
+                    <!-- Status Publicado no Catálogo -->
+                    <div class="pt-2 flex items-center gap-2">
+                        <input type="checkbox" id="is_published" name="is_published" {% if course.is_published %}checked{% endif %}
+                               class="w-4 h-4 rounded text-cyan-600 bg-gray-900 border-gray-800 focus:ring-cyan-500">
+                        <label for="is_published" class="text-xs text-gray-300 font-medium cursor-pointer">
+                            Publicado no catálogo para todos os alunos
+                        </label>
+                    </div>
+
+                    <!-- Botão Salvar Configurações -->
+                    <div class="pt-2">
+                        <button type="submit" class="w-full px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
+                            Salvar Alterações da Trilha
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
