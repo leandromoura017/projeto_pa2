@@ -65,20 +65,112 @@ def _build_portfolio_context(target_user, request=None):
     enrolled_tech_ids.update(solved_attempts.exclude(challenge__lesson__course__technology__isnull=True).values_list('challenge__lesson__course__technology_id', flat=True))
     enrolled_tech_ids.update(published_videos.exclude(technology__isnull=True).values_list('technology_id', flat=True))
 
+    COURSE_PALETTES = [
+        {
+            'name': 'cyan',
+            'bg': 'bg-cyan-950/60',
+            'border': 'border-cyan-800/80',
+            'text': 'text-cyan-300',
+            'bar': 'from-cyan-500 to-blue-500',
+            'dot': 'bg-cyan-400',
+        },
+        {
+            'name': 'emerald',
+            'bg': 'bg-emerald-950/60',
+            'border': 'border-emerald-800/80',
+            'text': 'text-emerald-300',
+            'bar': 'from-emerald-500 to-teal-400',
+            'dot': 'bg-emerald-400',
+        },
+        {
+            'name': 'amber',
+            'bg': 'bg-amber-950/60',
+            'border': 'border-amber-800/80',
+            'text': 'text-amber-300',
+            'bar': 'from-amber-500 to-yellow-400',
+            'dot': 'bg-amber-400',
+        },
+        {
+            'name': 'purple',
+            'bg': 'bg-purple-950/60',
+            'border': 'border-purple-800/80',
+            'text': 'text-purple-300',
+            'bar': 'from-purple-500 to-indigo-400',
+            'dot': 'bg-purple-400',
+        },
+        {
+            'name': 'rose',
+            'bg': 'bg-rose-950/60',
+            'border': 'border-rose-800/80',
+            'text': 'text-rose-300',
+            'bar': 'from-rose-500 to-pink-400',
+            'dot': 'bg-rose-400',
+        },
+        {
+            'name': 'blue',
+            'bg': 'bg-blue-950/60',
+            'border': 'border-blue-800/80',
+            'text': 'text-blue-300',
+            'bar': 'from-blue-500 to-sky-400',
+            'dot': 'bg-blue-400',
+        },
+    ]
+
     tech_stats = []
     if enrolled_tech_ids:
         user_technologies = Technology.objects.filter(id__in=enrolled_tech_ids, is_active=True).order_by('name')
+        course_palette_idx = 0
         for tech in user_technologies:
             tech_solved = solved_attempts.filter(challenge__lesson__course__technology=tech).count()
             tech_certs = certificates.filter(course__technology=tech).count()
             tech_videos = published_videos.filter(technology=tech).count()
-            tech_enrolled_courses = [enr.course for enr in enrollments if enr.course.technology_id == tech.id]
 
-            # Cálculo ponderado de domínio prático (0 a 100%)
-            raw_score = (tech_solved * 30) + (tech_certs * 50) + (tech_videos * 20)
-            percentage = min(100, raw_score)
+            tech_courses = []
+            for enr in enrollments:
+                if enr.course.technology_id == tech.id:
+                    comp, tot, pct = enr.course.get_user_progress(target_user)
+                    has_cert = certificates.filter(course=enr.course).exists()
+                    is_completed = (tot > 0 and comp >= tot) or enr.completed_at is not None or has_cert
+                    if is_completed:
+                        pct = 100
+                        if tot > 0:
+                            comp = tot
 
-            if percentage >= 80:
+                    palette = COURSE_PALETTES[course_palette_idx % len(COURSE_PALETTES)]
+                    course_palette_idx += 1
+
+                    tech_courses.append({
+                        'course': enr.course,
+                        'enrollment': enr,
+                        'completed_count': comp,
+                        'total_count': tot,
+                        'progress_pct': pct,
+                        'is_completed': is_completed,
+                        'has_certificate': has_cert,
+                        'palette': palette,
+                    })
+
+            # Domínio prático ponderado da tecnologia
+            if tech_courses:
+                avg_course_pct = sum(c['progress_pct'] for c in tech_courses) / len(tech_courses)
+                all_completed = all(c['is_completed'] for c in tech_courses)
+                any_completed = any(c['is_completed'] for c in tech_courses) or tech_certs > 0
+                if all_completed:
+                    percentage = 100
+                else:
+                    bonus = (tech_solved * 10) + (tech_certs * 20) + (tech_videos * 10)
+                    percentage = min(100, max(int(round(avg_course_pct)), min(95, int(round(avg_course_pct)) + bonus)))
+            else:
+                raw_score = (tech_solved * 30) + (tech_certs * 50) + (tech_videos * 20)
+                percentage = min(100, raw_score)
+                all_completed = percentage >= 100 or tech_certs > 0
+                any_completed = tech_certs > 0
+
+            if percentage >= 100 or all_completed:
+                level_label = "Concluído • Formação Completa"
+                badge_color = "emerald"
+                percentage = 100
+            elif percentage >= 80:
                 level_label = "Avançado / Especialista"
                 badge_color = "emerald"
             elif percentage >= 40:
@@ -96,11 +188,14 @@ def _build_portfolio_context(target_user, request=None):
                 'solved_count': tech_solved,
                 'certs_count': tech_certs,
                 'videos_count': tech_videos,
-                'enrolled_courses': tech_enrolled_courses,
+                'courses': tech_courses,
+                'enrolled_courses': [c['course'] for c in tech_courses],
                 'percentage': percentage,
                 'level_label': level_label,
                 'badge_color': badge_color,
-                'has_activity': percentage > 0,
+                'has_activity': percentage > 0 or len(tech_courses) > 0,
+                'all_completed': all_completed,
+                'any_completed': any_completed,
             })
 
     # Maturidade global de conhecimento prático

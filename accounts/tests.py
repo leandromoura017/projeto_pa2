@@ -765,6 +765,54 @@ class Onda8PortfolioAndLGPDTests(TestCase):
         self.assertEqual(res_thread.status_code, 200)
         self.assertContains(res_thread, other.profile.avatar.url)
 
+    def test_knowledge_meter_shows_completed_course_and_palettes(self):
+        """
+        Garante que no medidor de conhecimento:
+        1. Cursos finalizados aparecem como Concluído (100%).
+        2. A tecnologia com todos os cursos concluídos exibe 'Concluído • Formação Completa' (100%).
+        3. Cada curso possui paleta de cores própria com gradiente e identificação visual.
+        """
+        from courses.models import Course, Lesson, Enrollment, LessonProgress
+        from django.utils import timezone
+
+        course = Course.objects.create(
+            title='Curso Python para Automação',
+            slug='curso-python-automacao',
+            technology=self.tech,
+            instructor=self.user,
+            is_published=True
+        )
+        l1 = Lesson.objects.create(course=course, title='Aula 1', order=1)
+        l2 = Lesson.objects.create(course=course, title='Aula 2', order=2)
+
+        enr = Enrollment.objects.create(user=self.user, course=course, is_active=True, completed_at=timezone.now())
+        LessonProgress.objects.create(user=self.user, lesson=l1, is_completed=True)
+        LessonProgress.objects.create(user=self.user, lesson=l2, is_completed=True)
+
+        self.client.force_login(self.user)
+        res = self.client.get(reverse('profile'))
+        self.assertEqual(res.status_code, 200)
+
+        tech_stat = next((t for t in res.context['tech_stats'] if t['tech'].slug == 'python'), None)
+        self.assertIsNotNone(tech_stat)
+        self.assertEqual(tech_stat['percentage'], 100)
+        self.assertEqual(tech_stat['level_label'], 'Concluído • Formação Completa')
+        self.assertTrue(tech_stat['all_completed'])
+
+        # Validar dados individuais do curso
+        self.assertEqual(len(tech_stat['courses']), 1)
+        course_data = tech_stat['courses'][0]
+        self.assertTrue(course_data['is_completed'])
+        self.assertEqual(course_data['progress_pct'], 100)
+        self.assertIn('palette', course_data)
+        self.assertIn('bar', course_data['palette'])
+
+        # Validar renderização HTML no template
+        content = res.content.decode('utf-8')
+        self.assertIn('Concluído • Formação Completa', content)
+        self.assertIn('Concluído', content)
+        self.assertIn('Cursos & Trilhas do Tema:', content)
+
     def test_account_delete_view_lgpd_requires_login(self):
         delete_url = reverse('account_delete')
         res = self.client.get(delete_url)

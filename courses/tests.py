@@ -1045,5 +1045,61 @@ class DynamicCourseCreatorTests(TestCase):
         self.assertIn('Resumo essencial do tema para fixação conceitual.', content_str)
         self.assertIn('Dúvidas no tema? Clique para ler o contexto / explicação teórica da pílula', content_str)
 
+    def test_mentor_photo_in_course_list_and_detail(self):
+        """
+        Garante que a foto do mentor é renderizada tanto no catálogo de cursos quanto no detalhe.
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from accounts.models import Profile
+
+        # Mock de imagem para avatar
+        avatar_file = SimpleUploadedFile("mentor_avatar.png", b"fake_png_data", content_type="image/png")
+        mentor_profile, _ = Profile.objects.get_or_create(user=self.creator)
+        mentor_profile.avatar = avatar_file
+        mentor_profile.save()
+
+        course = Course.objects.create(
+            title='Trilha com Mentor com Foto',
+            slug='trilha-com-mentor-com-foto',
+            technology=self.tech,
+            instructor=self.creator,
+            is_published=True
+        )
+
+        # 1. Catálogo de cursos (course_list)
+        res_list = self.client.get(reverse('course_list'))
+        self.assertEqual(res_list.status_code, 200)
+        self.assertIn(mentor_profile.avatar.url, res_list.content.decode('utf-8'))
+        self.assertIn('Mentor da Trilha', res_list.content.decode('utf-8'))
+
+        # 2. Detalhe do curso (course_detail)
+        res_detail = self.client.get(reverse('course_detail', kwargs={'slug': course.slug}))
+        self.assertEqual(res_detail.status_code, 200)
+        self.assertIn(mentor_profile.avatar.url, res_detail.content.decode('utf-8'))
+
+    def test_course_detail_shows_completed_badge_when_finished(self):
+        """
+        Garante que dentro do curso, quando 100% concluído, é exibido o badge 'Trilha Concluída'.
+        """
+        from courses.models import LessonProgress
+        self.client.force_login(self.creator)
+
+        course = Course.objects.create(
+            title='Trilha Completa Finalizada',
+            slug='trilha-completa-finalizada',
+            technology=self.tech,
+            instructor=self.creator,
+            is_published=True
+        )
+        l1 = Lesson.objects.create(course=course, title='Aula 1', order=1)
+        Enrollment.objects.create(user=self.creator, course=course, is_active=True)
+        LessonProgress.objects.create(user=self.creator, lesson=l1, is_completed=True)
+
+        res = self.client.get(reverse('course_detail', kwargs={'slug': course.slug}))
+        self.assertEqual(res.status_code, 200)
+        content_str = res.content.decode('utf-8')
+        self.assertIn('Trilha Concluída', content_str)
+        self.assertIn('1 de 1 pílula concluída (100%)', content_str)
+
 
 

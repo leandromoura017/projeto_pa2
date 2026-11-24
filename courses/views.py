@@ -55,7 +55,7 @@ def course_list_view(request):
     level = request.GET.get('level', '').strip()
     query = request.GET.get('q', '').strip()
 
-    courses = Course.objects.filter(is_published=True).select_related('technology', 'instructor').prefetch_related('lessons')
+    courses = Course.objects.filter(is_published=True).select_related('technology', 'instructor__profile').prefetch_related('lessons')
     technologies = Technology.objects.filter(is_active=True).order_by('name')
 
     if tech_slug:
@@ -91,7 +91,7 @@ def course_detail_view(request, slug):
     progresso percentual, informações do instrutor, matrícula e emissão de certificado.
     """
     course = get_object_or_404(
-        Course.objects.select_related('technology', 'instructor').prefetch_related('lessons__video'),
+        Course.objects.select_related('technology', 'instructor__profile').prefetch_related('lessons__video'),
         slug=slug,
         is_published=True
     )

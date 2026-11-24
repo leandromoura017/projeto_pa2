@@ -68,8 +68,14 @@
             <!-- Instructor Info & Meta -->
             <div class="mt-6 pt-6 border-t border-gray-800 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <a href="{% url 'public_profile' course.instructor.id %}" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40 hover:scale-105 transition">
-                        {{ course.instructor.first_name|default:course.instructor.email|slice:":1"|upper }}
+                    <a href="{% url 'public_profile' course.instructor.id %}" class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center border border-cyan-400/40 hover:scale-105 transition shrink-0 bg-gray-800" title="Ver Perfil do Mentor">
+                        {% if course.instructor.profile.avatar %}
+                            <img src="{{ course.instructor.profile.avatar.url }}" alt="{{ course.instructor.first_name|default:course.instructor.username }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white">
+                                {{ course.instructor.first_name|default:course.instructor.email|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
                     </a>
                     <div>
                         <span class="text-xs text-gray-400 block">Instrutor / Mentor da Trilha</span>
@@ -140,9 +146,16 @@
                 <div class="mt-6 pt-6 border-t border-gray-800/80">
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                                Progresso na Trilha
-                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                                    Progresso na Trilha
+                                </span>
+                                {% if progress_pct >= 100 and total_count > 0 or certificate %}
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 border border-emerald-600 text-emerald-300">
+                                        Trilha Concluída
+                                    </span>
+                                {% endif %}
+                            </div>
                             <p class="text-xs text-gray-400 mt-0.5">
                                 {{ completed_count }} de {{ total_count }} pílula{{ total_count|pluralize:"s" }} concluída{{ completed_count|pluralize:"s" }} ({{ progress_pct }}%)
                             </p>
