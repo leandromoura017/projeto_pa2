@@ -224,9 +224,22 @@ class TAMEvaluation(models.Model):
         verbose_name_plural = "Avaliações TAM (Pesquisa PA2)"
         ordering = ['-created_at']
 
+    @property
+    def display_name(self):
+        """
+        Retorna o nome do avaliador para exibição segura em templates e relatórios,
+        evitando falhas de lookup quando a avaliação for anônima (user=None).
+        """
+        if self.evaluator_name:
+            return self.evaluator_name
+        if self.user and getattr(self.user, 'email', None):
+            return self.user.email
+        if self.evaluator_email:
+            return self.evaluator_email
+        return "Avaliador Anônimo"
+
     def __str__(self):
-        nome = self.evaluator_name or (self.user.email if self.user else "Avaliador Anônimo")
-        return f"TAM #{self.id} - {nome} ({self.get_role_display()}) - Média Geral: {self.overall_score:.2f}"
+        return f"TAM #{self.id} - {self.display_name} ({self.get_role_display()}) - Média Geral: {self.overall_score:.2f}"
 
     @property
     def pu_score(self):

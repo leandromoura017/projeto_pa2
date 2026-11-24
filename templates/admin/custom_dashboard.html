@@ -493,7 +493,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <h4 class="text-sm font-bold text-white">
-                                            {{ eval.evaluator_name|default:eval.user.email|default:"Avaliador Anônimo" }}
+                                            {{ eval.display_name }}
                                         </h4>
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 border border-cyan-800 text-cyan-300">
                                             {{ eval.get_role_display }}

@@ -569,6 +569,39 @@ class TAMEvaluationTests(TestCase):
         eval_obj = TAMEvaluation.objects.get(user=self.user)
         self.assertEqual(eval_obj.overall_score, 4.0)
 
+    def test_admin_dashboard_renders_anonymous_tam_evaluation_without_error(self):
+        """
+        Garante que o painel admin /painel-admin/ renderiza avaliações TAM anônimas
+        (user=None e evaluator_name="") sem disparar VariableDoesNotExist.
+        """
+        from accounts.models import TAMEvaluation
+        admin_user = User.objects.create_superuser(
+            email='superadmin_tam@codeview.com',
+            password='AdminPassword123!',
+            first_name='Admin'
+        )
+        self.client.force_login(admin_user)
+
+        # Avaliação totalmente anônima (sem user, sem nome preenchido)
+        TAMEvaluation.objects.create(
+            user=None,
+            evaluator_name='',
+            evaluator_email='',
+            role='outro',
+            experience='menos_1_ano',
+            device='mobile',
+            pu1=5, pu2=5, pu3=5, pu4=5, pu5=5,
+            peou1=5, peou2=5, peou3=5, peou4=5, peou5=5,
+            atu1=5, atu2=5, atu3=5,
+            biu1=5, biu2=5, biu3=5
+        )
+
+        response = self.client.get(reverse('admin_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Avaliador Anônimo')
+        self.assertTemplateUsed(response, 'admin/custom_dashboard.html')
+
+
 
 class Onda8PortfolioAndLGPDTests(TestCase):
     """
