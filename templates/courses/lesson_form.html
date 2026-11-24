@@ -100,13 +100,24 @@
                 {% endif %}
             </div>
 
-            <!-- Conteúdo Complementar / Snippet de Código -->
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
-                    Conteúdo Complementar / Resumo do Código
-                </label>
-                <textarea name="content" rows="4" placeholder="Explique os pontos-chave ensinados nesta pílula, forneça os comandos para o terminal ou snippets de código que o aluno precisará..."
-                          class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none">{{ lesson.content|default:'' }}</textarea>
+            <!-- Contexto Teórico / Explicação da Pílula (Opcional) -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-[#111827] border border-cyan-800/40 space-y-3">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        Contexto Teórico / Explicação da Pílula
+                    </label>
+                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300">
+                        Opcional
+                    </span>
+                </div>
+                <p class="text-[11px] text-gray-300 leading-relaxed">
+                    Insira uma breve explicação do tema abordado nesta etapa/vídeo. Alunos que não compreenderem totalmente assistindo à pílula poderão ler este texto explicativo para tirar dúvidas antes de responder aos desafios.
+                </p>
+                <textarea name="content" rows="4" 
+                          placeholder="Ex: Nesta aula abordamos o funcionamento de funções assíncronas. Quando usamos 'await', a execução aguarda a resolução da Promise antes de prosseguir, evitando encadeamentos complexos. Caso ocorra erro, a cláusula catch captura a exceção de forma transparente..."
+                          class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-y">{{ lesson.content|default:'' }}</textarea>
+                <span class="text-[10px] text-gray-500 block">Fica a critério do criador da trilha preencher ou deixar em branco.</span>
             </div>
 
             {% if not is_edit %}

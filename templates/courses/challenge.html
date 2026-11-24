@@ -74,12 +74,34 @@
                 </h1>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                {% if lesson.video %}
+                    <a href="{% url 'video_detail' lesson.video.id %}" target="_blank" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-950/80 border border-cyan-800 text-cyan-300 hover:bg-cyan-900 transition flex items-center gap-1.5 shadow" title="Rever Vídeo da Aula">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Rever Vídeo</span>
+                    </a>
+                {% endif %}
                 <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-950/80 border border-amber-700/80 text-amber-300 flex items-center gap-1 shadow">
                     +{{ challenge.points }} pontos
                 </span>
             </div>
         </div>
+
+        <!-- Explicação Teórica da Pílula (para quem teve dúvidas pelo vídeo) -->
+        {% if lesson.content %}
+            <details class="mb-6 rounded-2xl bg-cyan-950/20 border border-cyan-800/40 p-4 text-xs text-gray-300 group">
+                <summary class="cursor-pointer font-bold text-cyan-400 hover:text-cyan-300 select-none flex items-center justify-between">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Dúvidas no tema? Clique para ler o contexto / explicação teórica da pílula</span>
+                    </span>
+                    <svg class="w-4 h-4 transition-transform duration-200 group-open:rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="mt-3 pt-3 border-t border-cyan-900/40 text-gray-200 leading-relaxed whitespace-pre-line text-xs sm:text-sm font-sans">
+                    {{ lesson.content }}
+                </div>
+            </details>
+        {% endif %}
 
         <!-- Question Prompt -->
         <div class="mb-6">

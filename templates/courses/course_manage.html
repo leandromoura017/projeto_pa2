@@ -116,9 +116,15 @@
                                                 </span>
                                             {% endif %}
                                         </div>
-                                        <p class="text-[11px] text-gray-400 mt-1 line-clamp-1">
-                                            {{ lesson.content|default:"Sem descrição adicional" }}
-                                        </p>
+                                        {% if lesson.content %}
+                                            <p class="text-[11px] text-gray-400 mt-1 line-clamp-2">
+                                                <span class="text-cyan-400 font-semibold">Contexto:</span> {{ lesson.content }}
+                                            </p>
+                                        {% else %}
+                                            <p class="text-[11px] text-gray-500 mt-1 italic">
+                                                Sem explicação teórica cadastrada (opcional)
+                                            </p>
+                                        {% endif %}
                                     </div>
                                 </div>
 

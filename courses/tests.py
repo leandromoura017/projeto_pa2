@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import IntegrityError
-from videos.models import Technology
+from videos.models import Technology, Video
 from .models import Course, Lesson, Enrollment, Challenge, ChallengeAttempt
 
 User = get_user_model()
@@ -937,6 +937,113 @@ class DynamicCourseCreatorTests(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTemplateUsed(res, 'courses/my_courses.html')
         self.assertContains(res, 'Meu Curso 1')
+
+    def test_video_button_precedes_challenge_button_and_renders_explanation(self):
+        """
+        Garante que no detalhe do curso:
+        1. 'Ver Vídeo' aparece antes de 'Resolver Desafio'.
+        2. O link de 'Ver Vídeo' aponta diretamente para a pílula (video_detail).
+        3. A explicação / contexto teórico opcional da pílula é exibido em bloco expansível.
+        """
+        video = Video.objects.create(
+            title='Pílula Teste Ordem',
+            description='Vídeo de demonstração.',
+            technology=self.tech,
+            author=self.creator,
+            duration_seconds=45,
+            is_published=True
+        )
+        course = Course.objects.create(
+            title='Curso com Vídeo e Desafio',
+            slug='curso-com-video-e-desafio',
+            technology=self.tech,
+            instructor=self.creator,
+            is_published=True
+        )
+        lesson = Lesson.objects.create(
+            course=course,
+            title='Aula 1: Conceito Fundamental',
+            order=1,
+            video=video,
+            content='Explicação teórica curta para quem tiver dúvidas após assistir ao vídeo.',
+            duration_seconds=45
+        )
+        ch = Challenge.objects.create(
+            lesson=lesson,
+            title='Desafio da Aula 1',
+            question_text='Qual o conceito correto?',
+            option_a='A',
+            option_b='B',
+            correct_option='A',
+            points=10
+        )
+
+        res = self.client.get(reverse('course_detail', kwargs={'slug': course.slug}))
+        self.assertEqual(res.status_code, 200)
+        content_str = res.content.decode('utf-8')
+
+        # 1. 'Ver Vídeo' vem antes de 'Resolver Desafio'
+        video_pos = content_str.find('Ver Vídeo')
+        challenge_pos = content_str.find('Resolver Desafio')
+        self.assertNotEqual(video_pos, -1)
+        self.assertNotEqual(challenge_pos, -1)
+        self.assertLess(video_pos, challenge_pos, "'Ver Vídeo' deve vir antes de 'Resolver Desafio'")
+
+        # 2. O link aponta para a pílula de vídeo específica
+        video_detail_url = reverse('video_detail', kwargs={'video_id': video.id})
+        self.assertIn(video_detail_url, content_str)
+
+        # 3. Explicação teórica exibida
+        self.assertIn('Contexto / Explicação Teórica', content_str)
+        self.assertIn('Explicação teórica curta para quem tiver dúvidas', content_str)
+
+    def test_challenge_view_renders_video_review_and_theory_explanation(self):
+        """
+        Na tela do desafio prático (/aulas/<id>/desafio/):
+        1. Deve exibir o botão 'Rever Vídeo' se a aula tiver vídeo associado.
+        2. Deve exibir o acordeão com o contexto explicativo da pílula se cadastrado.
+        """
+        self.client.force_login(self.creator)
+        video = Video.objects.create(
+            title='Vídeo da Trilha',
+            technology=self.tech,
+            author=self.creator,
+            duration_seconds=60,
+            is_published=True
+        )
+        course = Course.objects.create(
+            title='Trilha com Explicação',
+            slug='trilha-com-explicacao',
+            technology=self.tech,
+            instructor=self.creator,
+            is_published=True
+        )
+        lesson = Lesson.objects.create(
+            course=course,
+            title='Aula com Explicação Teórica',
+            order=1,
+            video=video,
+            content='Resumo essencial do tema para fixação conceitual.',
+            duration_seconds=60
+        )
+        ch = Challenge.objects.create(
+            lesson=lesson,
+            title='Desafio 1',
+            question_text='Pergunta prática',
+            option_a='Opção 1',
+            option_b='Opção 2',
+            correct_option='A'
+        )
+
+        url = reverse('lesson_challenge', kwargs={'lesson_id': lesson.id})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+        content_str = res.content.decode('utf-8')
+
+        self.assertIn('Rever Vídeo', content_str)
+        self.assertIn(reverse('video_detail', kwargs={'video_id': video.id}), content_str)
+        self.assertIn('Resumo essencial do tema para fixação conceitual.', content_str)
+        self.assertIn('Dúvidas no tema? Clique para ler o contexto / explicação teórica da pílula', content_str)
 
 
 
