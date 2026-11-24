@@ -173,6 +173,36 @@ class CourseViewsIntegrationTest(TestCase):
         enrollment = Enrollment.objects.get(user=self.student, course=self.course_python)
         self.assertFalse(enrollment.is_active)
 
+    def test_unenroll_completed_course_blocked(self):
+        """Não deve permitir cancelamento de matrícula em cursos já concluídos / certificados."""
+        from django.utils import timezone
+        enr = Enrollment.objects.create(
+            user=self.student,
+            course=self.course_python,
+            is_active=True,
+            completed_at=timezone.now()
+        )
+        self.client.login(email='carlinhos@codeview.com', password='Password123!')
+        response = self.client.post(reverse('course_unenroll', kwargs={'slug': self.course_python.slug}))
+        self.assertEqual(response.status_code, 302)
+        enr.refresh_from_db()
+        self.assertTrue(enr.is_active)
+
+    def test_unenroll_mid_course_wipes_progress(self):
+        """Ao cancelar no meio do curso, deve zerar o progresso das aulas e tentativas de desafios."""
+        from courses.models import LessonProgress, Challenge, ChallengeAttempt
+        Enrollment.objects.create(user=self.student, course=self.course_python, is_active=True)
+        lp = LessonProgress.objects.create(user=self.student, lesson=self.lesson_python, is_completed=True)
+        ch = Challenge.objects.create(lesson=self.lesson_python, title='Desafio', question_text='Pergunta', correct_option='A')
+        att = ChallengeAttempt.objects.create(user=self.student, challenge=ch, is_correct=True, selected_option='A')
+
+        self.client.login(email='carlinhos@codeview.com', password='Password123!')
+        response = self.client.post(reverse('course_unenroll', kwargs={'slug': self.course_python.slug}))
+        self.assertEqual(response.status_code, 302)
+
+        self.assertFalse(LessonProgress.objects.filter(id=lp.id).exists())
+        self.assertFalse(ChallengeAttempt.objects.filter(id=att.id).exists())
+
 
 class SeedCoursesCommandTest(TestCase):
     def test_seed_courses_command(self):

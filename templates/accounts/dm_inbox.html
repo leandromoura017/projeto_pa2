@@ -38,9 +38,13 @@
                         <div class="bg-[#111827] border {% if conv.unread_count > 0 %}border-cyan-500/60{% else %}border-gray-800{% endif %} hover:border-cyan-500/50 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition shadow-lg group">
                             <!-- Clickable conversation area -->
                             <a href="{% url 'dm_thread' conv.partner.id %}" class="flex items-center gap-4 min-w-0 flex-1">
-                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-base font-bold text-white shrink-0 border border-cyan-400/40">
-                                    {{ conv.partner.first_name|default:conv.partner.email|slice:":1"|upper }}
-                                </div>
+                                {% if conv.partner.profile and conv.partner.profile.avatar %}
+                                    <img src="{{ conv.partner.profile.avatar.url }}" alt="{{ conv.partner.first_name }}" class="w-12 h-12 rounded-2xl object-cover border border-cyan-400/40 shrink-0">
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-base font-bold text-white shrink-0 border border-cyan-400/40">
+                                        {{ conv.partner.first_name|default:conv.partner.email|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition truncate">
@@ -122,9 +126,13 @@
                     {% for mentor in mentors %}
                         <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-col gap-3 shadow">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-sm font-bold text-black shrink-0">
-                                    {{ mentor.first_name|default:mentor.email|slice:":1"|upper }}
-                                </div>
+                                {% if mentor.profile and mentor.profile.avatar %}
+                                    <img src="{{ mentor.profile.avatar.url }}" alt="{{ mentor.first_name }}" class="w-10 h-10 rounded-xl object-cover border border-amber-500/40 shrink-0">
+                                {% else %}
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-sm font-bold text-black shrink-0">
+                                        {{ mentor.first_name|default:mentor.email|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
                                 <div>
                                     <h3 class="text-sm font-bold text-white">
                                         {{ mentor.get_full_name|default:mentor.first_name|default:mentor.username }}

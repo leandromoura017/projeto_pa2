@@ -91,18 +91,33 @@
                 <div>
                     {% if user.is_authenticated %}
                         {% if is_enrolled %}
-                            <div class="flex flex-wrap items-center gap-3">
-                                <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    Matriculado
-                                </span>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    {% if certificate or progress_pct >= 100 %}
+                                        <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                            Curso Concluído (Certificado Emitido)
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                            Matriculado
+                                        </span>
 
-                                <form method="POST" action="{% url 'course_unenroll' course.slug %}" onsubmit="return confirm('Deseja realmente cancelar sua matrícula nesta trilha?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-red-300 hover:bg-red-950/40 border border-gray-800 hover:border-red-800/60 transition">
-                                        Cancelar Matrícula
-                                    </button>
-                                </form>
+                                        <form method="POST" action="{% url 'course_unenroll' course.slug %}" 
+                                              onsubmit="return confirm('ATENÇÃO: Ao cancelar a matrícula no meio do curso, você perderá toda a sua jornada e o progresso das pílulas e desafios realizados até aqui nesta trilha.\n\nDeseja realmente cancelar sua matrícula?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-red-300 hover:bg-red-950/40 border border-gray-800 hover:border-red-800/60 transition" title="Ao cancelar no meio do curso, todo o progresso atual é perdido">
+                                                Cancelar Matrícula
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                                {% if not certificate and progress_pct < 100 %}
+                                    <span class="text-[11px] text-gray-500">
+                                        Lembrete: cancelar a matrícula no meio do curso zera o progresso acumulado nesta trilha.
+                                    </span>
+                                {% endif %}
                             </div>
                         {% else %}
                             <form method="POST" action="{% url 'course_enroll' course.slug %}">

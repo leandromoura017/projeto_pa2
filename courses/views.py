@@ -209,6 +209,10 @@ def enroll_course_view(request, slug):
 def unenroll_course_view(request, slug):
     """
     Ação de cancelamento de matrícula no curso.
+    Regra de negócio:
+    - Se o curso já foi finalizado (completed_at != None ou certificado emitido), não permite cancelamento.
+    - Se cancelado no meio do curso, o aluno perde toda a jornada realizada até o momento
+      (progresso das aulas e tentativas de desafios da trilha são resetados).
     """
     if request.method != 'POST':
         return redirect('course_detail', slug=slug)
@@ -217,19 +221,31 @@ def unenroll_course_view(request, slug):
     enrollment = Enrollment.objects.filter(user=request.user, course=course, is_active=True).first()
 
     if enrollment:
+        # Se o curso já foi finalizado, bloquear cancelamento
+        has_cert = Certificate.objects.filter(user=request.user, course=course).exists()
+        if enrollment.completed_at is not None or has_cert:
+            messages.error(request, "Você já concluiu este curso e obteve sua certificação. Não é permitido cancelar a matrícula de uma formação finalizada.")
+            return redirect('course_detail', slug=slug)
+
+        # Cancelamento no meio do curso: apaga a jornada até o momento
+        lesson_ids = list(course.lessons.values_list('id', flat=True))
+        LessonProgress.objects.filter(user=request.user, lesson_id__in=lesson_ids).delete()
+        ChallengeAttempt.objects.filter(user=request.user, challenge__lesson_id__in=lesson_ids).delete()
+
+        # Desativa a matrícula e zera conclusão
         enrollment.is_active = False
+        enrollment.completed_at = None
         enrollment.save()
 
-        # Notificação de matrícula cancelada (Onda 7 - #31)
         Notification.objects.create(
             user=request.user,
             title="⚠️ Matrícula Cancelada",
-            message=f"Você cancelou sua matrícula na trilha '{course.title}'. Seu progresso foi pausado.",
+            message=f"Você cancelou sua matrícula na trilha '{course.title}'. Seu progresso e atividades foram resetados.",
             link=reverse('course_detail', kwargs={'slug': course.slug}),
             icon='⚠️'
         )
 
-        messages.warning(request, f"Você cancelou sua matrícula no curso '{course.title}'.")
+        messages.warning(request, f"Sua matrícula no curso '{course.title}' foi cancelada e seu progresso nesta trilha foi resetado.")
 
     return redirect('course_detail', slug=slug)
 
@@ -837,12 +853,12 @@ def course_manage_view(request, slug):
                 messages.success(request, "Dados da trilha atualizados com sucesso!")
                 return redirect('course_manage', slug=course.slug)
 
-    lessons = course.lessons.select_related('video', 'challenge').order_by('order', 'id')
+    lessons = course.lessons.select_related('video').prefetch_related('challenges').order_by('order', 'id')
     user_videos = Video.objects.filter(author=request.user).order_by('-created_at')
 
     total_enrollments = Enrollment.objects.filter(course=course, is_active=True).count()
     completed_enrollments = Enrollment.objects.filter(course=course, completed_at__isnull=False).count()
-    total_challenges = sum(1 for l in lessons if hasattr(l, 'challenge') and l.challenge is not None)
+    total_challenges = Challenge.objects.filter(lesson__course=course).count()
 
     return render(request, 'courses/course_manage.html', {
         'course': course,
@@ -1131,7 +1147,16 @@ def challenge_manage_view(request, slug, lesson_id):
     """
     Lista todos os desafios práticos da aula para o criador, permitindo
     adicionar quantos desafios desejar (discursivos ou alternativas).
+    Se receber POST, delega para criação ou edição para compatibilidade.
     """
+    if request.method == 'POST':
+        course = get_object_or_404(Course, slug=slug)
+        lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+        existing = lesson.challenges.first()
+        if existing and 'challenge_type' not in request.POST:
+            return challenge_edit_view(request, slug, lesson_id, existing.id)
+        return challenge_create_view(request, slug, lesson_id)
+
     course = get_object_or_404(Course, slug=slug)
     lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
 

@@ -54,40 +54,54 @@ def _build_portfolio_context(target_user, request=None):
     # Medidor de Conhecimento Técnico (Onda 8 - #35)
     total_points = sum(a.challenge.points for a in solved_attempts if a.challenge and a.challenge.points)
 
+    # Medidor de Conhecimento Técnico (Onda 8 - #35)
+    # Filtra apenas tecnologias de cursos em que o usuário está matriculado ou possui atividades práticas
+    enrolled_tech_ids = set(
+        Enrollment.objects.filter(user=target_user, is_active=True)
+        .exclude(course__technology__isnull=True)
+        .values_list('course__technology_id', flat=True)
+    )
+    enrolled_tech_ids.update(certificates.exclude(course__technology__isnull=True).values_list('course__technology_id', flat=True))
+    enrolled_tech_ids.update(solved_attempts.exclude(challenge__lesson__course__technology__isnull=True).values_list('challenge__lesson__course__technology_id', flat=True))
+    enrolled_tech_ids.update(published_videos.exclude(technology__isnull=True).values_list('technology_id', flat=True))
+
     tech_stats = []
-    all_technologies = Technology.objects.filter(is_active=True).order_by('name')
-    for tech in all_technologies:
-        tech_solved = solved_attempts.filter(challenge__lesson__course__technology=tech).count()
-        tech_certs = certificates.filter(course__technology=tech).count()
-        tech_videos = published_videos.filter(technology=tech).count()
+    if enrolled_tech_ids:
+        user_technologies = Technology.objects.filter(id__in=enrolled_tech_ids, is_active=True).order_by('name')
+        for tech in user_technologies:
+            tech_solved = solved_attempts.filter(challenge__lesson__course__technology=tech).count()
+            tech_certs = certificates.filter(course__technology=tech).count()
+            tech_videos = published_videos.filter(technology=tech).count()
+            tech_enrolled_courses = [enr.course for enr in enrollments if enr.course.technology_id == tech.id]
 
-        # Cálculo ponderado de domínio prático (0 a 100%)
-        raw_score = (tech_solved * 30) + (tech_certs * 50) + (tech_videos * 20)
-        percentage = min(100, raw_score)
+            # Cálculo ponderado de domínio prático (0 a 100%)
+            raw_score = (tech_solved * 30) + (tech_certs * 50) + (tech_videos * 20)
+            percentage = min(100, raw_score)
 
-        if percentage >= 80:
-            level_label = "Avançado / Especialista"
-            badge_color = "emerald"
-        elif percentage >= 40:
-            level_label = "Intermediário / Praticante"
-            badge_color = "cyan"
-        elif percentage > 0:
-            level_label = "Iniciante / Em Formação"
-            badge_color = "blue"
-        else:
-            level_label = "Não Iniciado"
-            badge_color = "gray"
+            if percentage >= 80:
+                level_label = "Avançado / Especialista"
+                badge_color = "emerald"
+            elif percentage >= 40:
+                level_label = "Intermediário / Praticante"
+                badge_color = "cyan"
+            elif percentage > 0:
+                level_label = "Iniciante / Em Formação"
+                badge_color = "blue"
+            else:
+                level_label = "Iniciado / Cursando"
+                badge_color = "amber"
 
-        tech_stats.append({
-            'tech': tech,
-            'solved_count': tech_solved,
-            'certs_count': tech_certs,
-            'videos_count': tech_videos,
-            'percentage': percentage,
-            'level_label': level_label,
-            'badge_color': badge_color,
-            'has_activity': percentage > 0,
-        })
+            tech_stats.append({
+                'tech': tech,
+                'solved_count': tech_solved,
+                'certs_count': tech_certs,
+                'videos_count': tech_videos,
+                'enrolled_courses': tech_enrolled_courses,
+                'percentage': percentage,
+                'level_label': level_label,
+                'badge_color': badge_color,
+                'has_activity': percentage > 0,
+            })
 
     # Maturidade global de conhecimento prático
     active_techs_count = sum(1 for t in tech_stats if t['has_activity'])
@@ -419,7 +433,7 @@ def dm_thread_view(request, user_id):
     thread_messages = DirectMessage.objects.filter(
         Q(sender=request.user, recipient=other_user) |
         Q(sender=other_user, recipient=request.user)
-    ).select_related('sender', 'recipient').order_by('created_at')
+    ).select_related('sender__profile', 'recipient__profile').order_by('created_at')
 
     return render(request, 'accounts/dm_thread.html', {
         'other_user': other_user,

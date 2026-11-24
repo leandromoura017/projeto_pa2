@@ -707,6 +707,64 @@ class Onda8PortfolioAndLGPDTests(TestCase):
         self.assertTrue(tech_stat['has_activity'])
         self.assertGreater(tech_stat['percentage'], 0)
 
+    def test_knowledge_meter_only_shows_enrolled_technologies(self):
+        """O medidor de conhecimento técnico deve mostrar apenas tecnologias de cursos em que o aluno se inscreveu."""
+        from videos.models import Technology
+        from courses.models import Course, Enrollment
+
+        tech_rust = Technology.objects.create(name='Rust', slug='rust', icon_name='🦀')
+        Course.objects.create(title='Curso Rust', slug='curso-rust', technology=tech_rust, instructor=self.user)
+
+        course_py = Course.objects.create(title='Curso Python', slug='curso-py', technology=self.tech, instructor=self.user)
+        Enrollment.objects.create(user=self.user, course=course_py, is_active=True)
+
+        self.client.force_login(self.user)
+        res = self.client.get(reverse('profile'))
+        self.assertEqual(res.status_code, 200)
+
+        tech_slugs = [t['tech'].slug for t in res.context['tech_stats']]
+        self.assertIn('python', tech_slugs)
+        self.assertNotIn('rust', tech_slugs)  # Não se inscreveu em Rust, então não aparece
+
+    def test_portfolio_courses_six_visible_limit(self):
+        """No portfólio, no máximo 6 cursos ficam visíveis inicialmente; os excedentes ficam ocultos para 'ver mais'."""
+        from courses.models import Course, Enrollment
+        for i in range(1, 8):
+            c = Course.objects.create(title=f'Curso {i}', slug=f'curso-{i}', technology=self.tech, instructor=self.user)
+            Enrollment.objects.create(user=self.user, course=c, is_active=True)
+
+        self.client.force_login(self.user)
+        res = self.client.get(reverse('profile'))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.context['enrollment_cards']), 7)
+        self.assertContains(res, 'extra-course-item')
+        self.assertContains(res, 'btn-toggle-courses')
+        self.assertContains(res, 'Ver mais cursos (+1)')
+
+    def test_dm_thread_and_inbox_avatars_display(self):
+        """Fotos de perfil dos usuários devem aparecer nas conversas e caixa de DMs."""
+        from accounts.models import DirectMessage
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        other = User.objects.create_user(email='partner.avatar@codeview.com', password='Password123!', first_name='AvatarDev')
+        fake_avatar = SimpleUploadedFile('avatar.jpg', b'fake-image-content', content_type='image/jpeg')
+        other.profile.avatar = fake_avatar
+        other.profile.save()
+
+        DirectMessage.objects.create(sender=other, recipient=self.user, content='Olá com avatar!')
+
+        self.client.force_login(self.user)
+
+        # 1. Inbox
+        res_inbox = self.client.get(reverse('dm_inbox'))
+        self.assertEqual(res_inbox.status_code, 200)
+        self.assertContains(res_inbox, other.profile.avatar.url)
+
+        # 2. Thread
+        res_thread = self.client.get(reverse('dm_thread', kwargs={'user_id': other.id}))
+        self.assertEqual(res_thread.status_code, 200)
+        self.assertContains(res_thread, other.profile.avatar.url)
+
     def test_account_delete_view_lgpd_requires_login(self):
         delete_url = reverse('account_delete')
         res = self.client.get(delete_url)
