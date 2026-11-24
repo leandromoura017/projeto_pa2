@@ -121,25 +121,25 @@
                         </div>
 
                         <!-- Bottom Content Overlay (Title, Description, Author, Like, Share & Challenge) -->
-                        <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none space-y-2">
+                        <div class="absolute bottom-0 left-0 right-0 p-3.5 sm:p-5 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none space-y-2">
                             <!-- Author, Like Button, Share Button and Challenge Quick Link -->
-                            <div class="flex items-center justify-between pointer-events-auto gap-2">
-                                <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-2 hover:opacity-90 transition">
-                                    <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-[11px] font-bold text-white border border-cyan-400/40">
+                            <div class="flex flex-wrap items-center justify-between pointer-events-auto gap-2">
+                                <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-1.5 sm:gap-2 hover:opacity-90 transition min-w-0 max-w-[140px] sm:max-w-none">
+                                    <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-[11px] font-bold text-white border border-cyan-400/40 shrink-0">
                                         {{ video.author.first_name|default:video.author.email|slice:":1"|upper }}
                                     </div>
-                                    <span class="text-xs font-semibold text-white drop-shadow hover:underline">
+                                    <span class="text-xs font-semibold text-white drop-shadow hover:underline truncate">
                                         {{ video.author.first_name|default:video.author.username }}
                                     </span>
                                 </a>
 
-                                <div class="flex items-center gap-1.5 sm:gap-2">
+                                <div class="flex items-center gap-1 sm:gap-1.5 flex-wrap shrink-0">
                                     <!-- Botão Curtir Vídeo (Onda 3) -->
                                     <form method="POST" action="{% url 'video_like' video.id %}" class="like-form inline">
                                         {% csrf_token %}
                                         <button type="submit" 
                                                 data-video-id="{{ video.id }}"
-                                                class="btn-like inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
+                                                class="btn-like inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
                                                 {% if video.id in liked_video_ids %}
                                                     bg-rose-600/90 border-rose-400 text-white shadow-lg shadow-rose-500/30
                                                 {% else %}
@@ -152,7 +152,7 @@
 
                                     <!-- Botão Compartilhar Vídeo (Onda 5 - #22) -->
                                     <a href="{% url 'video_detail' video.id %}" 
-                                       class="btn-share-direct inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
+                                       class="btn-share-direct inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
                                        title="Compartilhar Vídeo">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -161,7 +161,7 @@
 
                                     <!-- Botão Comentários (Onda 6 - #24) -->
                                     <a href="{% url 'video_detail' video.id %}#comments" 
-                                       class="btn-comments-direct inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
+                                       class="btn-comments-direct inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/25 bg-black/60 text-gray-200 hover:border-cyan-400 hover:text-cyan-300 transition"
                                        title="Ver Comentários">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -173,7 +173,7 @@
                                     <form method="POST" action="{% url 'video_trust_vote' video.id %}" class="inline">
                                         {% csrf_token %}
                                         <button type="submit" 
-                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
+                                                class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border transition
                                                 {% if video.id in trusted_video_ids %}
                                                     bg-emerald-600/90 border-emerald-400 text-white shadow-lg shadow-emerald-500/30
                                                 {% else %}
@@ -189,7 +189,7 @@
 
                                     {% with lesson=video.lessons.first %}
                                         {% if lesson and lesson.challenge %}
-                                            <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/90 hover:bg-amber-400 text-black shadow-lg transition">
+                                            <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/90 hover:bg-amber-400 text-black shadow-lg transition">
                                                 <span>Desafio</span>
                                             </a>
                                         {% endif %}

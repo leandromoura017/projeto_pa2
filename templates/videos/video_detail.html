@@ -11,27 +11,27 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+<div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full">
 
-    <!-- Top Navigation -->
-    <div class="flex items-center justify-between gap-4 mb-6">
-        <nav class="flex items-center gap-2 text-xs text-gray-400">
-            <a href="{% url 'feed' %}" class="hover:text-cyan-400 transition">Feed de Vídeos</a>
-            <span>/</span>
-            <span class="text-gray-200 font-semibold truncate">{{ video.title }}</span>
+    <!-- Top Navigation (Ajustada perfeitamente para qualquer largura de celular) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6">
+        <nav class="flex items-center gap-1.5 sm:gap-2 text-xs text-gray-400 min-w-0 max-w-full">
+            <a href="{% url 'feed' %}" class="hover:text-cyan-400 transition shrink-0 font-medium">Feed de Vídeos</a>
+            <span class="text-gray-600 shrink-0">/</span>
+            <span class="text-gray-200 font-semibold truncate block min-w-0" title="{{ video.title }}">{{ video.title }}</span>
         </nav>
 
-        <a href="{% url 'feed' %}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
+        <a href="{% url 'feed' %}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gray-800/90 hover:bg-gray-700 text-gray-200 border border-gray-700 transition shrink-0 self-start sm:self-auto">
             <span>&larr;</span> Voltar ao Feed
         </a>
     </div>
 
     <!-- Main Player & Details Card -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
 
-        <!-- Left: 9:16 Video Player -->
-        <div class="lg:col-span-5 flex justify-center">
-            <div class="relative w-full max-w-[340px] sm:max-w-[380px] h-[600px] sm:h-[660px] bg-black rounded-3xl border border-gray-800 shadow-2xl overflow-hidden flex items-center justify-center">
+        <!-- Left: 9:16 Video Player (responsivo sem estourar altura/largura) -->
+        <div class="lg:col-span-5 flex justify-center w-full">
+            <div class="relative w-full max-w-[320px] sm:max-w-[360px] md:max-w-[380px] aspect-[9/16] max-h-[70vh] sm:max-h-[660px] bg-black rounded-2xl sm:rounded-3xl border border-gray-800 shadow-2xl overflow-hidden flex items-center justify-center">
                 <video class="w-full h-full object-cover" 
                        src="{{ video.video_file.url }}" 
                        controls 
@@ -40,16 +40,16 @@
                        loop></video>
 
                 <!-- Technology Badge -->
-                <div class="absolute top-4 left-4 pointer-events-none">
-                    <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
+                <div class="absolute top-3 sm:top-4 left-3 sm:left-4 pointer-events-none">
+                    <span class="px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider bg-black/60 backdrop-blur-md border border-cyan-500/40 text-cyan-300 flex items-center gap-1 shadow">
                         {{ video.technology.name }}
                     </span>
                 </div>
 
-                <!-- Selo de Conteúdo Confiável em Destaque no Player (Onda 7 - #29) -->
+                <!-- Selo de Conteúdo Confiável em Destaque no Player -->
                 {% if video.is_trusted_content %}
-                    <div class="absolute bottom-16 left-4 pointer-events-none">
-                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-950/90 backdrop-blur-md border border-emerald-500/60 text-emerald-300 shadow-lg flex items-center gap-1.5 animate-pulse">
+                    <div class="absolute bottom-16 left-3 sm:left-4 pointer-events-none">
+                        <span class="px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-950/90 backdrop-blur-md border border-emerald-500/60 text-emerald-300 shadow-lg flex items-center gap-1.5 animate-pulse">
                             <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             <span>Conteúdo Confiável</span>
                         </span>
@@ -59,45 +59,45 @@
         </div>
 
         <!-- Right: Information, Trust Seal, Private Notes, Sharing & Comments -->
-        <div class="lg:col-span-7 space-y-6">
+        <div class="lg:col-span-7 space-y-5 sm:space-y-6 w-full min-w-0">
 
-            <!-- Title & Meta -->
-            <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
-                <div class="flex items-center justify-between gap-3">
-                    <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-3 group">
+            <!-- Caixinha 1: Autor, Título, Descrição & Métricas -->
+            <div class="bg-[#111827] border border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-800/80">
+                    <a href="{% url 'public_profile' video.author.id %}" class="flex items-center gap-3 group min-w-0 flex-1">
                         {% if video.author.profile and video.author.profile.avatar %}
-                            <img src="{{ video.author.profile.avatar.url }}" alt="{{ video.author.first_name }}" class="w-10 h-10 rounded-xl object-cover border border-cyan-500/40">
+                            <img src="{{ video.author.profile.avatar.url }}" alt="{{ video.author.first_name }}" class="w-10 h-10 rounded-xl object-cover border border-cyan-500/40 shrink-0">
                         {% else %}
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-sm font-bold text-white border border-cyan-400/40 shrink-0">
                                 {{ video.author.first_name|default:video.author.email|slice:":1"|upper }}
                             </div>
                         {% endif %}
-                        <div>
-                            <span class="text-xs text-gray-400 block">Autor da Pílula</span>
-                            <span class="text-sm font-bold text-white group-hover:text-cyan-400 transition">
+                        <div class="min-w-0 flex-1">
+                            <span class="text-[11px] text-gray-400 block leading-tight">Autor da Pílula</span>
+                            <span class="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-400 transition truncate block">
                                 {{ video.author.get_full_name|default:video.author.first_name|default:video.author.username }}
                             </span>
                         </div>
                     </a>
 
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
+                        <span class="text-[11px] sm:text-xs text-gray-400 bg-gray-900 border border-gray-800 px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             {{ video.views_count }} views
                         </span>
-                        <span class="text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                        <span class="text-[11px] sm:text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/60 px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             {{ video.likes_count }} likes
                         </span>
                     </div>
                 </div>
 
-                <h1 class="text-xl sm:text-2xl font-extrabold text-white leading-snug">
+                <h1 class="text-lg sm:text-2xl font-extrabold text-white leading-snug break-words">
                     {{ video.title }}
                 </h1>
 
                 {% if video.description %}
-                    <p class="text-sm text-gray-300 leading-relaxed pt-2 border-t border-gray-800">
+                    <p class="text-xs sm:text-sm text-gray-300 leading-relaxed pt-2 border-t border-gray-800 break-words">
                         {{ video.description }}
                     </p>
                 {% endif %}
@@ -105,12 +105,12 @@
                 <!-- Challenge Link (if linked) -->
                 {% with lesson=video.lessons.first %}
                     {% if lesson and lesson.challenge %}
-                        <div class="pt-4 border-t border-gray-800 flex items-center justify-between gap-4">
-                            <div>
+                        <div class="pt-3 border-t border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="min-w-0">
                                 <span class="text-xs font-bold text-amber-300 block">Desafio Prático Disponível</span>
-                                <span class="text-[11px] text-gray-400">Esta pílula faz parte de uma trilha com exercício interativo.</span>
+                                <span class="text-[11px] text-gray-400 block mt-0.5">Esta pílula faz parte de uma trilha com exercício interativo.</span>
                             </div>
-                            <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg transition">
+                            <a href="{% url 'lesson_challenge' lesson.id %}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg transition shrink-0 w-full sm:w-auto">
                                 Resolver Desafio &rarr;
                             </a>
                         </div>
@@ -118,12 +118,12 @@
                 {% endwith %}
             </div>
 
-            <!-- Selo / Votação "Conteúdo Confiável" (Onda 7 - #29) -->
-            <div class="bg-[#111827] border {% if video.is_trusted_content %}border-emerald-500/50 bg-emerald-950/10{% else %}border-gray-800{% endif %} rounded-3xl p-5 sm:p-6 shadow-xl">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <!-- Caixinha 2: Selo / Votação "Conteúdo Confiável" (Avaliação e notas) -->
+            <div class="bg-[#111827] border {% if video.is_trusted_content %}border-emerald-500/50 bg-emerald-950/10{% else %}border-gray-800{% endif %} rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             <span class="text-xs font-bold uppercase tracking-wider {% if video.is_trusted_content %}text-emerald-400{% else %}text-gray-300{% endif %}">
                                 {% if video.is_trusted_content %}
                                     Selo Oficial: Conteúdo Confiável
@@ -132,7 +132,7 @@
                                 {% endif %}
                             </span>
                         </div>
-                        <p class="text-xs text-gray-400">
+                        <p class="text-xs text-gray-400 leading-relaxed break-words">
                             {% if video.has_mentor_trust %}
                                 Validado e homologado por <strong>Mentores Técnicos</strong> do CodeView.
                             {% elif video.is_trusted_content %}
@@ -143,12 +143,12 @@
                         </p>
                     </div>
 
-                    <!-- Botão de Votação (Interativo) -->
+                    <!-- Botão de Votação (Interativo & 100% encaixado na tela) -->
                     {% if user.is_authenticated %}
-                        <form id="form-trust-vote" method="POST" action="{% url 'video_trust_vote' video.id %}" class="shrink-0">
+                        <form id="form-trust-vote" method="POST" action="{% url 'video_trust_vote' video.id %}" class="w-full sm:w-auto shrink-0">
                             {% csrf_token %}
                             <button id="btn-trust-vote" type="submit" 
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md {% if user_has_trusted %}bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400{% else %}bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700{% endif %}">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md {% if user_has_trusted %}bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400{% else %}bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700{% endif %}">
                                 <span id="trust-icon" class="flex items-center">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                                 </span>
@@ -159,25 +159,25 @@
                             </button>
                         </form>
                     {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="text-xs font-semibold text-cyan-400 hover:underline shrink-0">
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="w-full sm:w-auto text-center text-xs font-semibold text-cyan-400 hover:underline shrink-0">
                             Entre para votar &rarr;
                         </a>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Minhas Anotações Privadas (Onda 7 - #28) -->
+            <!-- Caixinha 3: Minhas Anotações Privadas (Notas) -->
             {% if user.is_authenticated %}
-                <div class="bg-[#111827] border border-cyan-800/40 rounded-3xl p-6 sm:p-7 shadow-xl space-y-4">
-                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            <h2 class="text-sm font-bold text-white">Minhas Anotações Privadas</h2>
+                <div class="bg-[#111827] border border-cyan-800/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 shadow-xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-gray-800 pb-3">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <h2 class="text-xs sm:text-sm font-bold text-white">Minhas Anotações Privadas</h2>
                             <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">
                                 Só você vê
                             </span>
                         </div>
-                        <span id="note-saved-time" class="text-[11px] text-gray-500">
+                        <span id="note-saved-time" class="text-[11px] text-gray-500 self-start sm:self-auto">
                             {% if user_note and user_note.content %}
                                 Atualizado em {{ user_note.updated_at|date:"d/m às H:i" }}
                             {% else %}
@@ -194,19 +194,19 @@
                                       rows="4" 
                                       maxlength="2000" 
                                       placeholder="Escreva seus apontamentos técnicos, comandos para lembrar, dúvidas ou macetes sobre este código..." 
-                                      class="w-full bg-gray-900 border border-gray-700 rounded-2xl p-3.5 text-xs sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none font-mono leading-relaxed">{{ user_note.content|default:'' }}</textarea>
+                                      class="w-full bg-gray-900 border border-gray-700 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 text-xs sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none font-mono leading-relaxed">{{ user_note.content|default:'' }}</textarea>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span id="note-char-counter" class="text-[11px] text-gray-500">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div class="flex items-center gap-2 flex-wrap text-[11px]">
+                                <span id="note-char-counter" class="text-gray-500">
                                     {{ user_note.content|length|default:0 }} / 2000 caracteres
                                 </span>
-                                <span id="note-status-feedback" class="text-[11px] text-emerald-400 font-semibold hidden">
+                                <span id="note-status-feedback" class="text-emerald-400 font-semibold hidden">
                                     Anotação salva com sucesso!
                                 </span>
                             </div>
                             <button id="btn-save-note" type="submit" 
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
                                 Salvar Anotações
                             </button>
                         </div>
@@ -214,37 +214,37 @@
                 </div>
             {% endif %}
 
-            <!-- Compartilhar Vídeo Card (Onda 5 - #22) -->
-            <div class="bg-[#111827] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                        Compartilhar Pílula de Código
+            <!-- Caixinha 4: Compartilhar Vídeo Card -->
+            <div class="bg-[#111827] border border-cyan-500/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 min-w-0 truncate">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        <span class="truncate">Compartilhar Pílula de Código</span>
                     </span>
-                    <span class="text-[11px] text-gray-400">Link direto e redes</span>
+                    <span class="text-[11px] text-gray-400 shrink-0">Link direto e redes</span>
                 </div>
 
                 <!-- Copy Link Bar -->
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 min-w-0">
                     <input id="share-link-input" 
                            type="text" 
                            readonly 
                            value="{{ absolute_url }}" 
-                           class="flex-1 px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-xs text-gray-300 font-mono focus:outline-none select-all">
+                           class="flex-1 min-w-0 px-3 sm:px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-xs text-gray-300 font-mono focus:outline-none select-all truncate">
                     <button id="btn-copy-link" 
                             type="button" 
-                            class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md transition shrink-0">
+                            class="px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md transition shrink-0 whitespace-nowrap">
                         <span id="copy-text">Copiar Link</span>
                     </button>
                 </div>
 
                 <!-- Quick Share Buttons -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                     <!-- WhatsApp -->
                     <a href="https://api.whatsapp.com/send?text=Confira%20esta%20p%C3%ADlula%20de%20c%C3%B3digo%20sobre%20{{ video.title|urlencode }}%20no%20CodeView:%20{{ absolute_url|urlencode }}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
-                       class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 transition">
+                       class="flex items-center justify-center gap-1.5 p-2 sm:p-2.5 rounded-xl text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 transition text-center truncate">
                         WhatsApp
                     </a>
 
@@ -252,7 +252,7 @@
                     <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ absolute_url|urlencode }}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
-                       class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-blue-950/80 hover:bg-blue-900 border border-blue-700/80 text-blue-300 transition">
+                       class="flex items-center justify-center gap-1.5 p-2 sm:p-2.5 rounded-xl text-xs font-semibold bg-blue-950/80 hover:bg-blue-900 border border-blue-700/80 text-blue-300 transition text-center truncate">
                         LinkedIn
                     </a>
 
@@ -260,24 +260,24 @@
                     <a href="https://twitter.com/intent/tweet?text=Confira%20esta%20p%C3%ADlula%20de%20c%C3%B3digo:%20{{ video.title|urlencode }}&url={{ absolute_url|urlencode }}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
-                       class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 transition">
+                       class="flex items-center justify-center gap-1.5 p-2 sm:p-2.5 rounded-xl text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 transition text-center truncate">
                         X / Twitter
                     </a>
 
                     <!-- Web Share API (Dispositivos Móveis e Navegadores Modernos) -->
                     <button id="btn-native-share" 
                             type="button" 
-                            class="flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-300 transition">
+                            class="flex items-center justify-center gap-1.5 p-2 sm:p-2.5 rounded-xl text-xs font-semibold bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/80 text-cyan-300 transition text-center truncate">
                         Mais Opções
                     </button>
                 </div>
             </div>
 
-            <!-- Aba / Seção de Comentários Técnicos (Onda 6 - #24) -->
-            <div id="comments" class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-                <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+            <!-- Caixinha 5: Aba / Seção de Comentários Técnicos -->
+            <div id="comments" class="bg-[#111827] border border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800 pb-3">
                     <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         <h2 class="text-sm sm:text-base font-bold text-white">
                             Discussão Técnica
                         </h2>
@@ -298,18 +298,18 @@
                                       required 
                                       maxlength="500" 
                                       placeholder="Deixe sua dúvida técnica, sugestão ou insight sobre este código..." 
-                                      class="w-full bg-gray-900 border border-gray-700 rounded-2xl p-3.5 text-xs sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none"></textarea>
+                                      class="w-full bg-gray-900 border border-gray-700 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 text-xs sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition resize-none"></textarea>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <span class="text-[11px] text-gray-500">Máximo 500 caracteres</span>
                             <button type="submit" 
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-cyan-500/20 transition">
                                 Enviar Comentário
                             </button>
                         </div>
                     </form>
                 {% else %}
-                    <div class="p-4 rounded-2xl bg-gray-900/60 border border-gray-800 text-center">
+                    <div class="p-4 rounded-xl sm:rounded-2xl bg-gray-900/60 border border-gray-800 text-center">
                         <p class="text-xs text-gray-400">
                             Você precisa estar conectado para participar da discussão.
                         </p>
@@ -333,8 +333,8 @@
                                 {% endif %}
 
                                 <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <div class="flex items-center gap-1.5">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
                                             <a href="{% url 'public_profile' comment.user.id %}" class="text-xs font-bold text-white hover:text-cyan-400 transition truncate">
                                                 {{ comment.user.get_full_name|default:comment.user.first_name|default:comment.user.username }}
                                             </a>
@@ -352,7 +352,7 @@
                                             {{ comment.created_at|date:"d/m/Y \à\s H:i" }}
                                         </span>
                                     </div>
-                                    <p class="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed whitespace-pre-line">
+                                    <p class="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed whitespace-pre-line break-words">
                                         {{ comment.content }}
                                     </p>
                                 </div>
@@ -479,10 +479,10 @@
                     const data = await res.json();
                     if (data.status === 'success') {
                         if (data.is_trusted) {
-                            trustBtn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400";
+                            trustBtn.className = "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-400";
                             if (trustLabel) trustLabel.textContent = 'Você Validou';
                         } else {
-                            trustBtn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700";
+                            trustBtn.className = "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700";
                             if (trustLabel) trustLabel.textContent = 'Marcar Confiável';
                         }
                         if (trustBadge) {

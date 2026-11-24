@@ -3,17 +3,17 @@
 {% block title %}{{ course.title }} | CodeView{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+<div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full">
 
     <!-- Breadcrumb -->
-    <nav class="flex items-center gap-2 text-xs text-gray-400 mb-6">
+    <nav class="flex items-center gap-2 text-xs text-gray-400 mb-6 flex-wrap">
         <a href="{% url 'course_list' %}" class="hover:text-cyan-400 transition">Mini Cursos</a>
         <span>/</span>
         <span class="text-gray-200 font-semibold truncate">{{ course.title }}</span>
     </nav>
 
     <!-- Course Overview Header Card -->
-    <div class="bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-10 mb-8 shadow-2xl relative overflow-hidden">
+    <div class="bg-[#111827] border border-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-10 mb-8 shadow-2xl relative overflow-hidden">
         <div class="relative z-10">
             
             <!-- Badges -->
@@ -142,15 +142,15 @@
     </div>
 
     <!-- Tab Navigation: Ementa vs. Cronograma (Onda 6 - #25) -->
-    <div class="flex items-center gap-3 border-b border-gray-800 pb-3 mb-6">
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-gray-800 pb-3 mb-6">
         <button id="tab-syllabus-btn" 
                 onclick="switchCourseTab('syllabus')"
-                class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20">
+                class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20">
             Ementa de Pílulas ({{ lessons.count }})
         </button>
         <button id="tab-schedule-btn" 
                 onclick="switchCourseTab('schedule')"
-                class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700">
+                class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700">
             Cronograma de Estudos Sugerido
         </button>
     </div>
